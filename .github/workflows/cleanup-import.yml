@@ -1,0 +1,66 @@
+name: Cleanup canonical import payload
+
+on:
+  push:
+    paths:
+      - .github/workflows/cleanup-import.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ninlil-cleanup-import
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout all refs
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Verify imported source exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin feature/import-m3-security-state
+          git show origin/feature/import-m3-security-state:CMakeLists.txt >/dev/null
+          git show origin/feature/import-m3-security-state:include/ninlil.h >/dev/null
+          git show origin/feature/import-m3-security-state:ports/flash/ninlil_security_state.c >/dev/null
+      - name: Remove payload from main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C main origin/main
+          git rm -r -f --ignore-unmatch .bootstrap
+          git rm -f --ignore-unmatch \
+            .github/workflows/bootstrap-import.yml \
+            .github/workflows/bootstrap-import-v2.yml
+          git rm -f --ignore-unmatch .bootstrap-action-probe .bootstrap-failure.log
+          if ! git diff --cached --quiet; then
+            git diff --cached --check
+            git commit -m "chore: remove canonical import payload"
+            git push origin HEAD:main
+          fi
+      - name: Synchronize and clean review branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main feature/import-m3-security-state
+          git switch -C feature/import-m3-security-state origin/feature/import-m3-security-state
+          git merge --no-edit origin/main
+          git rm -r -f --ignore-unmatch .bootstrap
+          git rm -f --ignore-unmatch \
+            .github/workflows/bootstrap-import.yml \
+            .github/workflows/bootstrap-import-v2.yml
+          git rm -f --ignore-unmatch .bootstrap-action-probe .bootstrap-failure.log
+          if ! git diff --cached --quiet; then
+            git diff --cached --check
+            git commit -m "chore: remove canonical import scaffolding"
+          fi
+          git push origin HEAD:feature/import-m3-security-state
