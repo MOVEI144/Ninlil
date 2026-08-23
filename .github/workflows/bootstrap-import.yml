@@ -46,11 +46,6 @@ jobs:
           trap record_failure EXIT
           set -e
 
-          test "$(find .bootstrap -maxdepth 1 -type f -name 'source.part-*' | wc -l)" -eq 12
-          for part in .bootstrap/source.part-{00..10}; do
-            test "$(wc -c < "$part")" -eq 7000
-          done
-          test "$(wc -c < .bootstrap/source.part-11)" -eq 6224
           cat > /tmp/bootstrap-parts.sha256 <<'SUMS'
           ab4678d88affe5d7396c39a8a10207e8a3e3d4d904c1da0184d599edcaf88056  .bootstrap/source.part-00
           b44eaf3f3b2c2f9bb6426f99bfd269350d58b72a8785af5943b8309bbc447b1a  .bootstrap/source.part-01
@@ -61,12 +56,23 @@ jobs:
           4fd0d22a4ec5829a5f1d0c9fe455cb991306e5eab5f6bc96640f8284cce12931  .bootstrap/source.part-06
           72919e129a15eeab673129e0b68206b85e3bedda47fe6db59d378b8880c188b6  .bootstrap/source.part-07
           073df3e6e78d16ee77ca09dabcf9902b92b6bc10ec448f7d1a23edd0284e4490  .bootstrap/source.part-08
-          4c856bb69e5e9ae2979aed39b2c71df16bc88a2d1901aad3e4a4b54eef321548  .bootstrap/source.part-09
+          0687aee02d07850b336b28d8349f6d65069c62542116b8ba7567fb915bb04751  .bootstrap/source.part-09a
+          7a6db13ccb9488f38227394a9c588829360a7edbbac5054af9b8ac7047b489bb  .bootstrap/source.part-09b
+          ef74786c74e05bf6eb616b69311137ec83f598546978ea63adf7e0d46f885062  .bootstrap/source.part-09c
+          58192a6ae53713cda1eec1a8eff5cab58b8f17f24031009821312a7857946b24  .bootstrap/source.part-09d
           70ef211ce5692ebd9216f7dcdf14b7fedca9d40f5dcf93a4725ebd70955a9531  .bootstrap/source.part-10
           54f21afa1f62ba6ee8dc4b3aa37eda3cde6e87a9756c2074d91b833b5945a123  .bootstrap/source.part-11
           SUMS
           sha256sum --check --strict /tmp/bootstrap-parts.sha256
-          cat .bootstrap/source.part-{00..11} > /tmp/ninlil-source.tar.xz.b64
+          cat \
+            .bootstrap/source.part-{00..08} \
+            .bootstrap/source.part-09a \
+            .bootstrap/source.part-09b \
+            .bootstrap/source.part-09c \
+            .bootstrap/source.part-09d \
+            .bootstrap/source.part-10 \
+            .bootstrap/source.part-11 \
+            > /tmp/ninlil-source.tar.xz.b64
           base64 --decode /tmp/ninlil-source.tar.xz.b64 > /tmp/ninlil-source.tar.xz
           echo "a9b5a8c5647c33e553b22f5aed4742ea07836ec22e023b66f53eb851d57a496b  /tmp/ninlil-source.tar.xz" | sha256sum --check --strict
           test "$(wc -c < /tmp/ninlil-source.tar.xz)" -eq 62416
