@@ -66,7 +66,7 @@ jobs:
           test -x scripts/ci.sh
           test -f include/ninlil.h
           test -f ports/esp32s3/ninlil_sx1262_radio.c
-          test -f ports/security/ninlil_security_state.c
+          test -f ports/flash/ninlil_security_state.c
           test -f tests/test_security_state.c
           git add -A
           git diff --cached --check
