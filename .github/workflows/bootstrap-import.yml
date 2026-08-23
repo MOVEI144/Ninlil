@@ -1,0 +1,74 @@
+name: Bootstrap canonical source import
+
+on:
+  push:
+    paths:
+      - .github/workflows/bootstrap-import.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ninlil-bootstrap-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout canonical repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Verify bootstrap chunks and archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find .bootstrap -maxdepth 1 -type f -name 'source.part-*' | wc -l)" -eq 12
+          for part in .bootstrap/source.part-{00..10}; do
+            test "$(wc -c < "$part")" -eq 7000
+          done
+          test "$(wc -c < .bootstrap/source.part-11)" -eq 6224
+          cat .bootstrap/source.part-{00..11} > /tmp/ninlil-source.tar.xz.b64
+          base64 --decode /tmp/ninlil-source.tar.xz.b64 > /tmp/ninlil-source.tar.xz
+          echo "a9b5a8c5647c33e553b22f5aed4742ea07836ec22e023b66f53eb851d57a496b  /tmp/ninlil-source.tar.xz" | sha256sum --check --strict
+          test "$(wc -c < /tmp/ninlil-source.tar.xz)" -eq 62416
+          python3 - <<'PY'
+          from pathlib import PurePosixPath
+          import tarfile
+
+          archive = "/tmp/ninlil-source.tar.xz"
+          with tarfile.open(archive, "r:xz") as tf:
+              members = tf.getmembers()
+              if len(members) != 107:
+                  raise SystemExit(f"unexpected archive member count: {len(members)}")
+              for member in members:
+                  path = PurePosixPath(member.name)
+                  if path.is_absolute() or ".." in path.parts:
+                      raise SystemExit(f"unsafe archive path: {member.name}")
+                  if member.issym() or member.islnk():
+                      raise SystemExit(f"links are not permitted: {member.name}")
+          PY
+
+      - name: Materialize review branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C feature/import-m3-security-state
+          tar -xJf /tmp/ninlil-source.tar.xz
+          rm -rf .bootstrap .github/workflows/bootstrap-import.yml
+          test -f CMakeLists.txt
+          test -x scripts/ci.sh
+          test -f include/ninlil.h
+          test -f ports/esp32s3/ninlil_sx1262_radio.c
+          test -f ports/security/ninlil_security_state.c
+          test -f tests/test_security_state.c
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: import reviewed radio and security-state baseline"
+          git push --force origin HEAD:feature/import-m3-security-state
