@@ -59,9 +59,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp .github/workflows/ci.yml /tmp/ninlil-ci.yml
           git switch -C feature/import-m3-security-state
           tar -xJf /tmp/ninlil-source.tar.xz
-          rm -rf .bootstrap .github/workflows/bootstrap-import.yml
+          cp /tmp/ninlil-ci.yml .github/workflows/ci.yml
           test -f CMakeLists.txt
           test -x scripts/ci.sh
           test -f include/ninlil.h
