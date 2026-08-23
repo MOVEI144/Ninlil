@@ -1,19 +1,61 @@
 # Ninlil
 
-Ninlil is a small, portable C11 runtime for durable messaging over intermittent, low-bandwidth links.
+Ninlil is a small, portable C11 runtime for durable messaging over intermittent, low-bandwidth links. The standard hardware target is XIAO ESP32-S3 with Wio-SX1262 over the B2B connector; other ports remain possible through explicit adapters.
 
-This repository is the canonical Ninlil repository as of 2026-08-23.
+This repository, `MOVEI144/Ninlil`, is the canonical project repository from 2026-08-23 onward. The earlier `Aero123421/Ninlil-Runtime` repository is a legacy design and evidence source, not the implementation authority for this codebase.
 
-## Current status
+## Current verified state
 
-The repository is being bootstrapped from the reviewed direct-radio and persistent-security-state software candidate. No production release has been declared. ESP32-S3/SX1262 physical RF and hard-power acceptance remain mandatory gates.
+| Area | State |
+|---|---|
+| POSIX durable delivery core | Host-tested baseline |
+| SX1262 direct-radio software | Software candidate; physical RF acceptance pending |
+| ESP32 raw-flash delivery journal | Software candidate; hard-power acceptance pending |
+| Persistent security counter and membership stores | Software candidate; physical power-cut acceptance pending |
+| Secure-link encryption, EDHOC, Join, Relay, fragmentation | Not part of the imported official baseline |
 
-## Project principles
+No production release has been declared. In particular, passing host simulation is not evidence of RF performance or power-loss safety on physical flash.
 
-- never report an uncertain result as success;
-- commit durable state before external effects;
-- keep queues, tables, payloads, retries, and waits bounded;
-- keep product-specific policy outside the reusable runtime;
-- keep the first-party project, tests, and documentation within a 50,000-line budget.
+## Design boundary
 
-The initial source import is developed on a review branch before it is merged into `main`.
+Ninlil owns communication mechanics:
+
+- durable submit, retry, deduplication, receipts, and restart recovery;
+- bounded radio and storage adapters;
+- authenticated session, Join, Relay, and fragmentation layers as later milestones.
+
+Ninlil does not own product policy, cloud APIs, dashboards, building or equipment models, safety-rule decisions, or tenant authorization. Product integrations such as KG consume Ninlil through a narrow transport adapter.
+
+## Build and test
+
+Host CI requires CMake, Ninja, GCC, Clang, and clang-format.
+
+```sh
+./scripts/ci.sh
+```
+
+The ESP32-S3 build requires ESP-IDF v6.0.2 and the exact pinned Semtech driver subset:
+
+```sh
+./scripts/fetch_sx126x_driver.sh
+. /path/to/esp-idf-v6.0.2/export.sh
+./scripts/build_esp32s3.sh
+```
+
+Neither command flashes hardware or enables RF transmission. Repository defaults keep TX disabled until an explicit, reviewed RF profile is supplied.
+
+## Documentation
+
+Read in this order:
+
+1. [`docs/STATUS.md`](docs/STATUS.md)
+2. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+3. [`docs/ENGINEERING_STANDARD.md`](docs/ENGINEERING_STANDARD.md)
+4. [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md)
+5. [`docs/FAILURE_MODEL.md`](docs/FAILURE_MODEL.md)
+6. [`docs/TESTING.md`](docs/TESTING.md)
+7. [`docs/ROADMAP.md`](docs/ROADMAP.md)
+
+## License
+
+Apache License 2.0. See [`LICENSE`](LICENSE).
