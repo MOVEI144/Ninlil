@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ninlil-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host:
+    name: Host, sanitizers, static analysis
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            build-essential clang clang-format cmake ninja-build
+      - name: Run full host CI
+        run: ./scripts/ci.sh
+
+  esp32s3:
+    name: ESP-IDF v6.0.2 / ESP32-S3
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Fetch pinned Semtech driver
+        run: ./scripts/fetch_sx126x_driver.sh
+      - name: Verify pinned Semtech driver
+        run: ./scripts/check_sx126x_driver.sh
+      - name: Build firmware
+        uses: espressif/esp-idf-ci-action@9d38657f3d789ca759b2b37aaf5ceffbc42c4f0d
+        with:
+          esp_idf_version: v6.0.2
+          target: esp32s3
+          path: embedded/esp32s3
