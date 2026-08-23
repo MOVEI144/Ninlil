@@ -1,0 +1,53 @@
+name: Normalize canonical import formatting
+
+on:
+  push:
+    paths:
+      - .github/workflows/format-import.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ninlil-format-import
+  cancel-in-progress: false
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout review branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feature/import-m3-security-state
+          fetch-depth: 0
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends build-essential clang clang-format cmake ninja-build
+      - name: Apply canonical formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          find include src ports tests embedded \
+            -type f \( -name '*.c' -o -name '*.h' \) \
+            ! -path '*/third_party/*' -print0 \
+            | xargs -0 clang-format -i
+          git diff --check
+      - name: Run full host CI
+        run: ./scripts/ci.sh
+      - name: Commit only verified formatting changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain)" ]; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "style: apply canonical clang-format"
+          git push origin HEAD:feature/import-m3-security-state
