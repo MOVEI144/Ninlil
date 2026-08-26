@@ -8,6 +8,7 @@ idf_component_register(
         "${NINLIL_RADIO_ROOT}/include"
         "${NINLIL_RADIO_ROOT}/ports/esp32s3"
     REQUIRES
+        ninlil_core
         sx126x_driver
         esp_driver_gpio
         esp_driver_spi

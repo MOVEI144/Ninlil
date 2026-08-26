@@ -20,7 +20,9 @@ static sx126x_hal_status_t hal_error(void)
 
 static int set_level(gpio_num_t gpio, int level)
 {
-    return gpio_set_level(gpio, (uint32_t)(level != 0)) == ESP_OK ? 0 : -1;
+    bool high = level != 0;
+
+    return gpio_set_level(gpio, high) == ESP_OK ? 0 : -1;
 }
 
 static int wait_busy(const ninlil_sx1262_hal_context *context,
