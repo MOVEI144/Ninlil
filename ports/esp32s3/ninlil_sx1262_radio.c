@@ -65,8 +65,8 @@ static int configure_gpio(ninlil_sx1262_radio *radio)
     rc = gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
     if (rc != ESP_OK && rc != ESP_ERR_INVALID_STATE)
         return NINLIL_ERR_IO;
-    rc = gpio_isr_handler_add((gpio_num_t)NINLIL_SX1262_PIN_DIO1,
-                              dio1_isr, radio);
+    rc = gpio_isr_handler_add((gpio_num_t)NINLIL_SX1262_PIN_DIO1, dio1_isr,
+                              radio);
     if (rc != ESP_OK)
         return NINLIL_ERR_IO;
     radio->isr_installed = true;
@@ -171,24 +171,22 @@ static int apply_profile(ninlil_sx1262_radio *radio)
     };
     sx126x_mod_params_lora_t modulation;
     sx126x_pkt_params_lora_t packet;
-    sx126x_irq_mask_t irq_mask =
-        SX126X_IRQ_TX_DONE | SX126X_IRQ_RX_DONE | SX126X_IRQ_HEADER_ERROR |
-        SX126X_IRQ_CRC_ERROR | SX126X_IRQ_TIMEOUT;
+    sx126x_irq_mask_t irq_mask = SX126X_IRQ_TX_DONE | SX126X_IRQ_RX_DONE |
+                                 SX126X_IRQ_HEADER_ERROR |
+                                 SX126X_IRQ_CRC_ERROR | SX126X_IRQ_TIMEOUT;
 
     if (radio->profile.frequency_hz == 0u)
         return NINLIL_OK;
-    if (build_lora_parameters(&radio->profile, NINLIL_RADIO_MTU,
-                              &modulation, &packet) != NINLIL_OK)
+    if (build_lora_parameters(&radio->profile, NINLIL_RADIO_MTU, &modulation,
+                              &packet) != NINLIL_OK)
         return NINLIL_ERR_INVALID;
     if (status_ok(sx126x_set_pkt_type(&radio->hal, SX126X_PKT_TYPE_LORA)) !=
             NINLIL_OK ||
-        status_ok(sx126x_write_register(&radio->hal, SX126X_REG_LR_SYNCWORD,
-                                        private_sync_word,
-                                        (uint8_t)sizeof(private_sync_word))) !=
-            NINLIL_OK ||
-        status_ok(sx126x_set_rf_freq(&radio->hal,
-                                     radio->profile.frequency_hz)) !=
-            NINLIL_OK ||
+        status_ok(sx126x_write_register(
+            &radio->hal, SX126X_REG_LR_SYNCWORD, private_sync_word,
+            (uint8_t)sizeof(private_sync_word))) != NINLIL_OK ||
+        status_ok(sx126x_set_rf_freq(
+            &radio->hal, radio->profile.frequency_hz)) != NINLIL_OK ||
         calibrate_image(radio) != NINLIL_OK ||
         status_ok(sx126x_set_lora_mod_params(&radio->hal, &modulation)) !=
             NINLIL_OK ||
@@ -196,8 +194,8 @@ static int apply_profile(ninlil_sx1262_radio *radio)
             NINLIL_OK ||
         status_ok(sx126x_set_buffer_base_address(&radio->hal, 0u, 0u)) !=
             NINLIL_OK ||
-        status_ok(sx126x_set_dio_irq_params(&radio->hal, irq_mask, irq_mask,
-                                            0u, 0u)) != NINLIL_OK)
+        status_ok(sx126x_set_dio_irq_params(&radio->hal, irq_mask, irq_mask, 0u,
+                                            0u)) != NINLIL_OK)
         return NINLIL_ERR_IO;
     if (radio->profile.tx_enabled) {
         sx126x_pa_cfg_params_t pa = {0x04u, 0x07u, 0x00u, 0x01u};
@@ -214,13 +212,13 @@ static int apply_profile(ninlil_sx1262_radio *radio)
 static int configure_radio(ninlil_sx1262_radio *radio)
 {
     if (status_ok(sx126x_reset(&radio->hal)) != NINLIL_OK ||
-        status_ok(sx126x_set_standby(&radio->hal,
-                                     SX126X_STANDBY_CFG_RC)) != NINLIL_OK ||
+        status_ok(sx126x_set_standby(&radio->hal, SX126X_STANDBY_CFG_RC)) !=
+            NINLIL_OK ||
         status_ok(sx126x_set_reg_mode(&radio->hal, SX126X_REG_MODE_DCDC)) !=
             NINLIL_OK ||
         status_ok(sx126x_set_dio3_as_tcxo_ctrl(
-            &radio->hal, SX126X_TCXO_CTRL_1_8V,
-            TCXO_STARTUP_RTC_STEPS)) != NINLIL_OK ||
+            &radio->hal, SX126X_TCXO_CTRL_1_8V, TCXO_STARTUP_RTC_STEPS)) !=
+            NINLIL_OK ||
         status_ok(sx126x_set_dio2_as_rf_sw_ctrl(&radio->hal, true)) !=
             NINLIL_OK ||
         status_ok(sx126x_cal(&radio->hal, SX126X_CAL_ALL)) != NINLIL_OK ||
@@ -299,8 +297,7 @@ int ninlil_sx1262_radio_init(ninlil_sx1262_radio *radio,
 
 void ninlil_sx1262_radio_deinit(ninlil_sx1262_radio *radio)
 {
-    if (!radio ||
-        (radio->owner_task && !caller_is_owner(radio)))
+    if (!radio || (radio->owner_task && !caller_is_owner(radio)))
         return;
     if (radio->isr_installed) {
         (void)gpio_isr_handler_remove((gpio_num_t)NINLIL_SX1262_PIN_DIO1);
@@ -325,8 +322,7 @@ int ninlil_sx1262_radio_recover(ninlil_sx1262_radio *radio)
     return rc;
 }
 
-int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio,
-                             const uint8_t *data,
+int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio, const uint8_t *data,
                              uint16_t length)
 {
     sx126x_mod_params_lora_t modulation;
@@ -343,8 +339,8 @@ int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio,
     if (!radio->profile.tx_enabled || !radio->configured ||
         radio->profile.frequency_hz == 0u)
         return NINLIL_ERR_FAULT;
-    if (build_lora_parameters(&radio->profile, (uint8_t)length,
-                              &modulation, &packet) != NINLIL_OK)
+    if (build_lora_parameters(&radio->profile, (uint8_t)length, &modulation,
+                              &packet) != NINLIL_OK)
         return NINLIL_ERR_INVALID;
     time_on_air_ms = sx126x_get_lora_time_on_air_in_ms(&packet, &modulation);
     timeout_ms = time_on_air_ms + RADIO_TX_GUARD_MS;
@@ -352,8 +348,8 @@ int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio,
         return NINLIL_ERR_TOO_LARGE;
 
     radio->rx_active = false;
-    if (status_ok(sx126x_set_standby(&radio->hal,
-                                     SX126X_STANDBY_CFG_RC)) != NINLIL_OK) {
+    if (status_ok(sx126x_set_standby(&radio->hal, SX126X_STANDBY_CFG_RC)) !=
+        NINLIL_OK) {
         radio->io_errors++;
         return resume_rx(radio, NINLIL_ERR_IO);
     }
@@ -403,10 +399,8 @@ int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio,
     return resume_rx(radio, rc);
 }
 
-int ninlil_sx1262_radio_receive(ninlil_sx1262_radio *radio,
-                                uint8_t *data,
-                                uint16_t capacity,
-                                uint16_t *length,
+int ninlil_sx1262_radio_receive(ninlil_sx1262_radio *radio, uint8_t *data,
+                                uint16_t capacity, uint16_t *length,
                                 ninlil_sx1262_rx_info *info,
                                 TickType_t wait_ticks)
 {
@@ -455,10 +449,9 @@ int ninlil_sx1262_radio_receive(ninlil_sx1262_radio *radio,
     if (buffer_status.pld_len_in_bytes > capacity ||
         buffer_status.pld_len_in_bytes > NINLIL_RADIO_MTU)
         return resume_rx(radio, NINLIL_ERR_TOO_LARGE);
-    if (status_ok(sx126x_read_buffer(&radio->hal,
-                                     buffer_status.buffer_start_pointer, data,
-                                     buffer_status.pld_len_in_bytes)) !=
-        NINLIL_OK) {
+    if (status_ok(sx126x_read_buffer(
+            &radio->hal, buffer_status.buffer_start_pointer, data,
+            buffer_status.pld_len_in_bytes)) != NINLIL_OK) {
         radio->io_errors++;
         return resume_rx(radio, NINLIL_ERR_IO);
     }

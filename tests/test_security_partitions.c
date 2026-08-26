@@ -3,13 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#define CHECK(expression)                                                     \
-    do {                                                                      \
-        if (!(expression)) {                                                  \
-            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__, \
-                    #expression);                                             \
-            return 1;                                                         \
-        }                                                                     \
+#define CHECK(expression)                                                      \
+    do {                                                                       \
+        if (!(expression)) {                                                   \
+            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__,    \
+                    #expression);                                              \
+            return 1;                                                          \
+        }                                                                      \
     } while (0)
 
 typedef struct fake_partition {
@@ -48,10 +48,8 @@ const esp_partition_t *esp_partition_find_first(int type,
     return NULL;
 }
 
-esp_err_t esp_partition_read(const esp_partition_t *partition,
-                             size_t offset,
-                             void *output,
-                             size_t length)
+esp_err_t esp_partition_read(const esp_partition_t *partition, size_t offset,
+                             void *output, size_t length)
 {
     fake_partition *fake = from_descriptor(partition);
 
@@ -62,10 +60,8 @@ esp_err_t esp_partition_read(const esp_partition_t *partition,
     return ESP_OK;
 }
 
-esp_err_t esp_partition_write(const esp_partition_t *partition,
-                              size_t offset,
-                              const void *data,
-                              size_t length)
+esp_err_t esp_partition_write(const esp_partition_t *partition, size_t offset,
+                              const void *data, size_t length)
 {
     fake_partition *fake = from_descriptor(partition);
     const uint8_t *input = data;
@@ -84,8 +80,7 @@ esp_err_t esp_partition_write(const esp_partition_t *partition,
 }
 
 esp_err_t esp_partition_erase_range(const esp_partition_t *partition,
-                                    size_t offset,
-                                    size_t length)
+                                    size_t offset, size_t length)
 {
     fake_partition *fake = from_descriptor(partition);
 
@@ -132,8 +127,8 @@ int main(void)
     CHECK(counter_io.write(counter_io.ctx, 0u, &value, 1u) == 0);
     CHECK(counter_io.read(counter_io.ctx, 0u, &output, 1u) == 0);
     CHECK(output == value);
-    CHECK(counter_io.erase(counter_io.ctx, 0u,
-                           NINLIL_SECURITY_SECTOR_SIZE) == 0);
+    CHECK(counter_io.erase(counter_io.ctx, 0u, NINLIL_SECURITY_SECTOR_SIZE) ==
+          0);
     CHECK(counter_io.read(counter_io.ctx, 0u, &output, 1u) == 0);
     CHECK(output == UINT8_C(0xFF));
 

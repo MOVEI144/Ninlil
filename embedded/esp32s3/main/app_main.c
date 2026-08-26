@@ -51,7 +51,7 @@ static uint64_t now_ms(void)
     return (uint64_t)(esp_timer_get_time() / 1000);
 }
 
-#if defined(CONFIG_NINLIL_M1_MODE_DIAGNOSTIC) && \
+#if defined(CONFIG_NINLIL_M1_MODE_DIAGNOSTIC) &&                               \
     defined(CONFIG_NINLIL_DIAGNOSTIC_INITIATOR)
 static bool tick_reached(TickType_t now, TickType_t deadline)
 {
@@ -63,9 +63,8 @@ static int stack_headroom(const char *phase)
 {
     UBaseType_t free_bytes = uxTaskGetStackHighWaterMark(NULL);
     uint32_t total_bytes = CONFIG_ESP_MAIN_TASK_STACK_SIZE;
-    uint32_t percent = total_bytes == 0u
-                           ? 0u
-                           : ((uint32_t)free_bytes * 100u) / total_bytes;
+    uint32_t percent =
+        total_bytes == 0u ? 0u : ((uint32_t)free_bytes * 100u) / total_bytes;
 
     ESP_LOGI(TAG, "stack phase=%s minimum-free=%lu/%lu bytes (%lu%%)", phase,
              (unsigned long)free_bytes, (unsigned long)total_bytes,
@@ -90,8 +89,7 @@ static ninlil_rf_profile configured_profile(void)
 
     memset(&profile, 0, sizeof(profile));
     profile.tx_enabled = NINLIL_CONFIG_RF_TX_ENABLED;
-    profile.rf_gate_polarity_confirmed =
-        NINLIL_CONFIG_RF_GATE_CONFIRMED;
+    profile.rf_gate_polarity_confirmed = NINLIL_CONFIG_RF_GATE_CONFIRMED;
     profile.region = CONFIG_NINLIL_RF_REGION;
     profile.frequency_hz = CONFIG_NINLIL_RF_FREQUENCY_HZ;
     profile.tx_power_dbm = CONFIG_NINLIL_RF_TX_POWER_DBM;
@@ -111,8 +109,7 @@ static int initialize_radio_state(ninlil_radio_link *state)
 }
 
 static int recover_physical(ninlil_sx1262_radio *physical,
-                            ninlil_radio_link *state,
-                            int failure)
+                            ninlil_radio_link *state, int failure)
 {
     int rc;
 
@@ -129,8 +126,8 @@ static int recover_physical(ninlil_sx1262_radio *physical,
     while (rc != NINLIL_ERR_FAULT) {
         int hardware_result = ninlil_sx1262_radio_recover(physical);
 
-        rc = ninlil_radio_recovery_result(
-            state, now_ms(), hardware_result == NINLIL_OK);
+        rc = ninlil_radio_recovery_result(state, now_ms(),
+                                          hardware_result == NINLIL_OK);
         if (rc == NINLIL_OK)
             return NINLIL_OK;
         if (rc != NINLIL_ERR_FAULT)
@@ -147,8 +144,7 @@ static int random_fill(void *context, uint8_t *output, size_t length)
     return 0;
 }
 
-static int pump_radio_rx(ninlil_sx1262_radio *physical,
-                         ninlil_radio_link *link)
+static int pump_radio_rx(ninlil_sx1262_radio *physical, ninlil_radio_link *link)
 {
     unsigned int work;
 
@@ -156,8 +152,8 @@ static int pump_radio_rx(ninlil_sx1262_radio *physical,
         uint8_t packet[NINLIL_RADIO_MTU];
         ninlil_sx1262_rx_info info;
         uint16_t length = 0u;
-        int rc = ninlil_sx1262_radio_receive(
-            physical, packet, sizeof(packet), &length, &info, 0u);
+        int rc = ninlil_sx1262_radio_receive(physical, packet, sizeof(packet),
+                                             &length, &info, 0u);
 
         if (rc == NINLIL_ERR_EMPTY)
             return NINLIL_OK;
@@ -174,8 +170,7 @@ static int pump_radio_rx(ninlil_sx1262_radio *physical,
     return NINLIL_OK;
 }
 
-static int pump_radio_tx(ninlil_sx1262_radio *physical,
-                         ninlil_radio_link *link)
+static int pump_radio_tx(ninlil_sx1262_radio *physical, ninlil_radio_link *link)
 {
     const uint8_t *packet;
     size_t length;
@@ -215,8 +210,7 @@ static int validate_hil_inbound(const ninlil_inbound *inbound)
         inbound->payload[3] != (uint8_t)CONFIG_NINLIL_NODE_ID)
         return NINLIL_ERR_INVALID;
     sequence = get_be32(inbound->payload + 4);
-    return sequence >= 1u &&
-                   sequence <= CONFIG_NINLIL_DELIVERY_MESSAGE_COUNT
+    return sequence >= 1u && sequence <= CONFIG_NINLIL_DELIVERY_MESSAGE_COUNT
                ? NINLIL_OK
                : NINLIL_ERR_INVALID;
 }
@@ -436,9 +430,9 @@ static void run_diagnostic(ninlil_sx1262_radio *radio)
 #if defined(CONFIG_NINLIL_DIAGNOSTIC_INITIATOR)
         TickType_t now = xTaskGetTickCount();
 #endif
-        int rc = ninlil_sx1262_radio_receive(
-            radio, packet, sizeof(packet), &length, &info,
-            pdMS_TO_TICKS(LOOP_DELAY_MS));
+        int rc =
+            ninlil_sx1262_radio_receive(radio, packet, sizeof(packet), &length,
+                                        &info, pdMS_TO_TICKS(LOOP_DELAY_MS));
 
         if (rc == NINLIL_OK) {
             ninlil_diag_frame frame;
@@ -499,8 +493,7 @@ static void run_diagnostic(ninlil_sx1262_radio *radio)
         }
         if (!waiting && sent == CONFIG_NINLIL_DIAGNOSTIC_PING_COUNT) {
             uint32_t minimum =
-                ((uint32_t)CONFIG_NINLIL_DIAGNOSTIC_PING_COUNT * 995u +
-                 999u) /
+                ((uint32_t)CONFIG_NINLIL_DIAGNOSTIC_PING_COUNT * 995u + 999u) /
                 1000u;
             bool passed = received >= minimum;
 
@@ -525,8 +518,8 @@ static int initialize_radio_cycles(ninlil_sx1262_radio *radio,
     unsigned int cycle;
 
     for (cycle = 1u; cycle <= CONFIG_NINLIL_RADIO_INIT_CYCLES; cycle++) {
-        int rc = ninlil_sx1262_radio_init(
-            radio, profile, NINLIL_CONFIG_RF_GATE_RX_ACTIVE_HIGH);
+        int rc = ninlil_sx1262_radio_init(radio, profile,
+                                          NINLIL_CONFIG_RF_GATE_RX_ACTIVE_HIGH);
 
         if (rc != NINLIL_OK) {
             ESP_LOGE(TAG, "SX1262 initialization failed cycle=%u rc=%d", cycle,
@@ -558,8 +551,7 @@ void app_main(void)
              "CR=4/%u preamble=%u gate-confirmed=%s",
              profile.region, (unsigned long)profile.frequency_hz,
              profile.tx_enabled ? "enabled" : "disabled",
-             (int)profile.tx_power_dbm,
-             (unsigned int)profile.spreading_factor,
+             (int)profile.tx_power_dbm, (unsigned int)profile.spreading_factor,
              (unsigned long)profile.bandwidth_hz,
              (unsigned int)profile.coding_rate_denominator,
              (unsigned int)profile.preamble_symbols,

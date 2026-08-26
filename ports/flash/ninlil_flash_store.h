@@ -10,16 +10,12 @@
 #define NINLIL_FLASH_ALIGNMENT 16u
 #define NINLIL_FLASH_MAX_PAYLOAD 294u
 
-typedef int (*ninlil_flash_on_record)(void *ctx,
-                                      uint8_t type,
-                                      const uint8_t *payload,
-                                      uint16_t length);
+typedef int (*ninlil_flash_on_record)(void *ctx, uint8_t type,
+                                      const uint8_t *payload, uint16_t length);
 
 typedef struct ninlil_flash_io {
     int (*read)(void *ctx, size_t offset, uint8_t *buffer, size_t length);
-    int (*write)(void *ctx,
-                 size_t offset,
-                 const uint8_t *buffer,
+    int (*write)(void *ctx, size_t offset, const uint8_t *buffer,
                  size_t length);
     int (*erase)(void *ctx, size_t offset, size_t length);
     void *ctx;
@@ -35,12 +31,9 @@ typedef struct ninlil_flash_store {
 
 int ninlil_flash_store_open(ninlil_flash_store *store,
                             const ninlil_flash_io *io,
-                            ninlil_flash_on_record on_record,
-                            void *record_ctx);
-int ninlil_flash_store_append(ninlil_flash_store *store,
-                              uint8_t type,
-                              const uint8_t *payload,
-                              uint16_t length);
+                            ninlil_flash_on_record on_record, void *record_ctx);
+int ninlil_flash_store_append(ninlil_flash_store *store, uint8_t type,
+                              const uint8_t *payload, uint16_t length);
 int ninlil_flash_store_format(const ninlil_flash_io *io);
 size_t ninlil_flash_store_append_offset(const ninlil_flash_store *store);
 

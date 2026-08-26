@@ -84,9 +84,8 @@ static uint32_t crc32_ieee(const uint8_t *data, size_t length)
     for (index = 0u; index < length; index++) {
         crc ^= data[index];
         for (bit = 0u; bit < 8u; bit++) {
-            crc = (crc & 1u) != 0u
-                      ? (crc >> 1) ^ UINT32_C(0xEDB88320)
-                      : crc >> 1;
+            crc =
+                (crc & 1u) != 0u ? (crc >> 1) ^ UINT32_C(0xEDB88320) : crc >> 1;
         }
     }
     return ~crc;
@@ -116,10 +115,8 @@ static int io_valid(const ninlil_security_io *io)
            io->size == NINLIL_SECURITY_PARTITION_SIZE;
 }
 
-static int read_exact(const ninlil_security_io *io,
-                      size_t offset,
-                      uint8_t *buffer,
-                      size_t length)
+static int read_exact(const ninlil_security_io *io, size_t offset,
+                      uint8_t *buffer, size_t length)
 {
     if (offset > io->size || length > io->size - offset)
         return NINLIL_ERR_INVALID;
@@ -127,10 +124,8 @@ static int read_exact(const ninlil_security_io *io,
                                                           : NINLIL_ERR_IO;
 }
 
-static int write_exact(const ninlil_security_io *io,
-                       size_t offset,
-                       const uint8_t *buffer,
-                       size_t length)
+static int write_exact(const ninlil_security_io *io, size_t offset,
+                       const uint8_t *buffer, size_t length)
 {
     if (offset > io->size || length > io->size - offset)
         return NINLIL_ERR_INVALID;
@@ -138,10 +133,8 @@ static int write_exact(const ninlil_security_io *io,
                                                            : NINLIL_ERR_IO;
 }
 
-static int range_erased(const ninlil_security_io *io,
-                        size_t offset,
-                        size_t length,
-                        int *erased)
+static int range_erased(const ninlil_security_io *io, size_t offset,
+                        size_t length, int *erased)
 {
     uint8_t buffer[64];
 
@@ -173,8 +166,7 @@ static slot_state classify_commit(const uint8_t record[SECURITY_RECORD_SIZE],
 
     if (marker == expected && complement == expected_complement)
         return SLOT_VALID;
-    if (marker == SECURITY_ERASED_WORD &&
-        complement == SECURITY_ERASED_WORD)
+    if (marker == SECURITY_ERASED_WORD && complement == SECURITY_ERASED_WORD)
         return SLOT_INCOMPLETE;
     /* A partly programmed marker is indistinguishable from corruption of a
      * previously committed record. Rolling back could reuse a packet counter,
@@ -190,8 +182,7 @@ static int record_crc_valid(const uint8_t record[SECURITY_RECORD_SIZE])
            get_be32(record + SECURITY_CRC_OFFSET + 4u) == ~stored;
 }
 
-static int slot_tail_erased(const ninlil_security_io *io,
-                            unsigned int slot,
+static int slot_tail_erased(const ninlil_security_io *io, unsigned int slot,
                             int *erased)
 {
     size_t base = (size_t)slot * NINLIL_SECURITY_SECTOR_SIZE;
@@ -212,7 +203,7 @@ static uint64_t expected_high_water(uint32_t generation,
         return max_counter_exclusive;
     generation64 *= reservation_size;
     return generation64 > max_counter_exclusive ? max_counter_exclusive
-                                                  : generation64;
+                                                : generation64;
 }
 
 static int counter_config_equal(const ninlil_counter_config *left,
@@ -228,14 +219,12 @@ static int counter_config_equal(const ninlil_counter_config *left,
 static int membership_identity_equal(const ninlil_membership_record *left,
                                      const ninlil_membership_record *right)
 {
-    return memcmp(left->authority_fingerprint,
-                  right->authority_fingerprint,
+    return memcmp(left->authority_fingerprint, right->authority_fingerprint,
                   NINLIL_SECURITY_FINGERPRINT_BYTES) == 0;
 }
 
-static int membership_transition_valid(
-    const ninlil_membership_record *older,
-    const ninlil_membership_record *newer)
+static int membership_transition_valid(const ninlil_membership_record *older,
+                                       const ninlil_membership_record *newer)
 {
     if (!membership_identity_equal(older, newer) ||
         newer->membership_epoch < older->membership_epoch ||
@@ -253,8 +242,7 @@ static int membership_transition_valid(
 }
 
 static slot_state read_counter_slot(const ninlil_security_io *io,
-                                    unsigned int slot,
-                                    counter_record *decoded,
+                                    unsigned int slot, counter_record *decoded,
                                     int *io_error)
 {
     uint8_t record[SECURITY_RECORD_SIZE];
@@ -368,8 +356,7 @@ static slot_state read_membership_slot(const ninlil_security_io *io,
 }
 
 static int choose_counter_record(const ninlil_security_io *io,
-                                 counter_record *record,
-                                 int8_t *slot)
+                                 counter_record *record, int8_t *slot)
 {
     counter_record records[2];
     slot_state states[2];
@@ -378,8 +365,8 @@ static int choose_counter_record(const ninlil_security_io *io,
     unsigned int valid_count = 0u;
 
     for (index = 0u; index < 2u; index++) {
-        states[index] = read_counter_slot(io, index, &records[index],
-                                          &io_error);
+        states[index] =
+            read_counter_slot(io, index, &records[index], &io_error);
         if (io_error != 0)
             return io_error;
         if (states[index] == SLOT_CORRUPT)
@@ -421,8 +408,8 @@ static int choose_membership_record(const ninlil_security_io *io,
     unsigned int valid_count = 0u;
 
     for (index = 0u; index < 2u; index++) {
-        states[index] = read_membership_slot(io, index, &records[index],
-                                             &io_error);
+        states[index] =
+            read_membership_slot(io, index, &records[index], &io_error);
         if (io_error != 0)
             return io_error;
         if (states[index] == SLOT_CORRUPT)
@@ -457,8 +444,7 @@ static int choose_membership_record(const ninlil_security_io *io,
     return NINLIL_OK;
 }
 
-static int commit_record(const ninlil_security_io *io,
-                         int8_t current_slot,
+static int commit_record(const ninlil_security_io *io, int8_t current_slot,
                          const uint8_t record[SECURITY_RECORD_SIZE])
 {
     uint8_t verify[SECURITY_RECORD_SIZE];
@@ -479,8 +465,7 @@ static int commit_record(const ninlil_security_io *io,
     if (rc != NINLIL_OK)
         return rc;
     rc = read_exact(io, base, verify, SECURITY_COMMIT_OFFSET);
-    if (rc != NINLIL_OK ||
-        memcmp(record, verify, SECURITY_COMMIT_OFFSET) != 0)
+    if (rc != NINLIL_OK || memcmp(record, verify, SECURITY_COMMIT_OFFSET) != 0)
         return NINLIL_ERR_IO;
     rc = write_exact(io, base + SECURITY_COMMIT_OFFSET,
                      record + SECURITY_COMMIT_OFFSET,
@@ -495,8 +480,7 @@ static int commit_record(const ninlil_security_io *io,
 
 static void build_counter_record(uint8_t record[SECURITY_RECORD_SIZE],
                                  const ninlil_counter_config *config,
-                                 uint32_t generation,
-                                 uint64_t reserved_until)
+                                 uint32_t generation, uint64_t reserved_until)
 {
     uint32_t checksum;
 
@@ -553,13 +537,10 @@ static int counter_config_valid(const ninlil_counter_config *config)
 
     if (!config || !fingerprint_valid(config->session_fingerprint) ||
         config->direction > NINLIL_DIRECTION_RESPONDER_TO_INITIATOR ||
-        config->reservation_size == 0u ||
-        config->max_counter_exclusive == 0u ||
-        config->max_counter_exclusive >
-            NINLIL_SECURITY_COUNTER_MAX_EXCLUSIVE)
+        config->reservation_size == 0u || config->max_counter_exclusive == 0u ||
+        config->max_counter_exclusive > NINLIL_SECURITY_COUNTER_MAX_EXCLUSIVE)
         return 0;
-    reservations = config->max_counter_exclusive /
-                   config->reservation_size;
+    reservations = config->max_counter_exclusive / config->reservation_size;
     if (config->max_counter_exclusive % config->reservation_size != 0u)
         reservations++;
     return reservations <= UINT32_MAX;
@@ -715,8 +696,7 @@ static int membership_same(const ninlil_membership_record *left,
            left->binding_epoch == right->binding_epoch &&
            left->capabilities == right->capabilities &&
            left->state == right->state &&
-           memcmp(left->authority_fingerprint,
-                  right->authority_fingerprint,
+           memcmp(left->authority_fingerprint, right->authority_fingerprint,
                   NINLIL_SECURITY_FINGERPRINT_BYTES) == 0;
 }
 

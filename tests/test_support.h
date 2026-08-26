@@ -37,12 +37,9 @@ void test_link_duplicate_next(test_link *link, uint8_t side, uint8_t count);
 int test_rng_fill(void *ctx, uint8_t *buffer, size_t length);
 void test_fill_id(ninlil_id *id, uint8_t value);
 int test_make_directory(char *directory, size_t capacity);
-int test_make_path(char *path,
-                   size_t capacity,
-                   const char *directory,
+int test_make_path(char *path, size_t capacity, const char *directory,
                    const char *name);
-void test_remove_directory(const char *directory,
-                           const char *first,
+void test_remove_directory(const char *directory, const char *first,
                            const char *second);
 
 #endif

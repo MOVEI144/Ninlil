@@ -4,9 +4,7 @@
 
 #include <string.h>
 
-static int partition_read(void *ctx,
-                          size_t offset,
-                          uint8_t *buffer,
+static int partition_read(void *ctx, size_t offset, uint8_t *buffer,
                           size_t length)
 {
     ninlil_esp_security_partition *context = ctx;
@@ -17,9 +15,7 @@ static int partition_read(void *ctx,
                : -1;
 }
 
-static int partition_write(void *ctx,
-                           size_t offset,
-                           const uint8_t *buffer,
+static int partition_write(void *ctx, size_t offset, const uint8_t *buffer,
                            size_t length)
 {
     ninlil_esp_security_partition *context = ctx;
@@ -41,8 +37,7 @@ static int partition_erase(void *ctx, size_t offset, size_t length)
 }
 
 static int open_partition(ninlil_esp_security_partition *context,
-                          ninlil_security_io *io,
-                          const char *label,
+                          ninlil_security_io *io, const char *label,
                           esp_partition_subtype_t subtype)
 {
     const esp_partition_t *partition;
@@ -51,8 +46,8 @@ static int open_partition(ninlil_esp_security_partition *context,
         return NINLIL_ERR_INVALID;
     memset(context, 0, sizeof(*context));
     memset(io, 0, sizeof(*io));
-    partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA, subtype,
-                                         label);
+    partition =
+        esp_partition_find_first(ESP_PARTITION_TYPE_DATA, subtype, label);
     if (!partition || partition->size != NINLIL_SECURITY_PARTITION_SIZE)
         return NINLIL_ERR_NOT_FOUND;
     context->partition = partition;

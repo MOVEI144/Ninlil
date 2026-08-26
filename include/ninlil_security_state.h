@@ -22,9 +22,7 @@
  */
 typedef struct ninlil_security_io {
     int (*read)(void *ctx, size_t offset, uint8_t *buffer, size_t length);
-    int (*write)(void *ctx,
-                 size_t offset,
-                 const uint8_t *buffer,
+    int (*write)(void *ctx, size_t offset, const uint8_t *buffer,
                  size_t length);
     int (*erase)(void *ctx, size_t offset, size_t length);
     void *ctx;

@@ -9,13 +9,13 @@
 #define TEST_FLASH_HEADER_SIZE 32u
 #define TEST_FLASH_COMMIT_OFFSET 24u
 
-#define CHECK(expression)                                                     \
-    do {                                                                      \
-        if (!(expression)) {                                                  \
-            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__, \
-                    #expression);                                             \
-            return 1;                                                         \
-        }                                                                     \
+#define CHECK(expression)                                                      \
+    do {                                                                       \
+        if (!(expression)) {                                                   \
+            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__,    \
+                    #expression);                                              \
+            return 1;                                                          \
+        }                                                                      \
     } while (0)
 
 typedef struct memory_flash {
@@ -44,10 +44,7 @@ static void memory_flash_init(memory_flash *flash)
     memset(flash->bytes, UINT8_C(0xFF), sizeof(flash->bytes));
 }
 
-static int memory_read(void *ctx,
-                       size_t offset,
-                       uint8_t *buffer,
-                       size_t length)
+static int memory_read(void *ctx, size_t offset, uint8_t *buffer, size_t length)
 {
     memory_flash *flash = ctx;
 
@@ -62,10 +59,8 @@ static int memory_read(void *ctx,
     return 0;
 }
 
-static int program_bytes(memory_flash *flash,
-                         size_t offset,
-                         const uint8_t *buffer,
-                         size_t length)
+static int program_bytes(memory_flash *flash, size_t offset,
+                         const uint8_t *buffer, size_t length)
 {
     size_t index;
 
@@ -80,22 +75,18 @@ static int program_bytes(memory_flash *flash,
     return 0;
 }
 
-static int memory_write(void *ctx,
-                        size_t offset,
-                        const uint8_t *buffer,
+static int memory_write(void *ctx, size_t offset, const uint8_t *buffer,
                         size_t length)
 {
     memory_flash *flash = ctx;
 
     flash->write_calls++;
     if (flash->fail_write_call == flash->write_calls) {
-        size_t written = flash->write_all_then_fail
-                             ? length
-                             : flash->partial_write_bytes;
+        size_t written =
+            flash->write_all_then_fail ? length : flash->partial_write_bytes;
         if (written > length)
             written = length;
-        if (written > 0u &&
-            program_bytes(flash, offset, buffer, written) != 0)
+        if (written > 0u && program_bytes(flash, offset, buffer, written) != 0)
             return -1;
         return -1;
     }
@@ -128,9 +119,7 @@ static ninlil_flash_io memory_io(memory_flash *flash, size_t size)
     return io;
 }
 
-static int capture_record(void *ctx,
-                          uint8_t type,
-                          const uint8_t *payload,
+static int capture_record(void *ctx, uint8_t type, const uint8_t *payload,
                           uint16_t length)
 {
     capture *records = ctx;
@@ -157,10 +146,10 @@ static int test_append_replay(void)
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"one", 3u) == NINLIL_OK);
-    CHECK(ninlil_flash_store_append(&store, 3u,
-                                    (const uint8_t *)"two", 3u) == NINLIL_OK);
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"one", 3u) ==
+          NINLIL_OK);
+    CHECK(ninlil_flash_store_append(&store, 3u, (const uint8_t *)"two", 3u) ==
+          NINLIL_OK);
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
@@ -185,22 +174,20 @@ static int test_torn_record_abandons_sector(void)
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"good", 4u) == NINLIL_OK);
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"good", 4u) ==
+          NINLIL_OK);
     flash.fail_write_call = flash.write_calls + 2u;
     flash.partial_write_bytes = 12u;
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"torn", 4u) ==
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"torn", 4u) ==
           NINLIL_ERR_IO);
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
     CHECK(records.count == 1u);
-    CHECK(ninlil_flash_store_append_offset(&store) ==
-          NINLIL_FLASH_SECTOR_SIZE);
+    CHECK(ninlil_flash_store_append_offset(&store) == NINLIL_FLASH_SECTOR_SIZE);
     flash.fail_write_call = 0u;
-    CHECK(ninlil_flash_store_append(&store, 2u,
-                                    (const uint8_t *)"next", 4u) == NINLIL_OK);
+    CHECK(ninlil_flash_store_append(&store, 2u, (const uint8_t *)"next", 4u) ==
+          NINLIL_OK);
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
@@ -223,9 +210,8 @@ static int test_commit_completed_but_error_is_recoverable(void)
           NINLIL_OK);
     flash.fail_write_call = flash.write_calls + 3u;
     flash.write_all_then_fail = 1u;
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"ambiguous", 9u) ==
-          NINLIL_ERR_IO);
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"ambiguous",
+                                    9u) == NINLIL_ERR_IO);
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
@@ -247,8 +233,8 @@ static int test_committed_corruption_is_hard_failure(void)
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"crc", 3u) == NINLIL_OK);
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"crc", 3u) ==
+          NINLIL_OK);
     flash.bytes[TEST_FLASH_HEADER_SIZE] ^= UINT8_C(0x01);
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
@@ -272,13 +258,12 @@ static int test_sector_boundary_and_capacity(void)
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
     for (index = 0u; index < 11u; index++) {
-        CHECK(ninlil_flash_store_append(&store, 1u, payload,
-                                        sizeof(payload)) == NINLIL_OK);
+        CHECK(ninlil_flash_store_append(&store, 1u, payload, sizeof(payload)) ==
+              NINLIL_OK);
     }
     CHECK(ninlil_flash_store_append(&store, 1u, payload, sizeof(payload)) ==
           NINLIL_ERR_CAPACITY);
-    CHECK(ninlil_flash_store_append_offset(&store) ==
-          NINLIL_FLASH_SECTOR_SIZE);
+    CHECK(ninlil_flash_store_append_offset(&store) == NINLIL_FLASH_SECTOR_SIZE);
     return 0;
 }
 
@@ -296,15 +281,12 @@ static int test_readback_failure_poisons(void)
           NINLIL_OK);
     flash.corrupt_read_call = flash.read_calls + 1u;
     flash.corrupt_read_index = 0u;
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"verify", 6u) ==
-          NINLIL_ERR_IO);
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"again", 5u) ==
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"verify",
+                                    6u) == NINLIL_ERR_IO);
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"again", 5u) ==
           NINLIL_ERR_IO);
     return 0;
 }
-
 
 static int test_partial_write_cut_points(void)
 {
@@ -328,8 +310,8 @@ static int test_partial_write_cut_points(void)
               NINLIL_OK);
         flash.fail_write_call = flash.write_calls + 1u;
         flash.partial_write_bytes = header_cuts[index];
-        CHECK(ninlil_flash_store_append(&store, 1u, payload,
-                                        sizeof(payload)) == NINLIL_ERR_IO);
+        CHECK(ninlil_flash_store_append(&store, 1u, payload, sizeof(payload)) ==
+              NINLIL_ERR_IO);
         flash.fail_write_call = 0u;
         memset(&records, 0, sizeof(records));
         CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
@@ -354,8 +336,8 @@ static int test_partial_write_cut_points(void)
               NINLIL_OK);
         flash.fail_write_call = flash.write_calls + 2u;
         flash.partial_write_bytes = body_cuts[index];
-        CHECK(ninlil_flash_store_append(&store, 1u, payload,
-                                        sizeof(payload)) == NINLIL_ERR_IO);
+        CHECK(ninlil_flash_store_append(&store, 1u, payload, sizeof(payload)) ==
+              NINLIL_ERR_IO);
         flash.fail_write_call = 0u;
         memset(&records, 0, sizeof(records));
         CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
@@ -384,9 +366,8 @@ static int test_partial_commit_is_not_accepted(void)
               NINLIL_OK);
         flash.fail_write_call = flash.write_calls + 3u;
         flash.partial_write_bytes = bytes;
-        CHECK(ninlil_flash_store_append(&store, 1u,
-                                        (const uint8_t *)"commit", 6u) ==
-              NINLIL_ERR_IO);
+        CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"commit",
+                                        6u) == NINLIL_ERR_IO);
         flash.fail_write_call = 0u;
         memset(&records, 0, sizeof(records));
         CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
@@ -410,9 +391,8 @@ static int test_committed_header_corruption_is_hard_failure(void)
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"header", 6u) ==
-          NINLIL_OK);
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"header",
+                                    6u) == NINLIL_OK);
     flash.bytes[0] ^= UINT8_C(0x01);
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
@@ -432,9 +412,8 @@ static int test_committed_marker_corruption_is_hard_failure(void)
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"marker", 6u) ==
-          NINLIL_OK);
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"marker",
+                                    6u) == NINLIL_OK);
     /* Clear a bit that must remain one in the committed marker. */
     flash.bytes[TEST_FLASH_COMMIT_OFFSET] &= UINT8_C(0xBF);
     memset(&records, 0, sizeof(records));
@@ -455,12 +434,11 @@ static int test_erased_sector_gap_is_corrupt(void)
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
-    CHECK(ninlil_flash_store_append(&store, 1u,
-                                    (const uint8_t *)"first", 5u) ==
+    CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"first", 5u) ==
           NINLIL_OK);
     store.append_offset = 2u * NINLIL_FLASH_SECTOR_SIZE;
-    CHECK(ninlil_flash_store_append(&store, 2u,
-                                    (const uint8_t *)"gap", 3u) == NINLIL_OK);
+    CHECK(ninlil_flash_store_append(&store, 2u, (const uint8_t *)"gap", 3u) ==
+          NINLIL_OK);
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_ERR_CORRUPT);

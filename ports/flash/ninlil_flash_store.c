@@ -52,9 +52,8 @@ static uint32_t crc32_ieee(const uint8_t *data, size_t length)
     for (index = 0u; index < length; index++) {
         crc ^= data[index];
         for (bit = 0u; bit < 8u; bit++) {
-            crc = (crc & 1u) != 0u
-                      ? (crc >> 1) ^ UINT32_C(0xEDB88320)
-                      : crc >> 1;
+            crc =
+                (crc & 1u) != 0u ? (crc >> 1) ^ UINT32_C(0xEDB88320) : crc >> 1;
         }
     }
     return ~crc;
@@ -102,9 +101,7 @@ static int io_valid(const ninlil_flash_io *io)
            io->size % NINLIL_FLASH_SECTOR_SIZE == 0u;
 }
 
-static int read_exact(const ninlil_flash_io *io,
-                      size_t offset,
-                      uint8_t *buffer,
+static int read_exact(const ninlil_flash_io *io, size_t offset, uint8_t *buffer,
                       size_t length)
 {
     if (offset > io->size || length > io->size - offset)
@@ -113,10 +110,8 @@ static int read_exact(const ninlil_flash_io *io,
                                                           : NINLIL_ERR_IO;
 }
 
-static int write_exact(const ninlil_flash_io *io,
-                       size_t offset,
-                       const uint8_t *buffer,
-                       size_t length)
+static int write_exact(const ninlil_flash_io *io, size_t offset,
+                       const uint8_t *buffer, size_t length)
 {
     if (offset > io->size || length > io->size - offset)
         return NINLIL_ERR_INVALID;
@@ -138,33 +133,28 @@ static commit_state classify_commit(const uint8_t *header)
 
     if (marker == FLASH_COMMIT && complement == expected_complement)
         return COMMIT_STATE_COMMITTED;
-    if ((marker == FLASH_ERASED_WORD &&
-         complement == FLASH_ERASED_WORD) ||
+    if ((marker == FLASH_ERASED_WORD && complement == FLASH_ERASED_WORD) ||
         (can_be_partial_program(marker, FLASH_COMMIT) &&
          can_be_partial_program(complement, expected_complement)))
         return COMMIT_STATE_INCOMPLETE;
     return COMMIT_STATE_CORRUPT;
 }
 
-static int header_parse(const uint8_t *header,
-                        uint8_t *type,
-                        uint16_t *payload_length,
-                        uint16_t *total_length,
+static int header_parse(const uint8_t *header, uint8_t *type,
+                        uint16_t *payload_length, uint16_t *total_length,
                         uint32_t *sequence)
 {
     uint16_t stored_payload_length;
     uint16_t stored_total_length;
     uint32_t stored_header_crc;
 
-    if (classify_commit(header) != COMMIT_STATE_COMMITTED ||
-        header[0] != 'N' || header[1] != 'J' || header[2] != 'F' ||
-        header[3] != '2' || header[4] != FLASH_VERSION || header[5] < 1u ||
-        header[5] > 4u)
+    if (classify_commit(header) != COMMIT_STATE_COMMITTED || header[0] != 'N' ||
+        header[1] != 'J' || header[2] != 'F' || header[3] != '2' ||
+        header[4] != FLASH_VERSION || header[5] < 1u || header[5] > 4u)
         return 0;
     stored_header_crc = get_be32(header + FLASH_HEADER_CRC_OFFSET);
     if (stored_header_crc != crc32_ieee(header, 16u) ||
-        get_be32(header + FLASH_HEADER_CRC_OFFSET + 4u) !=
-            ~stored_header_crc)
+        get_be32(header + FLASH_HEADER_CRC_OFFSET + 4u) != ~stored_header_crc)
         return 0;
     stored_payload_length = get_be16(header + 6);
     if (get_be16(header + 8) != (uint16_t)~stored_payload_length ||
@@ -184,8 +174,7 @@ static int header_parse(const uint8_t *header,
 
 static int validate_committed_record(const uint8_t *record,
                                      uint16_t payload_length,
-                                     uint16_t total_length,
-                                     uint32_t sequence)
+                                     uint16_t total_length, uint32_t sequence)
 {
     size_t payload_area = align_up(payload_length, NINLIL_FLASH_ALIGNMENT);
     const uint8_t *trailer = record + FLASH_HEADER_SIZE + payload_area;
@@ -209,8 +198,7 @@ static int validate_committed_record(const uint8_t *record,
 
 int ninlil_flash_store_open(ninlil_flash_store *store,
                             const ninlil_flash_io *io,
-                            ninlil_flash_on_record on_record,
-                            void *record_ctx)
+                            ninlil_flash_on_record on_record, void *record_ctx)
 {
     size_t sector_base;
     size_t highest_active_sector = 0u;
@@ -295,18 +283,15 @@ int ninlil_flash_store_open(ninlil_flash_store *store,
         highest_end < highest_active_sector + NINLIL_FLASH_SECTOR_SIZE) {
         store->append_offset = highest_end;
     } else {
-        store->append_offset =
-            highest_active_sector + NINLIL_FLASH_SECTOR_SIZE;
+        store->append_offset = highest_active_sector + NINLIL_FLASH_SECTOR_SIZE;
     }
     if (store->append_offset > io->size)
         return NINLIL_ERR_CORRUPT;
     return NINLIL_OK;
 }
 
-int ninlil_flash_store_append(ninlil_flash_store *store,
-                              uint8_t type,
-                              const uint8_t *payload,
-                              uint16_t length)
+int ninlil_flash_store_append(ninlil_flash_store *store, uint8_t type,
+                              const uint8_t *payload, uint16_t length)
 {
     uint8_t record[FLASH_MAX_RECORD_SIZE];
     uint8_t verify[FLASH_MAX_RECORD_SIZE];
@@ -322,11 +307,10 @@ int ninlil_flash_store_append(ninlil_flash_store *store,
     if (!store || !io_valid(&store->io) || store->poisoned || type < 1u ||
         type > 4u || length > NINLIL_FLASH_MAX_PAYLOAD ||
         (length > 0u && !payload))
-        return store && store->poisoned ? NINLIL_ERR_IO
-                                        : NINLIL_ERR_INVALID;
+        return store && store->poisoned ? NINLIL_ERR_IO : NINLIL_ERR_INVALID;
     total_length = record_size(length);
-    sector_base = store->append_offset -
-                  store->append_offset % NINLIL_FLASH_SECTOR_SIZE;
+    sector_base =
+        store->append_offset - store->append_offset % NINLIL_FLASH_SECTOR_SIZE;
     if (store->append_offset + total_length >
         sector_base + NINLIL_FLASH_SECTOR_SIZE) {
         store->append_offset = sector_base + NINLIL_FLASH_SECTOR_SIZE;
@@ -363,8 +347,7 @@ int ninlil_flash_store_append(ninlil_flash_store *store,
                      FLASH_COMMIT_OFFSET);
     if (rc != NINLIL_OK)
         goto poison;
-    rc = write_exact(&store->io,
-                     store->append_offset + FLASH_HEADER_SIZE,
+    rc = write_exact(&store->io, store->append_offset + FLASH_HEADER_SIZE,
                      record + FLASH_HEADER_SIZE,
                      total_length - FLASH_HEADER_SIZE);
     if (rc != NINLIL_OK)
@@ -376,13 +359,12 @@ int ninlil_flash_store_append(ninlil_flash_store *store,
     }
     put_be32(record + FLASH_COMMIT_OFFSET, FLASH_COMMIT);
     put_be32(record + FLASH_COMMIT_OFFSET + 4u, ~FLASH_COMMIT);
-    rc = write_exact(&store->io,
-                     store->append_offset + FLASH_COMMIT_OFFSET,
+    rc = write_exact(&store->io, store->append_offset + FLASH_COMMIT_OFFSET,
                      record + FLASH_COMMIT_OFFSET, 8u);
     if (rc != NINLIL_OK)
         goto poison;
-    rc = read_exact(&store->io,
-                    store->append_offset + FLASH_COMMIT_OFFSET, verify, 8u);
+    rc = read_exact(&store->io, store->append_offset + FLASH_COMMIT_OFFSET,
+                    verify, 8u);
     if (rc != NINLIL_OK ||
         memcmp(record + FLASH_COMMIT_OFFSET, verify, 8u) != 0) {
         rc = NINLIL_ERR_IO;
@@ -402,8 +384,7 @@ int ninlil_flash_store_format(const ninlil_flash_io *io)
 {
     if (!io_valid(io))
         return NINLIL_ERR_INVALID;
-    return io->erase(io->ctx, 0u, io->size) == 0 ? NINLIL_OK
-                                                 : NINLIL_ERR_IO;
+    return io->erase(io->ctx, 0u, io->size) == 0 ? NINLIL_OK : NINLIL_ERR_IO;
 }
 
 size_t ninlil_flash_store_append_offset(const ninlil_flash_store *store)

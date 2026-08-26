@@ -1,5 +1,5 @@
-#include "ninlil_sx1262_hal.h"
 #include "ninlil_board_seeed_b2b.h"
+#include "ninlil_sx1262_hal.h"
 
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
@@ -11,13 +11,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#define CHECK(expression)                                                     \
-    do {                                                                      \
-        if (!(expression)) {                                                  \
-            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__, \
-                    #expression);                                             \
-            return 1;                                                         \
-        }                                                                     \
+#define CHECK(expression)                                                      \
+    do {                                                                       \
+        if (!(expression)) {                                                   \
+            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__,    \
+                    #expression);                                              \
+            return 1;                                                          \
+        }                                                                      \
     } while (0)
 
 static int fake_spi_token;
@@ -75,7 +75,8 @@ esp_err_t gpio_set_level(gpio_num_t gpio, int level)
     fake_gpio_set_calls++;
     if (fake_gpio_set_fail_call == fake_gpio_set_calls)
         return ESP_FAIL;
-    if (gpio >= 0 && (size_t)gpio < sizeof(fake_levels) / sizeof(fake_levels[0]))
+    if (gpio >= 0 &&
+        (size_t)gpio < sizeof(fake_levels) / sizeof(fake_levels[0]))
         fake_levels[gpio] = level;
     return ESP_OK;
 }
@@ -84,7 +85,8 @@ int gpio_get_level(gpio_num_t gpio)
 {
     if (gpio == NINLIL_SX1262_PIN_BUSY)
         return fake_busy_level;
-    if (gpio >= 0 && (size_t)gpio < sizeof(fake_levels) / sizeof(fake_levels[0]))
+    if (gpio >= 0 &&
+        (size_t)gpio < sizeof(fake_levels) / sizeof(fake_levels[0]))
         return fake_levels[gpio];
     return 0;
 }
@@ -182,8 +184,7 @@ esp_err_t spi_device_polling_transmit(spi_device_handle_t device,
     }
     fake_transmit_calls++;
     if (fake_transmit_result == ESP_OK && transaction->rx_buffer) {
-        memset(transaction->rx_buffer, UINT8_C(0xA5),
-               transaction->length / 8u);
+        memset(transaction->rx_buffer, UINT8_C(0xA5), transaction->length / 8u);
     }
     return fake_transmit_result;
 }

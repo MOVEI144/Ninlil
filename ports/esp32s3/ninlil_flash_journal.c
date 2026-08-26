@@ -19,20 +19,17 @@ struct ninlil_journal {
     ninlil_flash_store store;
 };
 
-static int partition_read(void *ctx,
-                          size_t offset,
-                          uint8_t *buffer,
+static int partition_read(void *ctx, size_t offset, uint8_t *buffer,
                           size_t length)
 {
     struct esp_flash_context *flash = ctx;
-    return esp_partition_read(flash->partition, offset, buffer, length) == ESP_OK
+    return esp_partition_read(flash->partition, offset, buffer, length) ==
+                   ESP_OK
                ? 0
                : -1;
 }
 
-static int partition_write(void *ctx,
-                           size_t offset,
-                           const uint8_t *buffer,
+static int partition_write(void *ctx, size_t offset, const uint8_t *buffer,
                            size_t length)
 {
     struct esp_flash_context *flash = ctx;
@@ -50,10 +47,8 @@ static int partition_erase(void *ctx, size_t offset, size_t length)
                : -1;
 }
 
-int ninlil_journal_open(ninlil_journal **out,
-                        const char *location,
-                        ninlil_journal_on_record on_record,
-                        void *ctx)
+int ninlil_journal_open(ninlil_journal **out, const char *location,
+                        ninlil_journal_on_record on_record, void *ctx)
 {
     const esp_partition_t *partition;
     ninlil_journal *journal;
@@ -88,10 +83,8 @@ int ninlil_journal_open(ninlil_journal **out,
     return NINLIL_OK;
 }
 
-int ninlil_journal_append(ninlil_journal *journal,
-                          uint8_t type,
-                          const uint8_t *payload,
-                          uint16_t length)
+int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
+                          const uint8_t *payload, uint16_t length)
 {
     if (!journal)
         return NINLIL_ERR_INVALID;

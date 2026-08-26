@@ -60,19 +60,16 @@ void ninlil_radio_link_init(ninlil_radio_link *radio);
 void ninlil_radio_link_bind(ninlil_radio_link *radio, ninlil_link *link);
 int ninlil_radio_begin_reset(ninlil_radio_link *radio);
 int ninlil_radio_mark_initialized(ninlil_radio_link *radio);
-int ninlil_radio_begin_tx(ninlil_radio_link *radio,
-                          const uint8_t **packet,
+int ninlil_radio_begin_tx(ninlil_radio_link *radio, const uint8_t **packet,
                           size_t *length);
 int ninlil_radio_tx_done(ninlil_radio_link *radio);
 int ninlil_radio_tx_defer(ninlil_radio_link *radio);
 int ninlil_radio_tx_timeout(ninlil_radio_link *radio, uint64_t now_ms);
 int ninlil_radio_busy_timeout(ninlil_radio_link *radio, uint64_t now_ms);
 int ninlil_radio_io_failure(ninlil_radio_link *radio, uint64_t now_ms);
-int ninlil_radio_recovery_result(ninlil_radio_link *radio,
-                                 uint64_t now_ms,
+int ninlil_radio_recovery_result(ninlil_radio_link *radio, uint64_t now_ms,
                                  int success);
-int ninlil_radio_push_rx(ninlil_radio_link *radio,
-                         const uint8_t *packet,
+int ninlil_radio_push_rx(ninlil_radio_link *radio, const uint8_t *packet,
                          size_t length);
 void ninlil_radio_note_crc_error(ninlil_radio_link *radio);
 void ninlil_radio_note_header_error(ninlil_radio_link *radio);

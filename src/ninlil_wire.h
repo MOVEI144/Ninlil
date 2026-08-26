@@ -27,24 +27,18 @@ typedef struct ninlil_wire_receipt_view {
 } ninlil_wire_receipt_view;
 
 size_t ninlil_wire_data_size(uint16_t payload_length);
-int ninlil_wire_packet_type(const uint8_t *packet, size_t length, uint8_t *type);
-size_t ninlil_wire_encode_data(uint8_t *packet,
-                               uint16_t source,
-                               uint16_t target,
-                               uint16_t service,
+int ninlil_wire_packet_type(const uint8_t *packet, size_t length,
+                            uint8_t *type);
+size_t ninlil_wire_encode_data(uint8_t *packet, uint16_t source,
+                               uint16_t target, uint16_t service,
                                const ninlil_id *message_id,
-                               const uint8_t *payload,
-                               uint16_t payload_length);
-int ninlil_wire_decode_data(const uint8_t *packet,
-                            size_t length,
+                               const uint8_t *payload, uint16_t payload_length);
+int ninlil_wire_decode_data(const uint8_t *packet, size_t length,
                             ninlil_wire_data_view *view);
-size_t ninlil_wire_encode_receipt(uint8_t *packet,
-                                  uint16_t source,
-                                  uint16_t target,
-                                  const ninlil_id *message_id,
+size_t ninlil_wire_encode_receipt(uint8_t *packet, uint16_t source,
+                                  uint16_t target, const ninlil_id *message_id,
                                   ninlil_progress progress);
-int ninlil_wire_decode_receipt(const uint8_t *packet,
-                               size_t length,
+int ninlil_wire_decode_receipt(const uint8_t *packet, size_t length,
                                ninlil_wire_receipt_view *view);
 
 #endif

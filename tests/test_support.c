@@ -7,9 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static int enqueue(test_endpoint *endpoint,
-                   const uint8_t *data,
-                   size_t length)
+static int enqueue(test_endpoint *endpoint, const uint8_t *data, size_t length)
 {
     if (length > TEST_PACKET_MAX)
         return NINLIL_ERR_TOO_LARGE;
@@ -44,9 +42,7 @@ static int test_send(void *ctx, const uint8_t *data, size_t length)
     return NINLIL_OK;
 }
 
-static int test_recv(void *ctx,
-                     uint8_t *buffer,
-                     size_t capacity,
+static int test_recv(void *ctx, uint8_t *buffer, size_t capacity,
                      size_t *length)
 {
     test_binding *binding = ctx;
@@ -123,17 +119,14 @@ int test_make_directory(char *directory, size_t capacity)
     return mkdtemp(directory) ? 0 : -1;
 }
 
-int test_make_path(char *path,
-                   size_t capacity,
-                   const char *directory,
+int test_make_path(char *path, size_t capacity, const char *directory,
                    const char *name)
 {
     int result = snprintf(path, capacity, "%s/%s", directory, name);
     return result >= 0 && (size_t)result < capacity ? 0 : -1;
 }
 
-void test_remove_directory(const char *directory,
-                           const char *first,
+void test_remove_directory(const char *directory, const char *first,
                            const char *second)
 {
     if (first)

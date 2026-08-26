@@ -42,9 +42,7 @@ static int pread_full(int fd, size_t offset, uint8_t *buffer, size_t length)
     return 0;
 }
 
-static int pwrite_full(int fd,
-                       size_t offset,
-                       const uint8_t *buffer,
+static int pwrite_full(int fd, size_t offset, const uint8_t *buffer,
                        size_t length)
 {
     size_t written = 0u;
@@ -64,18 +62,13 @@ static int pwrite_full(int fd,
     return 0;
 }
 
-static int file_read(void *ctx,
-                     size_t offset,
-                     uint8_t *buffer,
-                     size_t length)
+static int file_read(void *ctx, size_t offset, uint8_t *buffer, size_t length)
 {
     struct file_flash_context *file = ctx;
     return pread_full(file->fd, offset, buffer, length);
 }
 
-static int file_write(void *ctx,
-                      size_t offset,
-                      const uint8_t *buffer,
+static int file_write(void *ctx, size_t offset, const uint8_t *buffer,
                       size_t length)
 {
     struct file_flash_context *file = ctx;
@@ -134,10 +127,8 @@ static int initialize_file(int fd)
     return file_erase(&context, 0u, FILE_FLASH_SIZE);
 }
 
-int ninlil_journal_open(ninlil_journal **out,
-                        const char *location,
-                        ninlil_journal_on_record on_record,
-                        void *ctx)
+int ninlil_journal_open(ninlil_journal **out, const char *location,
+                        ninlil_journal_on_record on_record, void *ctx)
 {
     ninlil_journal *journal;
     ninlil_flash_io io;
@@ -151,8 +142,7 @@ int ninlil_journal_open(ninlil_journal **out,
     *out = NULL;
     fd = open(location, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     if (fd < 0 && errno == ENOENT) {
-        fd = open(location,
-                  O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
+        fd = open(location, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
                   0600);
         if (fd >= 0)
             created = 1;
@@ -195,10 +185,8 @@ int ninlil_journal_open(ninlil_journal **out,
     return NINLIL_OK;
 }
 
-int ninlil_journal_append(ninlil_journal *journal,
-                          uint8_t type,
-                          const uint8_t *payload,
-                          uint16_t length)
+int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
+                          const uint8_t *payload, uint16_t length)
 {
     if (!journal)
         return NINLIL_ERR_INVALID;

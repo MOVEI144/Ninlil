@@ -64,19 +64,21 @@ sx126x_status_t sx126x_set_standby(const void *context, int config);
 sx126x_status_t sx126x_set_reg_mode(const void *context, int mode);
 sx126x_status_t sx126x_set_dio2_as_rf_sw_ctrl(const void *context, bool enable);
 sx126x_status_t sx126x_set_dio3_as_tcxo_ctrl(const void *context, int voltage,
-                                              uint32_t timeout);
+                                             uint32_t timeout);
 sx126x_status_t sx126x_cal(const void *context, uint8_t mask);
 sx126x_status_t sx126x_cal_img_in_mhz(const void *context, uint16_t low_mhz,
                                       uint16_t high_mhz);
 sx126x_status_t sx126x_set_rx_tx_fallback_mode(const void *context, int mode);
 sx126x_status_t sx126x_set_pkt_type(const void *context, int type);
 sx126x_status_t sx126x_set_rf_freq(const void *context, uint32_t frequency);
-sx126x_status_t sx126x_set_lora_mod_params(
-    const void *context, const sx126x_mod_params_lora_t *params);
-sx126x_status_t sx126x_set_lora_pkt_params(
-    const void *context, const sx126x_pkt_params_lora_t *params);
-sx126x_status_t sx126x_set_buffer_base_address(const void *context,
-                                               uint8_t tx, uint8_t rx);
+sx126x_status_t
+sx126x_set_lora_mod_params(const void *context,
+                           const sx126x_mod_params_lora_t *params);
+sx126x_status_t
+sx126x_set_lora_pkt_params(const void *context,
+                           const sx126x_pkt_params_lora_t *params);
+sx126x_status_t sx126x_set_buffer_base_address(const void *context, uint8_t tx,
+                                               uint8_t rx);
 sx126x_status_t sx126x_set_dio_irq_params(const void *context, uint16_t mask,
                                           uint16_t dio1, uint16_t dio2,
                                           uint16_t dio3);
@@ -97,13 +99,13 @@ sx126x_status_t sx126x_get_irq_status(const void *context,
                                       sx126x_irq_mask_t *mask);
 sx126x_status_t sx126x_get_and_clear_irq_status(const void *context,
                                                 sx126x_irq_mask_t *mask);
-sx126x_status_t sx126x_get_rx_buffer_status(
-    const void *context, sx126x_rx_buffer_status_t *status);
+sx126x_status_t sx126x_get_rx_buffer_status(const void *context,
+                                            sx126x_rx_buffer_status_t *status);
 sx126x_status_t sx126x_read_buffer(const void *context, uint8_t offset,
                                    uint8_t *data, uint8_t length);
-sx126x_status_t sx126x_get_lora_pkt_status(
-    const void *context, sx126x_pkt_status_lora_t *status);
-uint32_t sx126x_get_lora_time_on_air_in_ms(
-    const sx126x_pkt_params_lora_t *packet,
-    const sx126x_mod_params_lora_t *modulation);
+sx126x_status_t sx126x_get_lora_pkt_status(const void *context,
+                                           sx126x_pkt_status_lora_t *status);
+uint32_t
+sx126x_get_lora_time_on_air_in_ms(const sx126x_pkt_params_lora_t *packet,
+                                  const sx126x_mod_params_lora_t *modulation);
 #endif

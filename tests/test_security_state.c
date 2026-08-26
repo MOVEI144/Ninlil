@@ -6,16 +6,15 @@
 #define TEST_RECORD_SIZE 64u
 #define TEST_CRC_OFFSET 48u
 #define TEST_COMMIT_OFFSET 56u
-#define TEST_SECTOR_SCAN_READS \
-    (NINLIL_SECURITY_SECTOR_SIZE / TEST_RECORD_SIZE)
+#define TEST_SECTOR_SCAN_READS (NINLIL_SECURITY_SECTOR_SIZE / TEST_RECORD_SIZE)
 
-#define CHECK(expression)                                                     \
-    do {                                                                      \
-        if (!(expression)) {                                                  \
-            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__, \
-                    #expression);                                             \
-            return 1;                                                         \
-        }                                                                     \
+#define CHECK(expression)                                                      \
+    do {                                                                       \
+        if (!(expression)) {                                                   \
+            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__,    \
+                    #expression);                                              \
+            return 1;                                                          \
+        }                                                                      \
     } while (0)
 
 typedef struct memory_flash {
@@ -38,10 +37,7 @@ static void memory_flash_init(memory_flash *flash)
     memset(flash->bytes, UINT8_C(0xFF), sizeof(flash->bytes));
 }
 
-static int memory_read(void *ctx,
-                       size_t offset,
-                       uint8_t *buffer,
-                       size_t length)
+static int memory_read(void *ctx, size_t offset, uint8_t *buffer, size_t length)
 {
     memory_flash *flash = ctx;
 
@@ -53,10 +49,8 @@ static int memory_read(void *ctx,
     return 0;
 }
 
-static int program_bytes(memory_flash *flash,
-                         size_t offset,
-                         const uint8_t *buffer,
-                         size_t length)
+static int program_bytes(memory_flash *flash, size_t offset,
+                         const uint8_t *buffer, size_t length)
 {
     size_t index;
 
@@ -71,23 +65,19 @@ static int program_bytes(memory_flash *flash,
     return 0;
 }
 
-static int memory_write(void *ctx,
-                        size_t offset,
-                        const uint8_t *buffer,
+static int memory_write(void *ctx, size_t offset, const uint8_t *buffer,
                         size_t length)
 {
     memory_flash *flash = ctx;
 
     flash->write_calls++;
     if (flash->fail_write_call == flash->write_calls) {
-        size_t written = flash->write_all_then_fail
-                             ? length
-                             : flash->partial_write_bytes;
+        size_t written =
+            flash->write_all_then_fail ? length : flash->partial_write_bytes;
 
         if (written > length)
             written = length;
-        if (written > 0u &&
-            program_bytes(flash, offset, buffer, written) != 0)
+        if (written > 0u && program_bytes(flash, offset, buffer, written) != 0)
             return -1;
         return -1;
     }
@@ -147,9 +137,8 @@ static uint32_t crc32_ieee(const uint8_t *data, size_t length)
     for (index = 0u; index < length; index++) {
         crc ^= data[index];
         for (bit = 0u; bit < 8u; bit++) {
-            crc = (crc & 1u) != 0u
-                      ? (crc >> 1) ^ UINT32_C(0xEDB88320)
-                      : crc >> 1;
+            crc =
+                (crc & 1u) != 0u ? (crc >> 1) ^ UINT32_C(0xEDB88320) : crc >> 1;
         }
     }
     return ~crc;
@@ -171,9 +160,8 @@ static void fill_fingerprint(uint8_t *fingerprint, uint8_t seed)
         fingerprint[index] = (uint8_t)(seed + index);
 }
 
-static ninlil_counter_config counter_config(uint8_t seed,
-                                            uint32_t reservation_size,
-                                            uint64_t max_counter)
+static ninlil_counter_config
+counter_config(uint8_t seed, uint32_t reservation_size, uint64_t max_counter)
 {
     ninlil_counter_config config;
 
@@ -185,11 +173,9 @@ static ninlil_counter_config counter_config(uint8_t seed,
     return config;
 }
 
-static ninlil_membership_record membership_record(uint8_t seed,
-                                                   uint16_t node_id,
-                                                   uint64_t membership_epoch,
-                                                   uint64_t binding_epoch,
-                                                   uint32_t capabilities)
+static ninlil_membership_record
+membership_record(uint8_t seed, uint16_t node_id, uint64_t membership_epoch,
+                  uint64_t binding_epoch, uint32_t capabilities)
 {
     ninlil_membership_record record;
 
@@ -218,8 +204,7 @@ static int test_format_and_invalid_input(void)
     wrong_size.size -= NINLIL_SECURITY_SECTOR_SIZE;
     CHECK(ninlil_security_format(NULL) == NINLIL_ERR_INVALID);
     CHECK(ninlil_security_format(&wrong_size) == NINLIL_ERR_INVALID);
-    CHECK(ninlil_counter_open(&counter, &wrong_size,
-                              NINLIL_COUNTER_CREATE_NEW,
+    CHECK(ninlil_counter_open(&counter, &wrong_size, NINLIL_COUNTER_CREATE_NEW,
                               &config) == NINLIL_ERR_INVALID);
     flash.bytes[0] = 0u;
     CHECK(ninlil_security_format(&io) == NINLIL_OK);
@@ -240,8 +225,7 @@ static int test_counter_config_generation_budget(void)
 
     memory_flash_init(&flash);
     io = memory_io(&flash);
-    config = counter_config(3u, 1u,
-                            NINLIL_SECURITY_COUNTER_MAX_EXCLUSIVE);
+    config = counter_config(3u, 1u, NINLIL_SECURITY_COUNTER_MAX_EXCLUSIVE);
     CHECK(ninlil_counter_open(&store, &io, NINLIL_COUNTER_CREATE_NEW,
                               &config) == NINLIL_ERR_INVALID);
     config.reservation_size = 4096u;
@@ -352,8 +336,7 @@ static int test_counter_torn_update_uses_old_high_water(void)
         CHECK(ninlil_counter_next(&store, &counter) == NINLIL_ERR_IO);
         flash.fail_write_call = 0u;
         ninlil_counter_close(&store);
-        CHECK(ninlil_counter_open(&store, &io,
-                                  NINLIL_COUNTER_RESUME_EXISTING,
+        CHECK(ninlil_counter_open(&store, &io, NINLIL_COUNTER_RESUME_EXISTING,
                                   &config) == NINLIL_OK);
         CHECK(ninlil_counter_next(&store, &counter) == NINLIL_OK);
         CHECK(counter == 4u);
@@ -377,8 +360,7 @@ static int test_counter_torn_update_uses_old_high_water(void)
         CHECK(ninlil_counter_next(&store, &counter) == NINLIL_ERR_IO);
         flash.fail_write_call = 0u;
         ninlil_counter_close(&store);
-        CHECK(ninlil_counter_open(&store, &io,
-                                  NINLIL_COUNTER_RESUME_EXISTING,
+        CHECK(ninlil_counter_open(&store, &io, NINLIL_COUNTER_RESUME_EXISTING,
                                   &config) == NINLIL_OK);
         CHECK(ninlil_counter_next(&store, &counter) == NINLIL_OK);
         CHECK(counter == 4u);
@@ -436,8 +418,7 @@ static int test_counter_partial_commit_is_fail_closed(void)
         CHECK(counter == UINT64_MAX);
         flash.fail_write_call = 0u;
         ninlil_counter_close(&store);
-        CHECK(ninlil_counter_open(&store, &io,
-                                  NINLIL_COUNTER_RESUME_EXISTING,
+        CHECK(ninlil_counter_open(&store, &io, NINLIL_COUNTER_RESUME_EXISTING,
                                   &config) == NINLIL_ERR_CORRUPT);
     }
     return 0;
@@ -493,8 +474,7 @@ static int test_counter_partial_erase_is_fail_closed(void)
         CHECK(counter == 3u);
         flash.fail_erase_call = 0u;
         ninlil_counter_close(&store);
-        rc = ninlil_counter_open(&store, &io,
-                                 NINLIL_COUNTER_RESUME_EXISTING,
+        rc = ninlil_counter_open(&store, &io, NINLIL_COUNTER_RESUME_EXISTING,
                                  &config);
         if (cut == 0u || cut == TEST_RECORD_SIZE) {
             CHECK(rc == NINLIL_OK);
@@ -531,8 +511,7 @@ static int test_counter_read_failures_preserve_commit_boundary(void)
     CHECK(counter == UINT64_MAX);
     flash.fail_read_call = 0u;
     ninlil_counter_close(&store);
-    CHECK(ninlil_counter_open(&store, &io,
-                              NINLIL_COUNTER_RESUME_EXISTING,
+    CHECK(ninlil_counter_open(&store, &io, NINLIL_COUNTER_RESUME_EXISTING,
                               &config) == NINLIL_OK);
     CHECK(ninlil_counter_next(&store, &counter) == NINLIL_OK);
     CHECK(counter == 4u);
@@ -547,8 +526,7 @@ static int test_counter_read_failures_preserve_commit_boundary(void)
     CHECK(counter == UINT64_MAX);
     flash.fail_read_call = 0u;
     ninlil_counter_close(&store);
-    CHECK(ninlil_counter_open(&store, &io,
-                              NINLIL_COUNTER_RESUME_EXISTING,
+    CHECK(ninlil_counter_open(&store, &io, NINLIL_COUNTER_RESUME_EXISTING,
                               &config) == NINLIL_OK);
     CHECK(ninlil_counter_next(&store, &counter) == NINLIL_OK);
     CHECK(counter == 8u);
@@ -620,8 +598,7 @@ static int test_adjacent_records_must_share_security_context(void)
     memory_flash_init(&flash);
     io = memory_io(&flash);
     config = counter_config(57u, 2u, 8u);
-    CHECK(ninlil_counter_open(&counter_store, &io,
-                              NINLIL_COUNTER_CREATE_NEW,
+    CHECK(ninlil_counter_open(&counter_store, &io, NINLIL_COUNTER_CREATE_NEW,
                               &config) == NINLIL_OK);
     CHECK(ninlil_counter_next(&counter_store, &counter) == NINLIL_OK);
     CHECK(ninlil_counter_next(&counter_store, &counter) == NINLIL_OK);
@@ -643,8 +620,7 @@ static int test_adjacent_records_must_share_security_context(void)
     ninlil_membership_close(&membership_store);
     flash.bytes[12] ^= UINT8_C(0x01);
     refresh_record_crc(flash.bytes);
-    CHECK(ninlil_membership_open(&membership_store, &io) ==
-          NINLIL_ERR_CORRUPT);
+    CHECK(ninlil_membership_open(&membership_store, &io) == NINLIL_ERR_CORRUPT);
     return 0;
 }
 
@@ -709,18 +685,15 @@ static int test_membership_rejects_rollback_and_authority_change(void)
 
     changed = active;
     changed.membership_epoch = 4u;
-    CHECK(ninlil_membership_activate(&store, &changed) ==
-          NINLIL_ERR_CONFLICT);
+    CHECK(ninlil_membership_activate(&store, &changed) == NINLIL_ERR_CONFLICT);
     changed = active;
     changed.membership_epoch = 6u;
     changed.binding_epoch = 8u;
-    CHECK(ninlil_membership_activate(&store, &changed) ==
-          NINLIL_ERR_CONFLICT);
+    CHECK(ninlil_membership_activate(&store, &changed) == NINLIL_ERR_CONFLICT);
     changed = active;
     changed.membership_epoch = 6u;
     changed.authority_fingerprint[0] ^= UINT8_C(0x01);
-    CHECK(ninlil_membership_activate(&store, &changed) ==
-          NINLIL_ERR_CONFLICT);
+    CHECK(ninlil_membership_activate(&store, &changed) == NINLIL_ERR_CONFLICT);
     return 0;
 }
 
@@ -817,8 +790,7 @@ static int test_membership_partial_commit_is_fail_closed(void)
         CHECK(ninlil_membership_revoke(&store) == NINLIL_ERR_IO);
         flash.fail_write_call = 0u;
         ninlil_membership_close(&store);
-        CHECK(ninlil_membership_open(&store, &io) ==
-              NINLIL_ERR_CORRUPT);
+        CHECK(ninlil_membership_open(&store, &io) == NINLIL_ERR_CORRUPT);
     }
     return 0;
 }

@@ -20,8 +20,7 @@ typedef struct ninlil_diag_frame {
 } ninlil_diag_frame;
 
 size_t ninlil_diag_encode(uint8_t *packet, const ninlil_diag_frame *frame);
-int ninlil_diag_decode(const uint8_t *packet,
-                       size_t length,
+int ninlil_diag_decode(const uint8_t *packet, size_t length,
                        ninlil_diag_frame *frame);
 
 #endif

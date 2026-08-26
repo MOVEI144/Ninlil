@@ -6,14 +6,11 @@ int ninlil_rf_profile_validate(const ninlil_rf_profile *profile)
         return NINLIL_ERR_INVALID;
     if (profile->frequency_hz == 0u)
         return profile->tx_enabled ? NINLIL_ERR_INVALID : NINLIL_OK;
-    if (profile->spreading_factor < 5u ||
-        profile->spreading_factor > 12u ||
-        (profile->bandwidth_hz != 125000u &&
-         profile->bandwidth_hz != 250000u &&
+    if (profile->spreading_factor < 5u || profile->spreading_factor > 12u ||
+        (profile->bandwidth_hz != 125000u && profile->bandwidth_hz != 250000u &&
          profile->bandwidth_hz != 500000u) ||
         profile->coding_rate_denominator < 5u ||
-        profile->coding_rate_denominator > 8u ||
-        profile->preamble_symbols < 6u)
+        profile->coding_rate_denominator > 8u || profile->preamble_symbols < 6u)
         return NINLIL_ERR_INVALID;
     if (!profile->tx_enabled)
         return NINLIL_OK;

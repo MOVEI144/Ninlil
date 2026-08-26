@@ -2,8 +2,7 @@
 
 #include <string.h>
 
-static int enter_recovery(ninlil_radio_link *radio,
-                          uint64_t now_ms,
+static int enter_recovery(ninlil_radio_link *radio, uint64_t now_ms,
                           int reported_error)
 {
     int recovery_in_progress;
@@ -12,14 +11,12 @@ static int enter_recovery(ninlil_radio_link *radio,
     if (radio->state == NINLIL_RADIO_FAULT)
         return NINLIL_ERR_FAULT;
 
-    recovery_in_progress =
-        radio->state == NINLIL_RADIO_RECOVERING ||
-        radio->state == NINLIL_RADIO_RESETTING;
-    window_expired =
-        radio->recovery_window_active &&
-        now_ms >= radio->recovery_window_start_ms &&
-        now_ms - radio->recovery_window_start_ms >=
-            NINLIL_RADIO_RECOVERY_WINDOW_MS;
+    recovery_in_progress = radio->state == NINLIL_RADIO_RECOVERING ||
+                           radio->state == NINLIL_RADIO_RESETTING;
+    window_expired = radio->recovery_window_active &&
+                     now_ms >= radio->recovery_window_start_ms &&
+                     now_ms - radio->recovery_window_start_ms >=
+                         NINLIL_RADIO_RECOVERY_WINDOW_MS;
 
     /*
      * A single recovery campaign never receives a fresh attempt budget merely
@@ -52,8 +49,7 @@ static int link_send(void *ctx, const uint8_t *data, size_t length)
         return NINLIL_ERR_TOO_LARGE;
     if (radio->state == NINLIL_RADIO_FAULT)
         return NINLIL_ERR_FAULT;
-    if (radio->state != NINLIL_RADIO_RX &&
-        radio->state != NINLIL_RADIO_STANDBY)
+    if (radio->state != NINLIL_RADIO_RX && radio->state != NINLIL_RADIO_STANDBY)
         return NINLIL_ERR_BUSY;
     if (radio->tx_pending || radio->tx_in_flight) {
         radio->counters.tx_capacity_count++;
@@ -66,9 +62,7 @@ static int link_send(void *ctx, const uint8_t *data, size_t length)
     return NINLIL_OK;
 }
 
-static int link_recv(void *ctx,
-                     uint8_t *buffer,
-                     size_t capacity,
+static int link_recv(void *ctx, uint8_t *buffer, size_t capacity,
                      size_t *length)
 {
     ninlil_radio_link *radio = ctx;
@@ -134,8 +128,7 @@ int ninlil_radio_mark_initialized(ninlil_radio_link *radio)
     return NINLIL_OK;
 }
 
-int ninlil_radio_begin_tx(ninlil_radio_link *radio,
-                          const uint8_t **packet,
+int ninlil_radio_begin_tx(ninlil_radio_link *radio, const uint8_t **packet,
                           size_t *length)
 {
     if (!radio || !packet || !length || !radio->tx_pending ||
@@ -152,8 +145,7 @@ int ninlil_radio_begin_tx(ninlil_radio_link *radio,
 
 int ninlil_radio_tx_done(ninlil_radio_link *radio)
 {
-    if (!radio || radio->state != NINLIL_RADIO_TX ||
-        !radio->tx_in_flight)
+    if (!radio || radio->state != NINLIL_RADIO_TX || !radio->tx_in_flight)
         return NINLIL_ERR_INVALID;
     radio->tx_in_flight = 0u;
     radio->tx_length = 0u;
@@ -164,8 +156,7 @@ int ninlil_radio_tx_done(ninlil_radio_link *radio)
 
 int ninlil_radio_tx_defer(ninlil_radio_link *radio)
 {
-    if (!radio || radio->state != NINLIL_RADIO_TX ||
-        !radio->tx_in_flight)
+    if (!radio || radio->state != NINLIL_RADIO_TX || !radio->tx_in_flight)
         return NINLIL_ERR_INVALID;
     radio->tx_in_flight = 0u;
     radio->tx_pending = 1u;
@@ -176,8 +167,7 @@ int ninlil_radio_tx_defer(ninlil_radio_link *radio)
 
 int ninlil_radio_tx_timeout(ninlil_radio_link *radio, uint64_t now_ms)
 {
-    if (!radio || radio->state != NINLIL_RADIO_TX ||
-        !radio->tx_in_flight)
+    if (!radio || radio->state != NINLIL_RADIO_TX || !radio->tx_in_flight)
         return NINLIL_ERR_INVALID;
     radio->tx_in_flight = 0u;
     radio->tx_pending = 1u;
@@ -209,13 +199,11 @@ int ninlil_radio_io_failure(ninlil_radio_link *radio, uint64_t now_ms)
     return enter_recovery(radio, now_ms, NINLIL_ERR_IO);
 }
 
-int ninlil_radio_recovery_result(ninlil_radio_link *radio,
-                                 uint64_t now_ms,
+int ninlil_radio_recovery_result(ninlil_radio_link *radio, uint64_t now_ms,
                                  int success)
 {
-    if (!radio ||
-        (radio->state != NINLIL_RADIO_RECOVERING &&
-         radio->state != NINLIL_RADIO_RESETTING))
+    if (!radio || (radio->state != NINLIL_RADIO_RECOVERING &&
+                   radio->state != NINLIL_RADIO_RESETTING))
         return NINLIL_ERR_INVALID;
     if (success) {
         radio->state = NINLIL_RADIO_RX;
@@ -226,8 +214,7 @@ int ninlil_radio_recovery_result(ninlil_radio_link *radio,
     return enter_recovery(radio, now_ms, NINLIL_ERR_IO);
 }
 
-int ninlil_radio_push_rx(ninlil_radio_link *radio,
-                         const uint8_t *packet,
+int ninlil_radio_push_rx(ninlil_radio_link *radio, const uint8_t *packet,
                          size_t length)
 {
     uint8_t index;
@@ -238,13 +225,13 @@ int ninlil_radio_push_rx(ninlil_radio_link *radio,
         return NINLIL_ERR_TOO_LARGE;
     if (radio->state != NINLIL_RADIO_RX)
         return radio->state == NINLIL_RADIO_FAULT ? NINLIL_ERR_FAULT
-                                                   : NINLIL_ERR_BUSY;
+                                                  : NINLIL_ERR_BUSY;
     if (radio->rx_count >= NINLIL_RADIO_RX_SLOTS) {
         radio->counters.rx_ring_overflow_count++;
         return NINLIL_ERR_CAPACITY;
     }
-    index = (uint8_t)((radio->rx_head + radio->rx_count) %
-                      NINLIL_RADIO_RX_SLOTS);
+    index =
+        (uint8_t)((radio->rx_head + radio->rx_count) % NINLIL_RADIO_RX_SLOTS);
     memcpy(radio->rx_packets[index], packet, length);
     radio->rx_lengths[index] = (uint8_t)length;
     radio->rx_count++;

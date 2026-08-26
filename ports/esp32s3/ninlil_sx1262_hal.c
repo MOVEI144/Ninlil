@@ -36,8 +36,8 @@ static int wait_busy(const ninlil_sx1262_hal_context *context,
     return 0;
 }
 
-static esp_err_t transmit(spi_device_handle_t spi, const void *tx,
-                          void *rx, size_t length)
+static esp_err_t transmit(spi_device_handle_t spi, const void *tx, void *rx,
+                          size_t length)
 {
     spi_transaction_t transaction;
 
@@ -76,8 +76,8 @@ int ninlil_sx1262_hal_init(ninlil_sx1262_hal_context *context)
     context->busy_timeout_ms = DEFAULT_BUSY_TIMEOUT_MS;
 
     memset(&gpio, 0, sizeof(gpio));
-    gpio.pin_bit_mask = (UINT64_C(1) << context->nss) |
-                        (UINT64_C(1) << context->reset);
+    gpio.pin_bit_mask =
+        (UINT64_C(1) << context->nss) | (UINT64_C(1) << context->reset);
     gpio.mode = GPIO_MODE_OUTPUT;
     gpio.pull_up_en = GPIO_PULLUP_DISABLE;
     gpio.pull_down_en = GPIO_PULLDOWN_DISABLE;
@@ -147,9 +147,8 @@ sx126x_hal_status_t sx126x_hal_reset(const void *opaque)
     if (set_level(context->reset, 1) != 0)
         return hal_error();
     esp_rom_delay_us(5000u);
-    return wait_busy(context, RESET_BUSY_TIMEOUT_MS) == 0
-               ? SX126X_HAL_STATUS_OK
-               : hal_error();
+    return wait_busy(context, RESET_BUSY_TIMEOUT_MS) == 0 ? SX126X_HAL_STATUS_OK
+                                                          : hal_error();
 }
 
 sx126x_hal_status_t sx126x_hal_wakeup(const void *opaque)
@@ -173,16 +172,13 @@ sx126x_hal_status_t sx126x_hal_wakeup(const void *opaque)
     spi_device_release_bus(context->spi);
     if (rc != ESP_OK || deselect_result != 0)
         return hal_error();
-    return wait_busy(context, RESET_BUSY_TIMEOUT_MS) == 0
-               ? SX126X_HAL_STATUS_OK
-               : hal_error();
+    return wait_busy(context, RESET_BUSY_TIMEOUT_MS) == 0 ? SX126X_HAL_STATUS_OK
+                                                          : hal_error();
 }
 
-sx126x_hal_status_t sx126x_hal_write(const void *opaque,
-                                     const uint8_t *command,
+sx126x_hal_status_t sx126x_hal_write(const void *opaque, const uint8_t *command,
                                      uint16_t command_length,
-                                     const uint8_t *data,
-                                     uint16_t data_length)
+                                     const uint8_t *data, uint16_t data_length)
 {
     const ninlil_sx1262_hal_context *context = opaque;
     esp_err_t rc;
@@ -192,9 +188,8 @@ sx126x_hal_status_t sx126x_hal_write(const void *opaque,
         (data_length > 0u && !data) ||
         wait_busy(context, context->busy_timeout_ms) != 0)
         return hal_error();
-    if (spi_device_acquire_bus(context->spi,
-                               pdMS_TO_TICKS(context->busy_timeout_ms)) !=
-        ESP_OK)
+    if (spi_device_acquire_bus(
+            context->spi, pdMS_TO_TICKS(context->busy_timeout_ms)) != ESP_OK)
         return hal_error();
     if (select_radio(context) != 0) {
         spi_device_release_bus(context->spi);
@@ -211,8 +206,7 @@ sx126x_hal_status_t sx126x_hal_write(const void *opaque,
     return SX126X_HAL_STATUS_OK;
 }
 
-sx126x_hal_status_t sx126x_hal_read(const void *opaque,
-                                    const uint8_t *command,
+sx126x_hal_status_t sx126x_hal_read(const void *opaque, const uint8_t *command,
                                     uint16_t command_length, uint8_t *data,
                                     uint16_t data_length)
 {
@@ -224,9 +218,8 @@ sx126x_hal_status_t sx126x_hal_read(const void *opaque,
         (data_length > 0u && !data) ||
         wait_busy(context, context->busy_timeout_ms) != 0)
         return hal_error();
-    if (spi_device_acquire_bus(context->spi,
-                               pdMS_TO_TICKS(context->busy_timeout_ms)) !=
-        ESP_OK)
+    if (spi_device_acquire_bus(
+            context->spi, pdMS_TO_TICKS(context->busy_timeout_ms)) != ESP_OK)
         return hal_error();
     if (select_radio(context) != 0) {
         spi_device_release_bus(context->spi);

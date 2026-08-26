@@ -42,19 +42,17 @@ size_t ninlil_diag_encode(uint8_t *packet, const ninlil_diag_frame *frame)
     put_be16(packet + 10, frame->target);
     packet[12] = frame->payload_length;
     if (frame->payload_length > 0u)
-        memcpy(packet + NINLIL_DIAG_HEADER,
-               frame->payload,
+        memcpy(packet + NINLIL_DIAG_HEADER, frame->payload,
                frame->payload_length);
     return NINLIL_DIAG_HEADER + frame->payload_length;
 }
 
-int ninlil_diag_decode(const uint8_t *packet,
-                       size_t length,
+int ninlil_diag_decode(const uint8_t *packet, size_t length,
                        ninlil_diag_frame *frame)
 {
     uint8_t payload_length;
-    if (!packet || !frame || length < NINLIL_DIAG_HEADER ||
-        packet[0] != 'N' || packet[1] != 'R' || packet[2] != 1u ||
+    if (!packet || !frame || length < NINLIL_DIAG_HEADER || packet[0] != 'N' ||
+        packet[1] != 'R' || packet[2] != 1u ||
         (packet[3] != NINLIL_DIAG_PING && packet[3] != NINLIL_DIAG_PONG))
         return NINLIL_ERR_INVALID;
     payload_length = packet[12];

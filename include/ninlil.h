@@ -94,20 +94,14 @@ typedef struct ninlil_runtime ninlil_runtime;
 
 int ninlil_open(ninlil_runtime **runtime, const ninlil_config *config);
 void ninlil_close(ninlil_runtime *runtime);
-int ninlil_submit(ninlil_runtime *runtime,
-                  const ninlil_id *idempotency_key,
-                  uint16_t target,
-                  uint16_t service,
-                  const uint8_t *payload,
-                  uint16_t payload_len,
-                  ninlil_id *message_id);
+int ninlil_submit(ninlil_runtime *runtime, const ninlil_id *idempotency_key,
+                  uint16_t target, uint16_t service, const uint8_t *payload,
+                  uint16_t payload_len, ninlil_id *message_id);
 int ninlil_step(ninlil_runtime *runtime);
 int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out);
-int ninlil_complete(ninlil_runtime *runtime,
-                    const ninlil_id *message_id,
+int ninlil_complete(ninlil_runtime *runtime, const ninlil_id *message_id,
                     ninlil_progress progress);
-int ninlil_query(ninlil_runtime *runtime,
-                 const ninlil_id *message_id,
+int ninlil_query(ninlil_runtime *runtime, const ninlil_id *message_id,
                  ninlil_info *out);
 
 #endif

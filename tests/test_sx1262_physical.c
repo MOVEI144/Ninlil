@@ -1,6 +1,6 @@
-#include "ninlil_sx1262_radio.h"
 #include "ninlil_board_seeed_b2b.h"
 #include "ninlil_radio.h"
+#include "ninlil_sx1262_radio.h"
 
 #include "driver/gpio.h"
 #include "esp_err.h"
@@ -12,13 +12,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#define CHECK(expression)                                                     \
-    do {                                                                      \
-        if (!(expression)) {                                                  \
-            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__, \
-                    #expression);                                             \
-            return 1;                                                         \
-        }                                                                     \
+#define CHECK(expression)                                                      \
+    do {                                                                       \
+        if (!(expression)) {                                                   \
+            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__,    \
+                    #expression);                                              \
+            return 1;                                                          \
+        }                                                                      \
     } while (0)
 
 static int task_a_token;
@@ -158,14 +158,16 @@ esp_err_t gpio_set_level(gpio_num_t gpio, int level)
 {
     if (fake_fail_gpio_set)
         return ESP_FAIL;
-    if (gpio >= 0 && (size_t)gpio < sizeof(fake_levels) / sizeof(fake_levels[0]))
+    if (gpio >= 0 &&
+        (size_t)gpio < sizeof(fake_levels) / sizeof(fake_levels[0]))
         fake_levels[gpio] = level;
     return ESP_OK;
 }
 
 int gpio_get_level(gpio_num_t gpio)
 {
-    if (gpio >= 0 && (size_t)gpio < sizeof(fake_levels) / sizeof(fake_levels[0]))
+    if (gpio >= 0 &&
+        (size_t)gpio < sizeof(fake_levels) / sizeof(fake_levels[0]))
         return fake_levels[gpio];
     return 0;
 }
@@ -247,7 +249,7 @@ sx126x_status_t sx126x_set_dio2_as_rf_sw_ctrl(const void *context, bool enable)
 }
 
 sx126x_status_t sx126x_set_dio3_as_tcxo_ctrl(const void *context, int voltage,
-                                              uint32_t timeout)
+                                             uint32_t timeout)
 {
     (void)context;
     (void)voltage;
@@ -305,24 +307,26 @@ sx126x_status_t sx126x_set_rf_freq(const void *context, uint32_t frequency)
     return SX126X_STATUS_OK;
 }
 
-sx126x_status_t sx126x_set_lora_mod_params(
-    const void *context, const sx126x_mod_params_lora_t *params)
+sx126x_status_t
+sx126x_set_lora_mod_params(const void *context,
+                           const sx126x_mod_params_lora_t *params)
 {
     (void)context;
     (void)params;
     return SX126X_STATUS_OK;
 }
 
-sx126x_status_t sx126x_set_lora_pkt_params(
-    const void *context, const sx126x_pkt_params_lora_t *params)
+sx126x_status_t
+sx126x_set_lora_pkt_params(const void *context,
+                           const sx126x_pkt_params_lora_t *params)
 {
     (void)context;
     (void)params;
     return SX126X_STATUS_OK;
 }
 
-sx126x_status_t sx126x_set_buffer_base_address(const void *context,
-                                               uint8_t tx, uint8_t rx)
+sx126x_status_t sx126x_set_buffer_base_address(const void *context, uint8_t tx,
+                                               uint8_t rx)
 {
     (void)context;
     (void)tx;
@@ -416,8 +420,8 @@ sx126x_status_t sx126x_get_and_clear_irq_status(const void *context,
     return SX126X_STATUS_OK;
 }
 
-sx126x_status_t sx126x_get_rx_buffer_status(
-    const void *context, sx126x_rx_buffer_status_t *status)
+sx126x_status_t sx126x_get_rx_buffer_status(const void *context,
+                                            sx126x_rx_buffer_status_t *status)
 {
     (void)context;
     status->pld_len_in_bytes = fake_rx_length;
@@ -434,8 +438,8 @@ sx126x_status_t sx126x_read_buffer(const void *context, uint8_t offset,
     return SX126X_STATUS_OK;
 }
 
-sx126x_status_t sx126x_get_lora_pkt_status(
-    const void *context, sx126x_pkt_status_lora_t *status)
+sx126x_status_t sx126x_get_lora_pkt_status(const void *context,
+                                           sx126x_pkt_status_lora_t *status)
 {
     (void)context;
     status->rssi_pkt_in_dbm = -70;
@@ -444,9 +448,9 @@ sx126x_status_t sx126x_get_lora_pkt_status(
     return SX126X_STATUS_OK;
 }
 
-uint32_t sx126x_get_lora_time_on_air_in_ms(
-    const sx126x_pkt_params_lora_t *packet,
-    const sx126x_mod_params_lora_t *modulation)
+uint32_t
+sx126x_get_lora_time_on_air_in_ms(const sx126x_pkt_params_lora_t *packet,
+                                  const sx126x_mod_params_lora_t *modulation)
 {
     (void)packet;
     (void)modulation;
@@ -649,8 +653,7 @@ int main(void)
     for (index = 0u; index < sizeof(tests) / sizeof(tests[0]); index++) {
         int rc = tests[index]();
 
-        printf("physical_%02zu %s\n", index + 1u,
-               rc == 0 ? "PASS" : "FAIL");
+        printf("physical_%02zu %s\n", index + 1u, rc == 0 ? "PASS" : "FAIL");
         if (rc != 0)
             return rc;
     }

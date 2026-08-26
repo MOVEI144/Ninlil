@@ -4,7 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 typedef uint8_t esp_partition_subtype_t;
-typedef struct esp_partition_t { size_t size; } esp_partition_t;
+typedef struct esp_partition_t {
+    size_t size;
+} esp_partition_t;
 #define ESP_PARTITION_TYPE_DATA 1
 const esp_partition_t *esp_partition_find_first(int type,
                                                 esp_partition_subtype_t subtype,

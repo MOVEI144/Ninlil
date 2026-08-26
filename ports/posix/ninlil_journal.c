@@ -1,7 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 
-#include "ninlil.h"
 #include "ninlil_journal.h"
+#include "ninlil.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -30,9 +30,8 @@ static uint32_t crc32_ieee(const uint8_t *data, size_t length)
     for (index = 0u; index < length; index++) {
         crc ^= data[index];
         for (bit = 0u; bit < 8u; bit++)
-            crc = (crc & 1u) != 0u
-                      ? (crc >> 1) ^ UINT32_C(0xEDB88320)
-                      : crc >> 1;
+            crc =
+                (crc & 1u) != 0u ? (crc >> 1) ^ UINT32_C(0xEDB88320) : crc >> 1;
     }
     return ~crc;
 }
@@ -83,9 +82,7 @@ static int read_full_at(int fd, off_t offset, uint8_t *data, size_t length)
 {
     size_t received = 0u;
     while (received < length) {
-        ssize_t result = pread(fd,
-                               data + received,
-                               length - received,
+        ssize_t result = pread(fd, data + received, length - received,
                                offset + (off_t)received);
         if (result < 0) {
             if (errno == EINTR)
@@ -146,10 +143,8 @@ static int header_valid(const uint8_t *header, uint16_t *length)
     return 1;
 }
 
-int ninlil_journal_open(ninlil_journal **out,
-                        const char *path,
-                        ninlil_journal_on_record on_record,
-                        void *ctx)
+int ninlil_journal_open(ninlil_journal **out, const char *path,
+                        ninlil_journal_on_record on_record, void *ctx)
 {
     struct stat status;
     ninlil_journal *journal;
@@ -163,8 +158,7 @@ int ninlil_journal_open(ninlil_journal **out,
     *out = NULL;
     fd = open(path, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
     if (fd < 0 && errno == ENOENT) {
-        fd = open(path,
-                  O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
+        fd = open(path, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW,
                   0600);
         if (fd >= 0)
             created = 1;
@@ -177,7 +171,7 @@ int ninlil_journal_open(ninlil_journal **out,
         int saved = errno;
         (void)close(fd);
         return saved == EWOULDBLOCK || saved == EAGAIN ? NINLIL_ERR_BUSY
-                                                        : NINLIL_ERR_IO;
+                                                       : NINLIL_ERR_IO;
     }
     if (fstat(fd, &status) != 0 || !S_ISREG(status.st_mode)) {
         (void)close(fd);
@@ -210,9 +204,7 @@ int ninlil_journal_open(ninlil_journal **out,
         required = (off_t)JRN_HEADER + (off_t)length + (off_t)JRN_CRC;
         if (remaining < required)
             break;
-        if (read_full_at(fd,
-                         position + (off_t)JRN_HEADER,
-                         body,
+        if (read_full_at(fd, position + (off_t)JRN_HEADER, body,
                          (size_t)length + JRN_CRC) != NINLIL_OK) {
             (void)close(fd);
             return NINLIL_ERR_IO;
@@ -252,10 +244,8 @@ int ninlil_journal_open(ninlil_journal **out,
     return NINLIL_OK;
 }
 
-int ninlil_journal_append(ninlil_journal *journal,
-                          uint8_t type,
-                          const uint8_t *payload,
-                          uint16_t length)
+int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
+                          const uint8_t *payload, uint16_t length)
 {
     uint8_t record[JRN_HEADER + JRN_MAX_PAYLOAD + JRN_CRC];
     off_t start;
@@ -265,7 +255,7 @@ int ninlil_journal_append(ninlil_journal *journal,
         (length > 0u && !payload) || length > JRN_MAX_PAYLOAD || type < 1u ||
         type > 4u)
         return journal && journal->poisoned ? NINLIL_ERR_IO
-                                             : NINLIL_ERR_INVALID;
+                                            : NINLIL_ERR_INVALID;
     record[0] = 'N';
     record[1] = 'J';
     record[2] = 'L';
@@ -283,9 +273,7 @@ int ninlil_journal_append(ninlil_journal *journal,
         journal->poisoned = 1;
         return NINLIL_ERR_IO;
     }
-    rc = write_full(journal->fd,
-                    record,
-                    JRN_HEADER + (size_t)length + JRN_CRC);
+    rc = write_full(journal->fd, record, JRN_HEADER + (size_t)length + JRN_CRC);
     if (rc != NINLIL_OK || fdatasync(journal->fd) != 0) {
         (void)ftruncate(journal->fd, start);
         (void)fdatasync(journal->fd);

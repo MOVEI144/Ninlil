@@ -17,7 +17,9 @@
 #define NINLIL_PROGRESS_APPLIED 3
 #define NINLIL_MAX_PAYLOAD 256
 typedef int ninlil_progress;
-typedef struct ninlil_id { uint8_t bytes[16]; } ninlil_id;
+typedef struct ninlil_id {
+    uint8_t bytes[16];
+} ninlil_id;
 typedef struct ninlil_link {
     int (*send)(void *, const uint8_t *, size_t);
     int (*recv)(void *, uint8_t *, size_t, size_t *);

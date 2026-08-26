@@ -4,13 +4,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#define CHECK(expression)                                                     \
-    do {                                                                      \
-        if (!(expression)) {                                                  \
-            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__, \
-                    #expression);                                             \
-            return 1;                                                         \
-        }                                                                     \
+#define CHECK(expression)                                                      \
+    do {                                                                       \
+        if (!(expression)) {                                                   \
+            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__,    \
+                    #expression);                                              \
+            return 1;                                                          \
+        }                                                                      \
     } while (0)
 
 static int test_diag_codec(void)
@@ -99,7 +99,8 @@ static int test_radio_rx_ring(void)
 
     CHECK(initialize_radio(&radio, &link) == 0);
     for (index = 0u; index < NINLIL_RADIO_RX_SLOTS; index++)
-        CHECK(ninlil_radio_push_rx(&radio, packet, sizeof(packet)) == NINLIL_OK);
+        CHECK(ninlil_radio_push_rx(&radio, packet, sizeof(packet)) ==
+              NINLIL_OK);
     CHECK(ninlil_radio_push_rx(&radio, packet, sizeof(packet)) ==
           NINLIL_ERR_CAPACITY);
     CHECK(radio.counters.rx_ring_overflow_count == 1u);
@@ -131,9 +132,8 @@ static int test_radio_bounded_recovery(void)
     CHECK(ninlil_radio_recovery_result(&radio, 103u, 0) == NINLIL_ERR_FAULT);
     CHECK(radio.state == NINLIL_RADIO_FAULT);
     CHECK(link.send(link.ctx, packet, sizeof(packet)) == NINLIL_ERR_FAULT);
-    CHECK(ninlil_radio_io_failure(&radio,
-                                  NINLIL_RADIO_RECOVERY_WINDOW_MS + 200u) ==
-          NINLIL_ERR_FAULT);
+    CHECK(ninlil_radio_io_failure(&radio, NINLIL_RADIO_RECOVERY_WINDOW_MS +
+                                              200u) == NINLIL_ERR_FAULT);
     CHECK(radio.state == NINLIL_RADIO_FAULT);
     CHECK(ninlil_radio_recovery_result(&radio,
                                        NINLIL_RADIO_RECOVERY_WINDOW_MS + 201u,
@@ -160,8 +160,7 @@ static int test_recovery_campaign_does_not_roll_over(void)
     CHECK(radio.recovery_attempts == 3u);
 
     now_ms += NINLIL_RADIO_RECOVERY_WINDOW_MS + UINT64_C(1);
-    CHECK(ninlil_radio_recovery_result(&radio, now_ms, 0) ==
-          NINLIL_ERR_FAULT);
+    CHECK(ninlil_radio_recovery_result(&radio, now_ms, 0) == NINLIL_ERR_FAULT);
     CHECK(radio.state == NINLIL_RADIO_FAULT);
     return 0;
 }

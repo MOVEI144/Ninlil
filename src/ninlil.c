@@ -67,7 +67,7 @@ static int id_equal(const ninlil_id *a, const ninlil_id *b)
 }
 
 static struct outbound_entry *find_outbound(ninlil_runtime *runtime,
-                                             const ninlil_id *id)
+                                            const ninlil_id *id)
 {
     uint32_t index;
     for (index = 0u; index < runtime->outbound_count; index++) {
@@ -78,7 +78,7 @@ static struct outbound_entry *find_outbound(ninlil_runtime *runtime,
 }
 
 static struct outbound_entry *find_idempotency(ninlil_runtime *runtime,
-                                                const ninlil_id *id)
+                                               const ninlil_id *id)
 {
     uint32_t index;
     for (index = 0u; index < runtime->outbound_count; index++) {
@@ -89,7 +89,7 @@ static struct outbound_entry *find_idempotency(ninlil_runtime *runtime,
 }
 
 static struct inbound_entry *find_inbound(ninlil_runtime *runtime,
-                                           const ninlil_id *id)
+                                          const ninlil_id *id)
 {
     uint32_t index;
     for (index = 0u; index < runtime->inbound_count; index++) {
@@ -101,13 +101,12 @@ static struct inbound_entry *find_inbound(ninlil_runtime *runtime,
 
 static int id_in_use(ninlil_runtime *runtime, const ninlil_id *id)
 {
-    return find_outbound(runtime, id) != NULL || find_inbound(runtime, id) != NULL;
+    return find_outbound(runtime, id) != NULL ||
+           find_inbound(runtime, id) != NULL;
 }
 
-static int append_record(ninlil_runtime *runtime,
-                         uint8_t type,
-                         const uint8_t *payload,
-                         uint16_t length)
+static int append_record(ninlil_runtime *runtime, uint8_t type,
+                         const uint8_t *payload, uint16_t length)
 {
     int rc;
     if (runtime->fatal_error != NINLIL_OK)
@@ -118,9 +117,7 @@ static int append_record(ninlil_runtime *runtime,
     return rc;
 }
 
-static int replay_record(void *ctx,
-                         uint8_t type,
-                         const uint8_t *payload,
+static int replay_record(void *ctx, uint8_t type, const uint8_t *payload,
                          uint16_t length)
 {
     ninlil_runtime *runtime = ctx;
@@ -144,8 +141,7 @@ static int replay_record(void *ctx,
 
         memset(&candidate, 0, sizeof(candidate));
         memcpy(candidate.message_id.bytes, payload, NINLIL_ID_BYTES);
-        memcpy(candidate.idempotency_key.bytes, payload + 16,
-               NINLIL_ID_BYTES);
+        memcpy(candidate.idempotency_key.bytes, payload + 16, NINLIL_ID_BYTES);
         if (id_in_use(runtime, &candidate.message_id) ||
             find_idempotency(runtime, &candidate.idempotency_key) != NULL)
             return NINLIL_ERR_CORRUPT;
@@ -153,8 +149,7 @@ static int replay_record(void *ctx,
         candidate.service = get_be16(payload + 34);
         candidate.payload_len = payload_len;
         if (payload_len > 0u) {
-            memcpy(candidate.payload, payload + OUT_CREATE_HEADER,
-                   payload_len);
+            memcpy(candidate.payload, payload + OUT_CREATE_HEADER, payload_len);
         }
         candidate.outcome = NINLIL_OUTCOME_ACTIVE;
         runtime->outbound[runtime->outbound_count++] = candidate;
@@ -182,8 +177,7 @@ static int replay_record(void *ctx,
         candidate.service = get_be16(payload + 18);
         candidate.payload_len = payload_len;
         if (payload_len > 0u) {
-            memcpy(candidate.payload, payload + IN_ACCEPT_HEADER,
-                   payload_len);
+            memcpy(candidate.payload, payload + IN_ACCEPT_HEADER, payload_len);
         }
         candidate.progress = NINLIL_PROGRESS_STORED;
         runtime->inbound[runtime->inbound_count++] = candidate;
@@ -222,9 +216,7 @@ static int log_outbound(ninlil_runtime *runtime,
     put_be16(record + 36, entry->payload_len);
     if (entry->payload_len > 0u)
         memcpy(record + OUT_CREATE_HEADER, entry->payload, entry->payload_len);
-    return append_record(runtime,
-                         JRN_OUT_CREATE,
-                         record,
+    return append_record(runtime, JRN_OUT_CREATE, record,
                          (uint16_t)(OUT_CREATE_HEADER + entry->payload_len));
 }
 
@@ -238,14 +230,11 @@ static int log_inbound(ninlil_runtime *runtime,
     put_be16(record + 20, entry->payload_len);
     if (entry->payload_len > 0u)
         memcpy(record + IN_ACCEPT_HEADER, entry->payload, entry->payload_len);
-    return append_record(runtime,
-                         JRN_IN_ACCEPT,
-                         record,
+    return append_record(runtime, JRN_IN_ACCEPT, record,
                          (uint16_t)(IN_ACCEPT_HEADER + entry->payload_len));
 }
 
-static int handle_data(ninlil_runtime *runtime,
-                       const uint8_t *packet,
+static int handle_data(ninlil_runtime *runtime, const uint8_t *packet,
                        size_t length)
 {
     ninlil_wire_data_view view;
@@ -258,7 +247,8 @@ static int handle_data(ninlil_runtime *runtime,
         return NINLIL_OK;
     existing = find_inbound(runtime, &view.message_id);
     if (existing) {
-        if (existing->source != view.source || existing->service != view.service ||
+        if (existing->source != view.source ||
+            existing->service != view.service ||
             existing->payload_len != view.payload_length ||
             (view.payload_length > 0u &&
              memcmp(existing->payload, view.payload, view.payload_length) != 0))
@@ -286,8 +276,7 @@ static int handle_data(ninlil_runtime *runtime,
     return NINLIL_OK;
 }
 
-static int handle_receipt(ninlil_runtime *runtime,
-                          const uint8_t *packet,
+static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
                           size_t length)
 {
     ninlil_wire_receipt_view view;
@@ -302,9 +291,7 @@ static int handle_receipt(ninlil_runtime *runtime,
     if (!entry || entry->target != view.source ||
         entry->outcome != NINLIL_OUTCOME_ACTIVE)
         return NINLIL_OK;
-    rc = append_record(runtime,
-                       JRN_OUT_SATISFIED,
-                       view.message_id.bytes,
+    rc = append_record(runtime, JRN_OUT_SATISFIED, view.message_id.bytes,
                        NINLIL_ID_BYTES);
     if (rc == NINLIL_OK)
         entry->outcome = NINLIL_OUTCOME_SATISFIED;
@@ -325,10 +312,8 @@ static int process_receive(ninlil_runtime *runtime, int *worked)
     int rc;
 
     *worked = 0;
-    rc = runtime->config.link.recv(runtime->config.link.ctx,
-                                   packet,
-                                   sizeof(packet),
-                                   &length);
+    rc = runtime->config.link.recv(runtime->config.link.ctx, packet,
+                                   sizeof(packet), &length);
     if (rc == 0)
         return NINLIL_OK;
     *worked = 1;
@@ -350,9 +335,8 @@ static int process_receipt(ninlil_runtime *runtime, int *worked)
     uint32_t scanned;
     *worked = 0;
     for (scanned = 0u; scanned < runtime->inbound_count; scanned++) {
-        uint32_t index = circular(runtime->receipt_cursor,
-                                  scanned,
-                                  runtime->inbound_count);
+        uint32_t index =
+            circular(runtime->receipt_cursor, scanned, runtime->inbound_count);
         struct inbound_entry *entry = &runtime->inbound[index];
         uint8_t packet[NINLIL_WIRE_RECEIPT_SIZE];
         size_t length;
@@ -361,12 +345,11 @@ static int process_receipt(ninlil_runtime *runtime, int *worked)
             continue;
         runtime->receipt_cursor = (index + 1u) % runtime->inbound_count;
         *worked = 1;
-        length = ninlil_wire_encode_receipt(packet,
-                                            runtime->config.node_id,
-                                            entry->source,
-                                            &entry->message_id,
+        length = ninlil_wire_encode_receipt(packet, runtime->config.node_id,
+                                            entry->source, &entry->message_id,
                                             NINLIL_PROGRESS_APPLIED);
-        rc = runtime->config.link.send(runtime->config.link.ctx, packet, length);
+        rc =
+            runtime->config.link.send(runtime->config.link.ctx, packet, length);
         if (rc == NINLIL_OK) {
             entry->need_receipt = 0u;
             return NINLIL_OK;
@@ -381,8 +364,7 @@ static int process_outbound(ninlil_runtime *runtime, int *worked)
     uint32_t scanned;
     *worked = 0;
     for (scanned = 0u; scanned < runtime->outbound_count; scanned++) {
-        uint32_t index = circular(runtime->outbound_cursor,
-                                  scanned,
+        uint32_t index = circular(runtime->outbound_cursor, scanned,
                                   runtime->outbound_count);
         struct outbound_entry *entry = &runtime->outbound[index];
         uint8_t packet[NINLIL_WIRE_DATA_MAX];
@@ -396,14 +378,11 @@ static int process_outbound(ninlil_runtime *runtime, int *worked)
             continue;
         runtime->outbound_cursor = (index + 1u) % runtime->outbound_count;
         *worked = 1;
-        length = ninlil_wire_encode_data(packet,
-                                         runtime->config.node_id,
-                                         entry->target,
-                                         entry->service,
-                                         &entry->message_id,
-                                         entry->payload,
-                                         entry->payload_len);
-        rc = runtime->config.link.send(runtime->config.link.ctx, packet, length);
+        length = ninlil_wire_encode_data(
+            packet, runtime->config.node_id, entry->target, entry->service,
+            &entry->message_id, entry->payload, entry->payload_len);
+        rc =
+            runtime->config.link.send(runtime->config.link.ctx, packet, length);
         if (rc == NINLIL_OK) {
             entry->last_sent_step = runtime->step_count;
             return NINLIL_OK;
@@ -433,7 +412,8 @@ int ninlil_open(ninlil_runtime **out, const ninlil_config *config)
         (config->link.max_packet_size != 0u &&
          config->link.max_packet_size < NINLIL_WIRE_RECEIPT_SIZE) ||
         !config->random.fill || config->max_outbound == 0u ||
-        config->max_inbound == 0u || config->max_outbound > NINLIL_MAX_ENTRIES ||
+        config->max_inbound == 0u ||
+        config->max_outbound > NINLIL_MAX_ENTRIES ||
         config->max_inbound > NINLIL_MAX_ENTRIES ||
         config->max_work_per_step > NINLIL_MAX_STEP_WORK)
         return NINLIL_ERR_INVALID;
@@ -448,16 +428,16 @@ int ninlil_open(ninlil_runtime **out, const ninlil_config *config)
         runtime->config.retry_interval_steps = 1u;
     if (runtime->config.max_work_per_step == 0u)
         runtime->config.max_work_per_step = 8u;
-    runtime->outbound = calloc(config->max_outbound, sizeof(*runtime->outbound));
+    runtime->outbound =
+        calloc(config->max_outbound, sizeof(*runtime->outbound));
     runtime->inbound = calloc(config->max_inbound, sizeof(*runtime->inbound));
     if (!runtime->outbound || !runtime->inbound) {
         ninlil_close(runtime);
         return NINLIL_ERR_IO;
     }
-    rc = ninlil_journal_open(&runtime->journal,
-                             runtime->config.journal_location,
-                             replay_record,
-                             runtime);
+    rc =
+        ninlil_journal_open(&runtime->journal, runtime->config.journal_location,
+                            replay_record, runtime);
     if (rc != NINLIL_OK) {
         ninlil_close(runtime);
         return rc;
@@ -476,13 +456,9 @@ void ninlil_close(ninlil_runtime *runtime)
     free(runtime);
 }
 
-int ninlil_submit(ninlil_runtime *runtime,
-                  const ninlil_id *idempotency_key,
-                  uint16_t target,
-                  uint16_t service,
-                  const uint8_t *payload,
-                  uint16_t payload_len,
-                  ninlil_id *message_id)
+int ninlil_submit(ninlil_runtime *runtime, const ninlil_id *idempotency_key,
+                  uint16_t target, uint16_t service, const uint8_t *payload,
+                  uint16_t payload_len, ninlil_id *message_id)
 {
     struct outbound_entry *existing;
     struct outbound_entry candidate;
@@ -551,7 +527,7 @@ int ninlil_step(ninlil_runtime *runtime)
         for (offset = 0u; offset < STEP_PHASES; offset++) {
             unsigned int phase = (runtime->phase_cursor + offset) % STEP_PHASES;
             int worked = 0;
-            int rc = phase == 0u ? process_receive(runtime, &worked)
+            int rc = phase == 0u   ? process_receive(runtime, &worked)
                      : phase == 1u ? process_receipt(runtime, &worked)
                                    : process_outbound(runtime, &worked);
             if (rc == NINLIL_ERR_CAPACITY || rc == NINLIL_ERR_CONFLICT)
@@ -595,8 +571,7 @@ int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
     return NINLIL_ERR_EMPTY;
 }
 
-int ninlil_complete(ninlil_runtime *runtime,
-                    const ninlil_id *message_id,
+int ninlil_complete(ninlil_runtime *runtime, const ninlil_id *message_id,
                     ninlil_progress progress)
 {
     struct inbound_entry *entry;
@@ -610,9 +585,7 @@ int ninlil_complete(ninlil_runtime *runtime,
         return NINLIL_ERR_NOT_FOUND;
     if (entry->progress == NINLIL_PROGRESS_APPLIED)
         return NINLIL_OK;
-    rc = append_record(runtime,
-                       JRN_IN_APPLIED,
-                       message_id->bytes,
+    rc = append_record(runtime, JRN_IN_APPLIED, message_id->bytes,
                        NINLIL_ID_BYTES);
     if (rc != NINLIL_OK)
         return rc;
@@ -621,8 +594,7 @@ int ninlil_complete(ninlil_runtime *runtime,
     return NINLIL_OK;
 }
 
-int ninlil_query(ninlil_runtime *runtime,
-                 const ninlil_id *message_id,
+int ninlil_query(ninlil_runtime *runtime, const ninlil_id *message_id,
                  ninlil_info *out)
 {
     struct outbound_entry *outbound;

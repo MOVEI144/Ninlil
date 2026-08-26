@@ -8,21 +8,18 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#define CHECK(expression)                                                     \
-    do {                                                                      \
-        if (!(expression)) {                                                  \
-            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__, \
-                    #expression);                                             \
-            return 1;                                                         \
-        }                                                                     \
+#define CHECK(expression)                                                      \
+    do {                                                                       \
+        if (!(expression)) {                                                   \
+            fprintf(stderr, "CHECK failed %s:%d: %s\n", __FILE__, __LINE__,    \
+                    #expression);                                              \
+            return 1;                                                          \
+        }                                                                      \
     } while (0)
 
-static int open_runtime(ninlil_runtime **runtime,
-                        const char *path,
-                        uint16_t node_id,
-                        ninlil_link link,
-                        uint32_t *random_state,
-                        uint32_t max_outbound,
+static int open_runtime(ninlil_runtime **runtime, const char *path,
+                        uint16_t node_id, ninlil_link link,
+                        uint32_t *random_state, uint32_t max_outbound,
                         uint32_t max_inbound)
 {
     ninlil_config config;
@@ -40,7 +37,8 @@ static int open_runtime(ninlil_runtime **runtime,
     return ninlil_open(runtime, &config);
 }
 
-static int pump(ninlil_runtime *first, ninlil_runtime *second, unsigned int count)
+static int pump(ninlil_runtime *first, ninlil_runtime *second,
+                unsigned int count)
 {
     unsigned int index;
 
@@ -73,8 +71,10 @@ static int test_durable_direct_and_receiver_replay(void)
     ninlil_info info;
 
     CHECK(test_make_directory(directory, sizeof(directory)) == 0);
-    CHECK(test_make_path(first_path, sizeof(first_path), directory, "a.j") == 0);
-    CHECK(test_make_path(second_path, sizeof(second_path), directory, "b.j") == 0);
+    CHECK(test_make_path(first_path, sizeof(first_path), directory, "a.j") ==
+          0);
+    CHECK(test_make_path(second_path, sizeof(second_path), directory, "b.j") ==
+          0);
     test_link_init(&transport, NINLIL_RADIO_MTU);
     test_link_bind(&transport, 0u, &first_link);
     test_link_bind(&transport, 1u, &second_link);
@@ -83,8 +83,7 @@ static int test_durable_direct_and_receiver_replay(void)
     CHECK(open_runtime(&second, second_path, 2u, second_link, &second_random,
                        8u, 8u) == NINLIL_OK);
     test_fill_id(&key, UINT8_C(0x11));
-    CHECK(ninlil_submit(first, &key, 2u, 7u,
-                        (const uint8_t *)"durable", 7u,
+    CHECK(ninlil_submit(first, &key, 2u, 7u, (const uint8_t *)"durable", 7u,
                         &message_id) == NINLIL_OK);
     CHECK(pump(first, second, 4u) == NINLIL_OK);
     ninlil_close(second);
@@ -92,10 +91,10 @@ static int test_durable_direct_and_receiver_replay(void)
     CHECK(open_runtime(&second, second_path, 2u, second_link, &second_random,
                        8u, 8u) == NINLIL_OK);
     CHECK(ninlil_receive(second, &inbound) == NINLIL_OK);
-    CHECK(memcmp(inbound.message_id.bytes, message_id.bytes,
-                 NINLIL_ID_BYTES) == 0);
-    CHECK(ninlil_complete(second, &message_id,
-                          NINLIL_PROGRESS_APPLIED) == NINLIL_OK);
+    CHECK(memcmp(inbound.message_id.bytes, message_id.bytes, NINLIL_ID_BYTES) ==
+          0);
+    CHECK(ninlil_complete(second, &message_id, NINLIL_PROGRESS_APPLIED) ==
+          NINLIL_OK);
     CHECK(pump(first, second, 5u) == NINLIL_OK);
     CHECK(ninlil_query(first, &message_id, &info) == NINLIL_OK);
     CHECK(info.outcome == NINLIL_OUTCOME_SATISFIED);
@@ -159,8 +158,10 @@ static int test_lost_receipt_and_duplicate_data(void)
     ninlil_info info;
 
     CHECK(test_make_directory(directory, sizeof(directory)) == 0);
-    CHECK(test_make_path(first_path, sizeof(first_path), directory, "a.j") == 0);
-    CHECK(test_make_path(second_path, sizeof(second_path), directory, "b.j") == 0);
+    CHECK(test_make_path(first_path, sizeof(first_path), directory, "a.j") ==
+          0);
+    CHECK(test_make_path(second_path, sizeof(second_path), directory, "b.j") ==
+          0);
     test_link_init(&transport, NINLIL_RADIO_MTU);
     test_link_bind(&transport, 0u, &first_link);
     test_link_bind(&transport, 1u, &second_link);
@@ -176,8 +177,8 @@ static int test_lost_receipt_and_duplicate_data(void)
     CHECK(ninlil_receive(second, &inbound) == NINLIL_OK);
     CHECK(ninlil_receive(second, &inbound) == NINLIL_ERR_EMPTY);
     test_link_drop_next(&transport, 1u, 1u);
-    CHECK(ninlil_complete(second, &message_id,
-                          NINLIL_PROGRESS_APPLIED) == NINLIL_OK);
+    CHECK(ninlil_complete(second, &message_id, NINLIL_PROGRESS_APPLIED) ==
+          NINLIL_OK);
     CHECK(pump(first, second, 8u) == NINLIL_OK);
     CHECK(ninlil_receive(second, &inbound) == NINLIL_ERR_EMPTY);
     CHECK(ninlil_query(first, &message_id, &info) == NINLIL_OK);
@@ -220,8 +221,7 @@ static int test_m0_config_compatibility(void)
     config.random.ctx = &random_state;
     CHECK(ninlil_open(&runtime, &config) == NINLIL_OK);
     test_fill_id(&key, UINT8_C(0x44));
-    CHECK(ninlil_submit(runtime, &key, 2u, 1u,
-                        (const uint8_t *)"compat", 6u,
+    CHECK(ninlil_submit(runtime, &key, 2u, 1u, (const uint8_t *)"compat", 6u,
                         &message_id) == NINLIL_OK);
     ninlil_close(runtime);
     runtime = NULL;
