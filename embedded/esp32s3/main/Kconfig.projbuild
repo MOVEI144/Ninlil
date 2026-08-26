@@ -1,0 +1,103 @@
+menu "Ninlil M1"
+
+choice NINLIL_M1_MODE
+    prompt "Firmware mode"
+    default NINLIL_M1_MODE_DIAGNOSTIC
+
+config NINLIL_M1_MODE_DIAGNOSTIC
+    bool "M1.1 diagnostic PING/PONG"
+
+config NINLIL_M1_MODE_DELIVERY
+    bool "M1.2/M1.3 durable direct delivery"
+endchoice
+
+config NINLIL_NODE_ID
+    int "Local node id"
+    range 1 65534
+    default 1
+
+config NINLIL_PEER_ID
+    int "Peer node id"
+    range 1 65534
+    default 2
+
+config NINLIL_DIAGNOSTIC_INITIATOR
+    bool "Initiate diagnostic PING packets"
+    default n
+    depends on NINLIL_M1_MODE_DIAGNOSTIC
+
+config NINLIL_DIAGNOSTIC_PING_COUNT
+    int "Diagnostic PING campaign count"
+    range 1 10000
+    default 1000
+    depends on NINLIL_DIAGNOSTIC_INITIATOR
+
+config NINLIL_RADIO_INIT_CYCLES
+    int "Radio initialization cycles before campaign"
+    range 1 100
+    default 1
+
+config NINLIL_DELIVERY_SUBMIT_ON_BOOT
+    bool "Run durable HIL delivery batch"
+    default n
+    depends on NINLIL_M1_MODE_DELIVERY
+
+config NINLIL_DELIVERY_MESSAGE_COUNT
+    int "Durable HIL delivery message count"
+    range 1 100
+    default 100
+    depends on NINLIL_M1_MODE_DELIVERY
+
+config NINLIL_RF_TX_ENABLE
+    bool "Enable RF transmission (requires local legal/HIL review)"
+    default n
+
+config NINLIL_RF_GATE_POLARITY_CONFIRMED
+    bool "GPIO38 RF gate polarity confirmed on this exact B2B board"
+    default n
+
+config NINLIL_RF_GATE_RX_ACTIVE_HIGH
+    bool "GPIO38 high selects receive path"
+    default y
+
+config NINLIL_RF_REGION
+    string "Local regional/HIL profile label"
+    default ""
+
+config NINLIL_RF_FREQUENCY_HZ
+    int "RF frequency in Hz (0 disables operational RX/TX)"
+    range 0 1000000000
+    default 0
+
+config NINLIL_RF_TX_POWER_DBM
+    int "SX1262 TX power in dBm"
+    range -9 22
+    default -9
+
+config NINLIL_RF_SF
+    int "LoRa spreading factor"
+    range 5 12
+    default 9
+
+choice NINLIL_RF_BW
+    prompt "LoRa bandwidth"
+    default NINLIL_RF_BW_125
+config NINLIL_RF_BW_125
+    bool "125 kHz"
+config NINLIL_RF_BW_250
+    bool "250 kHz"
+config NINLIL_RF_BW_500
+    bool "500 kHz"
+endchoice
+
+config NINLIL_RF_CR_DENOMINATOR
+    int "LoRa coding rate denominator (4/x)"
+    range 5 8
+    default 5
+
+config NINLIL_RF_PREAMBLE_SYMBOLS
+    int "LoRa preamble symbols"
+    range 6 65535
+    default 8
+
+endmenu

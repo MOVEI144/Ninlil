@@ -1,0 +1,17 @@
+/build*/
+/.ci-build/
+*.journal
+*.db
+*.log
+*.bin
+sdkconfig
+sdkconfig.old
+embedded/esp32s3/hil_local.h
+/.fake-build/
+/.verify-build/
+/.ci-build-m1/
+/.build-*/
+/.ci-build-*/
+/.baseline-build/
+/.qa-*/
+/.verify-*/
