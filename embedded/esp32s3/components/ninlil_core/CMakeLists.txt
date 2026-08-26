@@ -1,20 +1,20 @@
-set(NINLIL_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../..")
+get_filename_component(NINLIL_CORE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../.." ABSOLUTE)
 
 idf_component_register(
     SRCS
-        "${NINLIL_ROOT}/src/ninlil.c" "${NINLIL_ROOT}/src/ninlil_wire.c"
-        "${NINLIL_ROOT}/src/ninlil_diag.c" "${NINLIL_ROOT}/src/ninlil_radio.c"
-        "${NINLIL_ROOT}/src/ninlil_rf_profile.c"
-        "${NINLIL_ROOT}/ports/flash/ninlil_flash_store.c"
-        "${NINLIL_ROOT}/ports/flash/ninlil_security_state.c"
-        "${NINLIL_ROOT}/ports/esp32s3/ninlil_flash_journal.c"
-        "${NINLIL_ROOT}/ports/esp32s3/ninlil_security_partitions.c"
-        "${NINLIL_ROOT}/ports/esp32s3/ninlil_flash_admin.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil.c" "${NINLIL_CORE_ROOT}/src/ninlil_wire.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil_diag.c" "${NINLIL_CORE_ROOT}/src/ninlil_radio.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil_rf_profile.c"
+        "${NINLIL_CORE_ROOT}/ports/flash/ninlil_flash_store.c"
+        "${NINLIL_CORE_ROOT}/ports/flash/ninlil_security_state.c"
+        "${NINLIL_CORE_ROOT}/ports/esp32s3/ninlil_flash_journal.c"
+        "${NINLIL_CORE_ROOT}/ports/esp32s3/ninlil_security_partitions.c"
+        "${NINLIL_CORE_ROOT}/ports/esp32s3/ninlil_flash_admin.c"
     INCLUDE_DIRS
-        "${NINLIL_ROOT}/include"
-        "${NINLIL_ROOT}/src"
-        "${NINLIL_ROOT}/ports/flash"
-        "${NINLIL_ROOT}/ports/esp32s3/include"
+        "${NINLIL_CORE_ROOT}/include"
+        "${NINLIL_CORE_ROOT}/src"
+        "${NINLIL_CORE_ROOT}/ports/flash"
+        "${NINLIL_CORE_ROOT}/ports/esp32s3/include"
     REQUIRES esp_partition
 )
 
