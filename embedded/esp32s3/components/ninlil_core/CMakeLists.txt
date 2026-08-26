@@ -18,8 +18,12 @@ idf_component_register(
     REQUIRES esp_partition
 )
 
+# ESP-IDF public headers intentionally use GCC extensions such as
+# `#include_next` and test configuration macros that may be undefined. Keep
+# first-party warnings strict here, while the host ESP syntax gate separately
+# enforces -Wpedantic and -Wundef against stubbed framework headers.
 target_compile_options(${COMPONENT_LIB} PRIVATE
-    -std=c11 -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion
-    -Wsign-conversion -Wformat=2 -Wundef -Wcast-align -Wvla
+    -std=c11 -Wall -Wextra -Werror -Wshadow -Wconversion
+    -Wsign-conversion -Wformat=2 -Wcast-align -Wvla
     -Wstrict-prototypes -Wmissing-prototypes -fno-common
 )
