@@ -1,0 +1,9 @@
+[[dependency]]
+name = "sx126x_driver"
+repository = "https://github.com/Lora-net/sx126x_driver.git"
+version = "v2.5.0"
+commit = "a10c5dfdf89788c6ac805e9fe98889de44175aa2"
+license = "BSD-3-Clause-Clear"
+usage = "SX1261/SX1262 command driver; LoRa subset only"
+excluded = ["LR-FHSS", "BPSK"]
+fetch_script = "scripts/fetch_sx126x_driver.sh"

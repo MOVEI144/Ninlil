@@ -1,0 +1,4 @@
+#ifndef SX126X_REGS_H
+#define SX126X_REGS_H
+#define SX126X_REG_LR_SYNCWORD 0x0740u
+#endif
