@@ -1,0 +1,97 @@
+name: Recover canonical source
+
+on:
+  push:
+    branches:
+      - recovery/restore-canonical-source
+    paths:
+      - ".github/workflows/recover-source.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ninlil-canonical-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout recovery branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify canonical source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "recovery/restore-canonical-source"
+
+          cat .bootstrap/source.part-{00..11} > /tmp/ninlil-source.tar.xz.b64
+          base64 --decode /tmp/ninlil-source.tar.xz.b64 > /tmp/ninlil-source.tar.xz
+          echo "a9b5a8c5647c33e553b22f5aed4742ea07836ec22e023b66f53eb851d57a496b  /tmp/ninlil-source.tar.xz" | sha256sum --check --strict
+          test "$(wc -c < /tmp/ninlil-source.tar.xz)" -eq 62416
+
+          python3 - <<'PY'
+          from pathlib import PurePosixPath
+          import tarfile
+
+          archive = "/tmp/ninlil-source.tar.xz"
+          with tarfile.open(archive, "r:xz") as tf:
+              members = tf.getmembers()
+              if len(members) != 107:
+                  raise SystemExit(f"unexpected archive member count: {len(members)}")
+              for member in members:
+                  path = PurePosixPath(member.name)
+                  if path.is_absolute() or ".." in path.parts:
+                      raise SystemExit(f"unsafe archive path: {member.name}")
+                  if member.issym() or member.islnk():
+                      raise SystemExit(f"links are not permitted: {member.name}")
+          PY
+
+      - name: Restore source and remove bootstrap machinery
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .github/workflows/ci.yml /tmp/ninlil-ci.yml
+          tar -xJf /tmp/ninlil-source.tar.xz
+          install -m 0644 /tmp/ninlil-ci.yml .github/workflows/ci.yml
+
+          rm -rf .bootstrap .recovery
+          rm -f .bootstrap-failure.log
+          rm -f \
+            .github/workflows/bootstrap-import-v2.yml \
+            .github/workflows/bootstrap-import.yml \
+            .github/workflows/canonical-import-gate.yml \
+            .github/workflows/cleanup-import-v2.yml \
+            .github/workflows/cleanup-import.yml \
+            .github/workflows/finalize-import.yml \
+            .github/workflows/format-import.yml \
+            .github/workflows/recover-source.yml
+
+          chmod +x scripts/*.sh
+          test -f CMakeLists.txt
+          test -x scripts/ci.sh
+          test -f include/ninlil.h
+          test -f src/ninlil.c
+          test -f ports/esp32s3/ninlil_sx1262_radio.c
+          test -f ports/flash/ninlil_security_state.c
+          test -f tests/test_security_state.c
+          test ! -e .bootstrap
+          test ! -e .bootstrap-failure.log
+          git diff --check
+
+      - name: Commit recovered source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "fix: restore canonical Ninlil source tree [skip ci]"
+          git push origin HEAD:recovery/restore-canonical-source
