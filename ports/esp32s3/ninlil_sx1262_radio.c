@@ -24,7 +24,7 @@ static void IRAM_ATTR dio1_isr(void *context)
     if (radio && radio->owner_task)
         vTaskNotifyGiveFromISR(radio->owner_task, &awakened);
     if (awakened == pdTRUE)
-        portYIELD_FROM_ISR();
+        portYIELD_FROM_ISR(awakened);
 }
 
 static int status_ok(sx126x_status_t status)
@@ -75,7 +75,7 @@ static int configure_gpio(ninlil_sx1262_radio *radio)
 
 static int set_rx_gate(const ninlil_sx1262_radio *radio, bool receive)
 {
-    int level = receive == radio->rx_gate_active_high ? 1 : 0;
+    uint32_t level = (uint32_t)(receive == radio->rx_gate_active_high);
 
     return gpio_set_level((gpio_num_t)NINLIL_SX1262_PIN_RF_GATE, level) ==
                    ESP_OK
