@@ -1,12 +1,12 @@
-set(NINLIL_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../..")
+get_filename_component(NINLIL_RADIO_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../.." ABSOLUTE)
 
 idf_component_register(
     SRCS
-        "${NINLIL_ROOT}/ports/esp32s3/ninlil_sx1262_hal.c"
-        "${NINL_ROOT}/ports/esp32s3/ninlil_sx1262_radio.c"
+        "${NINLIL_RADIO_ROOT}/ports/esp32s3/ninlil_sx1262_hal.c"
+        "${NINLIL_RADIO_ROOT}/ports/esp32s3/ninlil_sx1262_radio.c"
     INCLUDE_DIRS
-        "${NINLIL_ROOT}/include"
-        "${NINLIL_ROOT}/ports/esp32s3"
+        "${NINLIL_RADIO_ROOT}/include"
+        "${NINLIL_RADIO_ROOT}/ports/esp32s3"
     REQUIRES
         sx126x_driver
         esp_driver_gpio
