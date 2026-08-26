@@ -1,5 +1,5 @@
-set(NINLIL_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../..")
-set(SX126X_ROOT "${NINLIL_ROOT}/third_party/sx126x_driver")
+get_filename_component(NINLIL_VENDOR_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../.." ABSOLUTE)
+set(SX126X_ROOT "${NINLIL_VENDOR_ROOT}/third_party/sx126x_driver")
 
 if(NOT EXISTS "${SX126X_ROOT}/src/sx126x.c")
     message(FATAL_ERROR
