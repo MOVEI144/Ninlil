@@ -13,6 +13,8 @@
 #define APP_SERVICE UINT16_C(0x0100)
 #define ARCHIVE_CAPACITY 32u
 #define RECEIPT_CLASSES 3u
+#define RECEIPT_FAIRNESS_ROUNDS 3u
+#define SCHEDULER_PHASES 3u
 #define OLD_OUT_CREATE 1u
 #define OLD_OUT_HEADER 52u
 #define CURRENT_RECORD_VERSION 3u
@@ -35,6 +37,7 @@ typedef struct scripted_link {
     size_t incoming_length;
     size_t last_sent_length;
     uint32_t send_calls;
+    ninlil_id receipt_message_id[64];
     uint8_t receipt_status[64];
     uint8_t receipt_evidence[64];
     uint8_t receipt_count;
@@ -58,8 +61,12 @@ static int scripted_send(void *ctx, const uint8_t *data, size_t length)
     link->last_sent_length = length;
     if (length == NINLIL_WIRE_RECEIPT_SIZE && data[3] == NINLIL_WIRE_RECEIPT &&
         link->receipt_count < sizeof(link->receipt_status)) {
-        link->receipt_status[link->receipt_count] = data[24];
-        link->receipt_evidence[link->receipt_count] = data[25];
+        uint8_t receipt_index = link->receipt_count;
+
+        memcpy(link->receipt_message_id[receipt_index].bytes, data + 8,
+               NINLIL_ID_BYTES);
+        link->receipt_status[receipt_index] = data[24];
+        link->receipt_evidence[receipt_index] = data[25];
         link->receipt_count++;
     }
     return link->send_result;
@@ -463,13 +470,17 @@ static int test_receipt_classes_make_bounded_progress(void)
     ninlil_role_profile profile;
     ninlil_runtime *runtime = NULL;
     ninlil_id archived_id;
-    ninlil_id live_id;
+    ninlil_id live_ids[2];
     ninlil_id rejected_id;
+    ninlil_id outbound_key;
+    ninlil_id outbound_id;
+    ninlil_id last_live_receipt;
+    ninlil_submission outbound;
     uint32_t random_state = 7u;
-    uint8_t seen_remote = 0u;
-    uint8_t seen_application = 0u;
-    uint8_t seen_rejection = 0u;
+    uint8_t outbound_payload = UINT8_C(0xE4);
+    uint8_t have_live_receipt = 0u;
     unsigned int index;
+    unsigned int round;
 
     CHECK(setup_leaf(directory, path, &profile, &policy) == 0);
     memset(&link, 0, sizeof(link));
@@ -480,34 +491,73 @@ static int test_receipt_classes_make_bounded_progress(void)
     CHECK(accept_protected(runtime, &link, &archived_id, UINT8_C(0xE0)) ==
           NINLIL_OK);
 
-    test_fill_id(&live_id, UINT8_C(0xE1));
-    CHECK(inject_data(&link, &live_id, NINLIL_EVIDENCE_REMOTE_STORED,
-                      UINT8_C(0xE1)) == NINLIL_OK);
-    CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    for (index = 0u; index < 2u; index++) {
+        uint8_t value = (uint8_t)(UINT8_C(0xE1) + index);
+
+        test_fill_id(&live_ids[index], value);
+        CHECK(inject_data(&link, &live_ids[index],
+                          NINLIL_EVIDENCE_REMOTE_STORED, value) == NINLIL_OK);
+        CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    }
     policy.result = NINLIL_ERR_NOT_FOUND;
-    test_fill_id(&rejected_id, UINT8_C(0xE2));
+    test_fill_id(&rejected_id, UINT8_C(0xE3));
     CHECK(inject_data(&link, &rejected_id, NINLIL_EVIDENCE_REMOTE_STORED,
-                      UINT8_C(0xE2)) == NINLIL_OK);
+                      UINT8_C(0xE3)) == NINLIL_OK);
     CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
     policy.result = NINLIL_OK;
 
+    test_fill_id(&outbound_key, UINT8_C(0xE4));
+    outbound = make_submission(outbound_key, NINLIL_EVIDENCE_REMOTE_STORED,
+                               &outbound_payload);
+    CHECK(ninlil_submit(runtime, &outbound, &outbound_id) == NINLIL_OK);
+    CHECK(wait_for_attempt(runtime, &outbound_id) == NINLIL_OK);
+
     link.receipt_count = 0u;
-    for (index = 0u; index < RECEIPT_CLASSES; index++)
-        CHECK(ninlil_step(runtime) == NINLIL_ERR_CAPACITY);
-    CHECK(link.receipt_count == RECEIPT_CLASSES);
-    for (index = 0u; index < link.receipt_count; index++) {
-        if (link.receipt_status[index] == NINLIL_RECEIPT_EVIDENCE &&
-            link.receipt_evidence[index] == NINLIL_EVIDENCE_REMOTE_STORED)
-            seen_remote = 1u;
-        else if (link.receipt_status[index] == NINLIL_RECEIPT_EVIDENCE &&
-                 link.receipt_evidence[index] ==
-                     NINLIL_EVIDENCE_APPLICATION_ACCEPTED)
-            seen_application = 1u;
-        else if (link.receipt_status[index] ==
-                 NINLIL_RECEIPT_PERMANENT_REJECTION)
-            seen_rejection = 1u;
+    for (round = 0u; round < RECEIPT_FAIRNESS_ROUNDS; round++) {
+        uint8_t begin = link.receipt_count;
+        unsigned int live_count = 0u;
+        unsigned int application_count = 0u;
+        unsigned int rejection_count = 0u;
+        unsigned int step;
+
+        for (step = 0u; step < SCHEDULER_PHASES * RECEIPT_CLASSES; step++) {
+            int rc;
+
+            if (link.incoming_length == 0u)
+                CHECK(inject_data(&link, &live_ids[0],
+                                  NINLIL_EVIDENCE_REMOTE_STORED,
+                                  UINT8_C(0xE1)) == NINLIL_OK);
+            rc = ninlil_step(runtime);
+            CHECK(rc == NINLIL_OK || rc == NINLIL_ERR_CAPACITY);
+        }
+        CHECK(link.receipt_count == (uint8_t)(begin + RECEIPT_CLASSES));
+        for (index = begin; index < link.receipt_count; index++) {
+            ninlil_id *receipt_id = &link.receipt_message_id[index];
+
+            if (link.receipt_status[index] == NINLIL_RECEIPT_EVIDENCE &&
+                link.receipt_evidence[index] == NINLIL_EVIDENCE_REMOTE_STORED) {
+                CHECK(same_id(receipt_id, &live_ids[0]) ||
+                      same_id(receipt_id, &live_ids[1]));
+                if (have_live_receipt)
+                    CHECK(!same_id(receipt_id, &last_live_receipt));
+                last_live_receipt = *receipt_id;
+                have_live_receipt = 1u;
+                live_count++;
+            } else if (link.receipt_status[index] == NINLIL_RECEIPT_EVIDENCE &&
+                       link.receipt_evidence[index] ==
+                           NINLIL_EVIDENCE_APPLICATION_ACCEPTED) {
+                CHECK(same_id(receipt_id, &archived_id));
+                application_count++;
+            } else {
+                CHECK(link.receipt_status[index] ==
+                      NINLIL_RECEIPT_PERMANENT_REJECTION);
+                CHECK(same_id(receipt_id, &rejected_id));
+                rejection_count++;
+            }
+        }
+        CHECK(live_count == 1u && application_count == 1u &&
+              rejection_count == 1u);
     }
-    CHECK(seen_remote && seen_application && seen_rejection);
 
     ninlil_close(runtime);
     test_remove_directory(directory, path, NULL);

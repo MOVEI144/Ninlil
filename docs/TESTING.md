@@ -17,7 +17,7 @@
 - A flaky test is a defect, not an accepted state.
 - Coverage percentage is not an acceptance criterion by itself.
 - Every milestone distinguishes host/model gates from physical gates.
-- P0 host tests cover store-before-receipt, restart handoff, duplicate, lost, pre-attempt, and reordered receipts, archive pressure and receipt-class progress, policy-error classification, reserves and starvation, deadline uncertainty, custody replay, Leaf windows, multi-Gateway dedupe, route epochs, group waves, and authorization-before-inbox.
+- P0 host tests cover store-before-receipt, restart handoff, duplicate, lost, pre-attempt, and reordered receipts, archive pressure, saturated receive/outbound phases, three-class receipt progress across repeated exact bound windows, per-class entry rotation, policy-error classification, reserves and starvation, deadline uncertainty, custody replay, Leaf windows, multi-Gateway dedupe, route epochs, group waves, and authorization-before-inbox.
 - Test evidence records exact commit and tool versions.
 
 The default host gate is `./scripts/ci.sh`. The standard ESP32 target is built separately with ESP-IDF v6.0.2.

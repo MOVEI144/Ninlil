@@ -408,10 +408,17 @@ int ninlil_process_receipt_send(ninlil_runtime *runtime, int *worked)
         uint8_t receipt_class =
             (uint8_t)((runtime->receipt_class_cursor + scanned) %
                       NINLIL_RECEIPT_CLASSES);
-        int rc = receipt_class == 0u   ? send_inbound_receipt(runtime, worked)
-                 : receipt_class == 1u ? send_archive_receipt(runtime, worked)
-                                       : send_rejection(runtime, worked);
+        int rc;
 
+        if (receipt_class == NINLIL_RECEIPT_CLASS_INBOUND)
+            rc = send_inbound_receipt(runtime, worked);
+        else if (receipt_class == NINLIL_RECEIPT_CLASS_ARCHIVE)
+            rc = send_archive_receipt(runtime, worked);
+        else if (receipt_class == NINLIL_RECEIPT_CLASS_REJECTION)
+            rc = send_rejection(runtime, worked);
+        else
+            return NINLIL_ERR_FAULT;
+        /* A blocked class must not monopolize later receipt opportunities. */
         if (*worked) {
             runtime->receipt_class_cursor =
                 (uint8_t)((receipt_class + 1u) % NINLIL_RECEIPT_CLASSES);
