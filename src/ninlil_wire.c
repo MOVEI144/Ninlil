@@ -134,9 +134,7 @@ int ninlil_wire_decode_data(const uint8_t *packet, size_t length,
         return NINLIL_ERR_INVALID;
     candidate.absolute_deadline_ms = get_be64(packet + 30);
     if (((flags & DATA_DEADLINE_PRESENT) == 0u) !=
-            (candidate.absolute_deadline_ms == 0u) ||
-        (candidate.absolute_deadline_ms != 0u &&
-         packet[27] != NINLIL_EVIDENCE_REMOTE_STORED))
+        (candidate.absolute_deadline_ms == 0u))
         return NINLIL_ERR_INVALID;
     memcpy(candidate.message_id.bytes, packet + 10, NINLIL_ID_BYTES);
     candidate.ownership = (ninlil_ownership)packet[26];

@@ -13,7 +13,8 @@
 #define NINLIL_JRN_IN_APPLICATION_ACCEPT 6u
 #define NINLIL_JRN_IN_RECEIPT_HANDOFF 7u
 #define NINLIL_JRN_IN_REJECTION 8u
-#define NINLIL_JRN_RECORD_VERSION 4u
+#define NINLIL_JRN_IN_EXPIRED 9u
+#define NINLIL_JRN_RECORD_VERSION 5u
 #define NINLIL_JRN_OUT_HEADER 52u
 #define NINLIL_JRN_IN_HEADER 36u
 #define NINLIL_JRN_DEADLINE_PRESENT 0x01u
@@ -94,6 +95,7 @@ typedef struct ninlil_rejection_entry {
     uint16_t payload_len;
     ninlil_ownership ownership;
     ninlil_evidence required_evidence;
+    ninlil_evidence latest_evidence;
     ninlil_traffic_class traffic_class;
     uint8_t status;
     uint8_t pending;
@@ -184,6 +186,8 @@ int ninlil_archive_outbound(ninlil_runtime *runtime,
 int ninlil_archive_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry,
                            ninlil_evidence evidence, uint8_t need_receipt,
                            uint16_t archive_slot);
+int ninlil_rejection_admission(const ninlil_runtime *runtime, uint16_t *slot);
+int ninlil_expire_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry);
 int ninlil_outbound_admission(const ninlil_runtime *runtime,
                               ninlil_traffic_class traffic_class);
 int ninlil_total_owned_available(const ninlil_runtime *runtime);
