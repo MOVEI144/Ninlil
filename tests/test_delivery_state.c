@@ -5,8 +5,10 @@
 #include "ninlil_wire.h"
 #include "test_support.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -1404,6 +1406,37 @@ static int test_durable_permanent_rejection_tombstones(void)
         CHECK(ninlil_step(runtime) == NINLIL_OK);
     CHECK(link.send_calls == send_calls);
     CHECK(ninlil_receive(runtime, &inbound) == NINLIL_ERR_EMPTY);
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(remove(path) == 0);
+
+    memset(&link, 0, sizeof(link));
+    policy.result = NINLIL_ERR_NOT_FOUND;
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    CHECK(journal_size(path, &empty_size) == 0);
+    {
+        struct rlimit blocked_limit;
+        struct rlimit previous_limit;
+        void (*previous_handler)(int);
+
+        CHECK(getrlimit(RLIMIT_FSIZE, &previous_limit) == 0);
+        blocked_limit = previous_limit;
+        blocked_limit.rlim_cur = (rlim_t)empty_size;
+        previous_handler = signal(SIGXFSZ, SIG_IGN);
+        CHECK(previous_handler != SIG_ERR);
+        CHECK(setrlimit(RLIMIT_FSIZE, &blocked_limit) == 0);
+        test_fill_id(&rejected_id, UINT8_C(0x4E));
+        CHECK(inject_data(&link, &rejected_id, NINLIL_EVIDENCE_REMOTE_STORED,
+                          payload) == NINLIL_OK);
+        CHECK(ninlil_step(runtime) == NINLIL_ERR_IO);
+        CHECK(setrlimit(RLIMIT_FSIZE, &previous_limit) == 0);
+        CHECK(signal(SIGXFSZ, previous_handler) != SIG_ERR);
+    }
+    CHECK(link.send_calls == 0u && link.receipt_count == 0u);
+    CHECK(journal_size(path, &current_size) == 0 && current_size == empty_size);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_IO);
+    CHECK(link.send_calls == 0u);
     ninlil_close(runtime);
     runtime = NULL;
     CHECK(remove(path) == 0);

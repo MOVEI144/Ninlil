@@ -467,6 +467,10 @@ static int send_rejection(ninlil_runtime *runtime, int *worked)
 
         if (!entry->used || !entry->pending)
             continue;
+        if (!entry->durable ||
+            (entry->status != NINLIL_RECEIPT_PERMANENT_REJECTION &&
+             entry->status != NINLIL_RECEIPT_EXPIRED))
+            return NINLIL_ERR_FAULT;
         runtime->rejection_cursor =
             (uint16_t)((index + 1u) % runtime->rejection_capacity);
         *worked = 1;
