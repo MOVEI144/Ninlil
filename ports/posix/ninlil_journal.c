@@ -314,17 +314,40 @@ int ninlil_journal_read(ninlil_journal *journal,
                         uint16_t relative_offset, uint8_t *buffer,
                         uint16_t length)
 {
-    uint64_t end;
+    uint8_t record[JRN_HEADER + JRN_MAX_PAYLOAD + JRN_CRC];
+    uint64_t record_offset;
+    uint16_t stored_length;
+    uint16_t verified_length;
+    size_t total_length;
+    int rc;
 
     if (!journal || journal->fd < 0 || journal->poisoned || !reference ||
         (length > 0u && !buffer) || relative_offset > reference->length ||
-        length > (uint16_t)(reference->length - relative_offset))
+        length > (uint16_t)(reference->length - relative_offset) ||
+        reference->offset < JRN_HEADER ||
+        reference->offset > (uint64_t)INT64_MAX)
         return NINLIL_ERR_INVALID;
-    end = reference->offset + relative_offset;
-    if (end < reference->offset || end > (uint64_t)INT64_MAX ||
-        length > (uint64_t)INT64_MAX - end)
+    record_offset = reference->offset - JRN_HEADER;
+    rc = read_full_at(journal->fd, (off_t)record_offset, record, JRN_HEADER);
+    if (rc != NINLIL_OK)
+        return rc;
+    if (!header_valid(record, &stored_length) ||
+        stored_length != reference->length)
+        return NINLIL_ERR_CORRUPT;
+    total_length = JRN_HEADER + (size_t)stored_length + JRN_CRC;
+    if (record_offset > (uint64_t)INT64_MAX - total_length)
         return NINLIL_ERR_INVALID;
-    return read_full_at(journal->fd, (off_t)end, buffer, length);
+    rc = read_full_at(journal->fd, (off_t)record_offset, record, total_length);
+    if (rc != NINLIL_OK)
+        return rc;
+    if (!header_valid(record, &verified_length) ||
+        verified_length != stored_length ||
+        get_be32(record + JRN_HEADER + stored_length) !=
+            crc32_ieee(record, JRN_HEADER + (size_t)stored_length))
+        return NINLIL_ERR_CORRUPT;
+    if (length > 0u)
+        memcpy(buffer, record + JRN_HEADER + relative_offset, length);
+    return NINLIL_OK;
 }
 
 void ninlil_journal_close(ninlil_journal *journal)

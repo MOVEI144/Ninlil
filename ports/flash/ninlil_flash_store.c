@@ -397,15 +397,62 @@ int ninlil_flash_store_read(const ninlil_flash_store *store,
                             uint16_t relative_offset, uint8_t *buffer,
                             uint16_t length)
 {
+    uint8_t header[FLASH_HEADER_SIZE];
+    uint8_t record[FLASH_MAX_RECORD_SIZE];
+    size_t record_offset;
+    uint8_t type;
+    uint16_t payload_length;
+    uint16_t total_length;
+    uint32_t sequence;
+    int rc;
+
     if (!store || !io_valid(&store->io) || store->poisoned ||
         (length > 0u && !buffer) || relative_offset > record_length ||
         length > (uint16_t)(record_length - relative_offset) ||
-        payload_offset > store->io.size ||
-        relative_offset > store->io.size - payload_offset ||
-        length > store->io.size - payload_offset - relative_offset)
+        payload_offset < FLASH_HEADER_SIZE)
         return NINLIL_ERR_INVALID;
-    return read_exact(&store->io, payload_offset + relative_offset, buffer,
-                      length);
+    record_offset = payload_offset - FLASH_HEADER_SIZE;
+    if (record_offset % NINLIL_FLASH_ALIGNMENT != 0u ||
+        record_offset > store->io.size ||
+        FLASH_HEADER_SIZE > store->io.size - record_offset)
+        return NINLIL_ERR_INVALID;
+    rc = read_exact(&store->io, record_offset, header, sizeof(header));
+    if (rc != NINLIL_OK)
+        return rc;
+    if (!header_parse(header, &type, &payload_length, &total_length,
+                      &sequence) ||
+        payload_length != record_length)
+        return NINLIL_ERR_CORRUPT;
+    (void)type;
+    if (total_length > sizeof(record) || total_length > store->append_offset ||
+        record_offset > store->append_offset - total_length ||
+        record_offset / NINLIL_FLASH_SECTOR_SIZE !=
+            (record_offset + total_length - 1u) / NINLIL_FLASH_SECTOR_SIZE)
+        return NINLIL_ERR_CORRUPT;
+    rc = read_exact(&store->io, record_offset, record, total_length);
+    if (rc != NINLIL_OK)
+        return rc;
+    {
+        uint8_t verified_type;
+        uint16_t verified_payload_length;
+        uint16_t verified_total_length;
+        uint32_t verified_sequence;
+
+        if (!header_parse(record, &verified_type, &verified_payload_length,
+                          &verified_total_length, &verified_sequence) ||
+            verified_type != type ||
+            verified_payload_length != payload_length ||
+            verified_total_length != total_length ||
+            verified_sequence != sequence)
+            return NINLIL_ERR_CORRUPT;
+    }
+    rc = validate_committed_record(record, payload_length, total_length,
+                                   sequence);
+    if (rc != NINLIL_OK)
+        return rc;
+    if (length > 0u)
+        memcpy(buffer, record + FLASH_HEADER_SIZE + relative_offset, length);
+    return NINLIL_OK;
 }
 
 int ninlil_flash_store_format(const ninlil_flash_io *io)

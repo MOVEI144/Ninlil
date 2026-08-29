@@ -13,6 +13,9 @@
 #define APP_SERVICE UINT16_C(0x0100)
 #define BATCH_MESSAGES 20u
 #define TOTAL_MESSAGES 100u
+#define FLASH_PAYLOAD_OFFSET 32L
+#define OUTBOUND_PAYLOAD_OFFSET 52L
+#define INBOUND_PAYLOAD_OFFSET 36L
 
 #define CHECK(expression)                                                      \
     do {                                                                       \
@@ -43,9 +46,9 @@ static int initialize_radio(ninlil_radio_link *radio, ninlil_link *link)
     return ninlil_radio_mark_initialized(radio);
 }
 
-static int open_runtime(ninlil_runtime **runtime, const char *path,
-                        uint16_t node_id, ninlil_link link,
-                        uint32_t *random_state)
+static int open_runtime_work(ninlil_runtime **runtime, const char *path,
+                             uint16_t node_id, ninlil_link link,
+                             uint32_t *random_state, uint32_t max_work)
 {
     ninlil_config config;
 
@@ -53,7 +56,7 @@ static int open_runtime(ninlil_runtime **runtime, const char *path,
     config.journal_location = path;
     config.node_id = node_id;
     config.retry_interval_steps = 1u;
-    config.max_work_per_step = 8u;
+    config.max_work_per_step = max_work;
     config.link = link;
     config.random.fill = test_rng_fill;
     config.random.ctx = random_state;
@@ -63,6 +66,32 @@ static int open_runtime(ninlil_runtime **runtime, const char *path,
                                      &config.profile) != NINLIL_OK)
         return NINLIL_ERR_INVALID;
     return ninlil_open(runtime, &config);
+}
+
+static int open_runtime(ninlil_runtime **runtime, const char *path,
+                        uint16_t node_id, ninlil_link link,
+                        uint32_t *random_state)
+{
+    return open_runtime_work(runtime, path, node_id, link, random_state, 8u);
+}
+
+static int flip_file_byte(const char *path, long offset)
+{
+    FILE *file = fopen(path, "r+b");
+    int value;
+    int result = -1;
+
+    if (!file)
+        return -1;
+    if (fseek(file, offset, SEEK_SET) == 0) {
+        value = fgetc(file);
+        if (value != EOF && fseek(file, offset, SEEK_SET) == 0 &&
+            fputc(value ^ 1, file) != EOF && fflush(file) == 0)
+            result = 0;
+    }
+    if (fclose(file) != 0)
+        result = -1;
+    return result;
 }
 
 static int submit_message(ninlil_runtime *runtime, const ninlil_id *key,
@@ -327,10 +356,85 @@ static int test_submit_survives_abrupt_exit(void)
     return 0;
 }
 
+static int test_flash_runtime_stops_on_payload_corruption(void)
+{
+    char directory[40];
+    char first_path[80];
+    char second_path[80];
+    radio_pair pair;
+    ninlil_link first_link;
+    ninlil_link second_link;
+    ninlil_runtime *first = NULL;
+    ninlil_runtime *second = NULL;
+    uint32_t first_random = 60u;
+    uint32_t second_random = 61u;
+    ninlil_id key;
+    ninlil_id message_id;
+    ninlil_inbound inbound;
+    uint8_t payload = UINT8_C(0x60);
+    int rc;
+
+    CHECK(test_make_directory(directory, sizeof(directory)) == 0);
+    CHECK(test_make_path(first_path, sizeof(first_path), directory,
+                         "out.flash") == 0);
+    CHECK(test_make_path(second_path, sizeof(second_path), directory,
+                         "in.flash") == 0);
+    memset(&pair, 0, sizeof(pair));
+    CHECK(initialize_radio(&pair.first, &first_link) == NINLIL_OK);
+    CHECK(open_runtime(&first, first_path, 1u, first_link, &first_random) ==
+          NINLIL_OK);
+    test_fill_id(&key, UINT8_C(0x60));
+    CHECK(submit_message(first, &key, 2u, &payload, 1u, &message_id) ==
+          NINLIL_OK);
+    CHECK(flip_file_byte(first_path,
+                         FLASH_PAYLOAD_OFFSET + OUTBOUND_PAYLOAD_OFFSET) == 0);
+    CHECK(ninlil_step(first) == NINLIL_ERR_CORRUPT);
+    CHECK(pair.first.tx_pending == 0u);
+    ninlil_close(first);
+    first = NULL;
+    CHECK(open_runtime(&first, first_path, 1u, first_link, &first_random) ==
+          NINLIL_ERR_CORRUPT);
+    CHECK(first == NULL);
+    CHECK(remove(first_path) == 0);
+
+    memset(&pair, 0, sizeof(pair));
+    CHECK(initialize_radio(&pair.first, &first_link) == NINLIL_OK);
+    CHECK(initialize_radio(&pair.second, &second_link) == NINLIL_OK);
+    CHECK(open_runtime(&first, first_path, 1u, first_link, &first_random) ==
+          NINLIL_OK);
+    CHECK(open_runtime_work(&second, second_path, 2u, second_link,
+                            &second_random, 1u) == NINLIL_OK);
+    test_fill_id(&key, UINT8_C(0x61));
+    CHECK(submit_message(first, &key, 2u, &payload, 1u, &message_id) ==
+          NINLIL_OK);
+    rc = ninlil_step(first);
+    CHECK(rc == NINLIL_OK || rc == NINLIL_ERR_BUSY);
+    CHECK(pair.first.tx_pending == 1u);
+    CHECK(air_move(&pair.first, &pair.second, &pair.drop_first_to_second,
+                   &pair.duplicate_first_to_second) == NINLIL_OK);
+    CHECK(ninlil_step(second) == NINLIL_OK);
+    CHECK(pair.second.tx_pending == 0u);
+    CHECK(flip_file_byte(second_path,
+                         FLASH_PAYLOAD_OFFSET + INBOUND_PAYLOAD_OFFSET) == 0);
+    CHECK(ninlil_receive(second, &inbound) == NINLIL_ERR_CORRUPT);
+    CHECK(ninlil_step(second) == NINLIL_ERR_CORRUPT);
+    CHECK(pair.second.tx_pending == 0u);
+    ninlil_close(first);
+    ninlil_close(second);
+    first = NULL;
+    second = NULL;
+    CHECK(open_runtime_work(&second, second_path, 2u, second_link,
+                            &second_random, 1u) == NINLIL_ERR_CORRUPT);
+    CHECK(second == NULL);
+    test_remove_directory(directory, first_path, second_path);
+    return 0;
+}
+
 static int (*const tests[])(void) = {
     test_direct_delivery_with_loss_and_duplicates,
     test_bidirectional_hundred_messages,
     test_submit_survives_abrupt_exit,
+    test_flash_runtime_stops_on_payload_corruption,
 };
 
 int main(void)

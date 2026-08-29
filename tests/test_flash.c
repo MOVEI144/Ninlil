@@ -447,6 +447,42 @@ static int test_erased_sector_gap_is_corrupt(void)
     return 0;
 }
 
+static int test_referenced_reads_revalidate_complete_record(void)
+{
+    static const size_t mutation_offsets[] = {0u, 24u, 32u, 33u, 40u, 48u};
+    size_t index;
+
+    for (index = 0u;
+         index < sizeof(mutation_offsets) / sizeof(mutation_offsets[0]);
+         index++) {
+        memory_flash flash;
+        ninlil_flash_io io;
+        ninlil_flash_store store;
+        capture records;
+        size_t payload_offset;
+        uint8_t payload = UINT8_C(0xA5);
+        uint8_t result = 0u;
+
+        memory_flash_init(&flash);
+        io = memory_io(&flash, sizeof(flash.bytes));
+        memset(&records, 0, sizeof(records));
+        CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
+              NINLIL_OK);
+        CHECK(ninlil_flash_store_append_ref(&store, 1u, &payload, 1u,
+                                            &payload_offset) == NINLIL_OK);
+        CHECK(payload_offset == TEST_FLASH_HEADER_SIZE);
+        flash.bytes[mutation_offsets[index]] ^=
+            mutation_offsets[index] == TEST_FLASH_COMMIT_OFFSET ? UINT8_C(0x02)
+                                                                : UINT8_C(0x01);
+        CHECK(ninlil_flash_store_read(&store, payload_offset, 1u, 0u, &result,
+                                      1u) == NINLIL_ERR_CORRUPT);
+        memset(&records, 0, sizeof(records));
+        CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
+              NINLIL_ERR_CORRUPT);
+    }
+    return 0;
+}
+
 static int (*const tests[])(void) = {
     test_append_replay,
     test_torn_record_abandons_sector,
@@ -459,6 +495,7 @@ static int (*const tests[])(void) = {
     test_committed_header_corruption_is_hard_failure,
     test_committed_marker_corruption_is_hard_failure,
     test_erased_sector_gap_is_corrupt,
+    test_referenced_reads_revalidate_complete_record,
 };
 
 int main(void)
