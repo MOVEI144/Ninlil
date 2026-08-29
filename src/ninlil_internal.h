@@ -148,12 +148,11 @@ int ninlil_log_evidence(ninlil_runtime *runtime, const ninlil_id *id,
                         ninlil_evidence evidence);
 int ninlil_log_terminal(ninlil_runtime *runtime, const ninlil_id *id,
                         ninlil_outcome outcome);
-void ninlil_archive_outbound(ninlil_runtime *runtime,
-                             ninlil_outbound_entry *entry,
-                             ninlil_outcome outcome);
-void ninlil_archive_inbound(ninlil_runtime *runtime,
-                            ninlil_inbound_entry *entry,
-                            ninlil_evidence evidence, uint8_t need_receipt);
+int ninlil_archive_outbound(ninlil_runtime *runtime,
+                            ninlil_outbound_entry *entry,
+                            ninlil_outcome outcome);
+int ninlil_archive_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry,
+                           ninlil_evidence evidence, uint8_t need_receipt);
 int ninlil_outbound_admission(const ninlil_runtime *runtime,
                               ninlil_traffic_class traffic_class);
 int ninlil_total_owned_available(const ninlil_runtime *runtime);

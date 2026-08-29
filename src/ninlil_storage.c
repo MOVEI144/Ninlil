@@ -179,39 +179,43 @@ int ninlil_id_in_use(ninlil_runtime *runtime, const ninlil_id *id)
 
 static ninlil_archive_entry *archive_slot(ninlil_runtime *runtime)
 {
+    uint16_t capacity = runtime->archive_capacity;
     uint16_t scanned;
 
-    for (scanned = 0u; scanned < runtime->archive_capacity; scanned++) {
+    if (capacity == 0u)
+        return NULL;
+    for (scanned = 0u; scanned < capacity; scanned++) {
         uint16_t index =
-            (uint16_t)((runtime->archive_replace_cursor + scanned) %
-                       runtime->archive_capacity);
+            (uint16_t)((runtime->archive_replace_cursor + scanned) % capacity);
         if (!runtime->archive[index].used) {
             runtime->archive_replace_cursor =
-                (uint16_t)((index + 1u) % runtime->archive_capacity);
+                (uint16_t)((index + 1u) % capacity);
             return &runtime->archive[index];
         }
     }
-    for (scanned = 0u; scanned < runtime->archive_capacity; scanned++) {
+    for (scanned = 0u; scanned < capacity; scanned++) {
         uint16_t index =
-            (uint16_t)((runtime->archive_replace_cursor + scanned) %
-                       runtime->archive_capacity);
+            (uint16_t)((runtime->archive_replace_cursor + scanned) % capacity);
         if (!runtime->archive[index].need_receipt) {
             runtime->archive_replace_cursor =
-                (uint16_t)((index + 1u) % runtime->archive_capacity);
+                (uint16_t)((index + 1u) % capacity);
             return &runtime->archive[index];
         }
     }
-    return &runtime->archive[runtime->archive_replace_cursor++ %
-                             runtime->archive_capacity];
+    return &runtime->archive[runtime->archive_replace_cursor++ % capacity];
 }
 
-void ninlil_archive_outbound(ninlil_runtime *runtime,
-                             ninlil_outbound_entry *entry,
-                             ninlil_outcome outcome)
+int ninlil_archive_outbound(ninlil_runtime *runtime,
+                            ninlil_outbound_entry *entry,
+                            ninlil_outcome outcome)
 {
     ninlil_archive_entry *archive = archive_slot(runtime);
     ninlil_traffic_class traffic_class = entry->traffic_class;
 
+    if (!archive) {
+        runtime->fatal_error = NINLIL_ERR_STATE;
+        return runtime->fatal_error;
+    }
     memset(archive, 0, sizeof(*archive));
     archive->used = 1u;
     archive->kind = NINLIL_ARCHIVE_OUTBOUND;
@@ -233,14 +237,18 @@ void ninlil_archive_outbound(ninlil_runtime *runtime,
     runtime->live_by_class[(unsigned int)traffic_class]--;
     if (traffic_class == NINLIL_TRAFFIC_BULK)
         runtime->bulk_live--;
+    return NINLIL_OK;
 }
 
-void ninlil_archive_inbound(ninlil_runtime *runtime,
-                            ninlil_inbound_entry *entry,
-                            ninlil_evidence evidence, uint8_t need_receipt)
+int ninlil_archive_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry,
+                           ninlil_evidence evidence, uint8_t need_receipt)
 {
     ninlil_archive_entry *archive = archive_slot(runtime);
 
+    if (!archive) {
+        runtime->fatal_error = NINLIL_ERR_STATE;
+        return runtime->fatal_error;
+    }
     memset(archive, 0, sizeof(*archive));
     archive->used = 1u;
     archive->kind = NINLIL_ARCHIVE_INBOUND;
@@ -258,6 +266,7 @@ void ninlil_archive_inbound(ninlil_runtime *runtime,
     archive->need_receipt = need_receipt;
     memset(entry, 0, sizeof(*entry));
     runtime->inbound_live--;
+    return NINLIL_OK;
 }
 
 int ninlil_outbound_admission(const ninlil_runtime *runtime,

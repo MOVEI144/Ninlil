@@ -414,10 +414,9 @@ int ninlil_application_accept(ninlil_runtime *runtime,
     rc = ninlil_log_id(runtime, NINLIL_JRN_IN_APPLICATION_ACCEPT, message_id);
     if (rc != NINLIL_OK)
         return rc;
-    ninlil_archive_inbound(runtime, entry, NINLIL_EVIDENCE_APPLICATION_ACCEPTED,
-                           entry->required_evidence ==
-                               NINLIL_EVIDENCE_APPLICATION_ACCEPTED);
-    return NINLIL_OK;
+    return ninlil_archive_inbound(
+        runtime, entry, NINLIL_EVIDENCE_APPLICATION_ACCEPTED,
+        entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED);
 }
 
 static void info_from_outbound(const ninlil_outbound_entry *entry,

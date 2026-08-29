@@ -190,7 +190,8 @@ static int replay_out_update(ninlil_runtime *runtime, uint8_t type,
             return NINLIL_ERR_CORRUPT;
         entry->latest_evidence = evidence;
         if (ninlil_evidence_satisfies(entry->required_evidence, evidence))
-            ninlil_archive_outbound(runtime, entry, NINLIL_OUTCOME_SATISFIED);
+            return ninlil_archive_outbound(runtime, entry,
+                                           NINLIL_OUTCOME_SATISFIED);
         return NINLIL_OK;
     }
     if (type == NINLIL_JRN_OUT_TERMINAL) {
@@ -202,8 +203,7 @@ static int replay_out_update(ninlil_runtime *runtime, uint8_t type,
             (outcome == NINLIL_OUTCOME_FAILED && !entry->attempted) ||
             (outcome == NINLIL_OUTCOME_UNKNOWN && !entry->attempted))
             return NINLIL_ERR_CORRUPT;
-        ninlil_archive_outbound(runtime, entry, outcome);
-        return NINLIL_OK;
+        return ninlil_archive_outbound(runtime, entry, outcome);
     }
     return NINLIL_ERR_CORRUPT;
 }
@@ -236,9 +236,8 @@ int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
             return NINLIL_ERR_CORRUPT;
         need_receipt = (uint8_t)(entry->required_evidence ==
                                  NINLIL_EVIDENCE_APPLICATION_ACCEPTED);
-        ninlil_archive_inbound(
+        return ninlil_archive_inbound(
             runtime, entry, NINLIL_EVIDENCE_APPLICATION_ACCEPTED, need_receipt);
-        return NINLIL_OK;
     }
     return NINLIL_ERR_CORRUPT;
 }

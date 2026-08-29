@@ -12,7 +12,7 @@ common=(
   -I"$root/ports/esp32s3"
   -I"$root/ports/esp32s3/include"
   -I"$root/tests/esp_stub"
-  -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
+  -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion -Wsign-conversion
   -Wformat=2 -Wundef -Wcast-align -Wstrict-prototypes
   -Wmissing-prototypes -Wvla -fno-common
 )
@@ -52,11 +52,11 @@ esp_sources=(
 
 for source in "${host_sources[@]}"; do
   "$clang_bin" "${common[@]}" --analyze \
-    -Xanalyzer -analyzer-output=text "$source"
+    -Xanalyzer -analyzer-output=text -Xanalyzer -analyzer-werror "$source"
 done
 for source in "${esp_sources[@]}"; do
   "$clang_bin" "${common[@]}" -DESP_PLATFORM=1 --analyze \
-    -Xanalyzer -analyzer-output=text "$source"
+    -Xanalyzer -analyzer-output=text -Xanalyzer -analyzer-werror "$source"
 done
 
 echo "Ninlil static analysis PASS"

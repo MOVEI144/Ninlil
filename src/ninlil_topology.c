@@ -120,14 +120,17 @@ int ninlil_topology_note_uplink(ninlil_topology *topology,
                                 const ninlil_reception_observation *observation,
                                 int *is_new)
 {
+    uint16_t capacity;
     uint16_t index;
     ninlil_uplink_dedupe *slot = NULL;
 
     if (!topology || !observation || !id_valid(&observation->message_id) ||
-        !is_new || topology->poisoned ||
-        !gateway_known(topology, observation->gateway_uid))
+        !is_new || topology->poisoned || !topology->dedupe)
         return NINLIL_ERR_INVALID;
-    for (index = 0u; index < topology->dedupe_capacity; index++) {
+    capacity = topology->dedupe_capacity;
+    if (capacity == 0u || !gateway_known(topology, observation->gateway_uid))
+        return NINLIL_ERR_INVALID;
+    for (index = 0u; index < capacity; index++) {
         if (topology->dedupe[index].used &&
             id_equal(&topology->dedupe[index].message_id,
                      &observation->message_id)) {
@@ -141,8 +144,8 @@ int ninlil_topology_note_uplink(ninlil_topology *topology,
     }
     if (!slot) {
         slot = &topology->dedupe[topology->dedupe_cursor];
-        topology->dedupe_cursor = (uint16_t)((topology->dedupe_cursor + 1u) %
-                                             topology->dedupe_capacity);
+        topology->dedupe_cursor =
+            (uint16_t)((topology->dedupe_cursor + 1u) % capacity);
     }
     memset(slot, 0, sizeof(*slot));
     slot->used = 1u;

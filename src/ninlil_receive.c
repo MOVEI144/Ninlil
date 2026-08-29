@@ -60,10 +60,13 @@ static int archive_contract_matches(ninlil_runtime *runtime,
 static int queue_rejection(ninlil_runtime *runtime, const ninlil_id *id,
                            uint16_t target, uint8_t status)
 {
+    uint16_t capacity = runtime->rejection_capacity;
     uint16_t index;
     ninlil_rejection_entry *entry = NULL;
 
-    for (index = 0u; index < runtime->rejection_capacity; index++) {
+    if (capacity == 0u || !runtime->rejections)
+        return NINLIL_ERR_STATE;
+    for (index = 0u; index < capacity; index++) {
         if (runtime->rejections[index].used &&
             ninlil_id_equal(&runtime->rejections[index].message_id, id)) {
             entry = &runtime->rejections[index];
@@ -75,8 +78,7 @@ static int queue_rejection(ninlil_runtime *runtime, const ninlil_id *id,
     if (!entry) {
         entry = &runtime->rejections[runtime->rejection_cursor];
         runtime->rejection_cursor =
-            (uint16_t)((runtime->rejection_cursor + 1u) %
-                       runtime->rejection_capacity);
+            (uint16_t)((runtime->rejection_cursor + 1u) % capacity);
     }
     if (entry->used &&
         (!ninlil_id_equal(&entry->message_id, id) || entry->target != target))
@@ -148,18 +150,14 @@ static int handle_data(ninlil_runtime *runtime, const uint8_t *packet,
     rc = ninlil_deadline_passed(runtime, view.absolute_deadline_ms, &expired);
     if (rc != NINLIL_OK)
         return rc;
-    if (expired) {
-        (void)queue_rejection(runtime, &view.message_id, view.source,
-                              NINLIL_RECEIPT_EXPIRED);
-        return NINLIL_OK;
-    }
+    if (expired)
+        return queue_rejection(runtime, &view.message_id, view.source,
+                               NINLIL_RECEIPT_EXPIRED);
     if (authorize_data(runtime, &view,
                        ninlil_live_service(runtime, view.source, view.service,
-                                           NINLIL_SERVICE_SEND)) != NINLIL_OK) {
-        (void)queue_rejection(runtime, &view.message_id, view.source,
-                              NINLIL_RECEIPT_PERMANENT_REJECTION);
-        return NINLIL_OK;
-    }
+                                           NINLIL_SERVICE_SEND)) != NINLIL_OK)
+        return queue_rejection(runtime, &view.message_id, view.source,
+                               NINLIL_RECEIPT_PERMANENT_REJECTION);
     if (runtime->inbound_live >= runtime->config.profile.max_inbound ||
         !ninlil_total_owned_available(runtime))
         return NINLIL_ERR_CAPACITY;
@@ -194,9 +192,8 @@ int ninlil_finish_outbound(ninlil_runtime *runtime,
 {
     int rc = ninlil_log_terminal(runtime, &entry->message_id, outcome);
 
-    if (rc == NINLIL_OK)
-        ninlil_archive_outbound(runtime, entry, outcome);
-    return rc;
+    return rc == NINLIL_OK ? ninlil_archive_outbound(runtime, entry, outcome)
+                           : rc;
 }
 
 static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
@@ -225,7 +222,8 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
         return rc;
     entry->latest_evidence = view.evidence;
     if (ninlil_evidence_satisfies(entry->required_evidence, view.evidence))
-        ninlil_archive_outbound(runtime, entry, NINLIL_OUTCOME_SATISFIED);
+        return ninlil_archive_outbound(runtime, entry,
+                                       NINLIL_OUTCOME_SATISFIED);
     return NINLIL_OK;
 }
 
