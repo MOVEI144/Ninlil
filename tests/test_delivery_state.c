@@ -1718,6 +1718,15 @@ static int test_deadline_outbound_and_expired_receipts(void)
           info.outcome == NINLIL_OUTCOME_ACTIVE);
     CHECK(ninlil_query(runtime, &unattempted_id, &info) == NINLIL_OK &&
           info.outcome == NINLIL_OUTCOME_EXPIRED);
+    CHECK(ninlil_mark_unknown(runtime, &ambiguous_id) == NINLIL_OK);
+    CHECK(ninlil_query(runtime, &ambiguous_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_UNKNOWN);
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(open_runtime_with_clock(&runtime, path, &link, &random_state, &policy,
+                                  &profile, &clock) == NINLIL_OK);
+    CHECK(ninlil_query(runtime, &ambiguous_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_UNKNOWN);
     ninlil_close(runtime);
     test_remove_directory(directory, path, NULL);
     return 0;
