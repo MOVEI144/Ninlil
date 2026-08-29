@@ -2,13 +2,14 @@
 
 #include <string.h>
 
-#define FLASH_VERSION 2u
+#define FLASH_VERSION 3u
 #define FLASH_HEADER_SIZE 32u
 #define FLASH_TRAILER_SIZE 16u
-#define FLASH_COMMIT UINT32_C(0x4E434D32) /* NCM2 */
+#define FLASH_COMMIT UINT32_C(0x4E434D33) /* NCM3 */
 #define FLASH_ERASED UINT8_C(0xFF)
 #define FLASH_ERASED_WORD UINT32_C(0xFFFFFFFF)
-#define FLASH_MAX_RECORD_SIZE 352u
+#define FLASH_MAX_RECORD_SIZE 368u
+#define FLASH_MAX_TYPE 6u
 #define FLASH_HEADER_CRC_OFFSET 16u
 #define FLASH_COMMIT_OFFSET 24u
 
@@ -149,8 +150,9 @@ static int header_parse(const uint8_t *header, uint8_t *type,
     uint32_t stored_header_crc;
 
     if (classify_commit(header) != COMMIT_STATE_COMMITTED || header[0] != 'N' ||
-        header[1] != 'J' || header[2] != 'F' || header[3] != '2' ||
-        header[4] != FLASH_VERSION || header[5] < 1u || header[5] > 4u)
+        header[1] != 'J' || header[2] != 'F' || header[3] != '3' ||
+        header[4] != FLASH_VERSION || header[5] < 1u ||
+        header[5] > FLASH_MAX_TYPE)
         return 0;
     stored_header_crc = get_be32(header + FLASH_HEADER_CRC_OFFSET);
     if (stored_header_crc != crc32_ieee(header, 16u) ||
@@ -257,7 +259,7 @@ int ninlil_flash_store_open(ninlil_flash_store *store,
             if (sequence != expected_sequence)
                 return NINLIL_ERR_CORRUPT;
             rc = on_record(record_ctx, type, record + FLASH_HEADER_SIZE,
-                           payload_length);
+                           payload_length, offset + FLASH_HEADER_SIZE);
             if (rc != NINLIL_OK)
                 return rc;
             expected_sequence++;
@@ -290,8 +292,9 @@ int ninlil_flash_store_open(ninlil_flash_store *store,
     return NINLIL_OK;
 }
 
-int ninlil_flash_store_append(ninlil_flash_store *store, uint8_t type,
-                              const uint8_t *payload, uint16_t length)
+int ninlil_flash_store_append_ref(ninlil_flash_store *store, uint8_t type,
+                                  const uint8_t *payload, uint16_t length,
+                                  size_t *payload_offset)
 {
     uint8_t record[FLASH_MAX_RECORD_SIZE];
     uint8_t verify[FLASH_MAX_RECORD_SIZE];
@@ -305,7 +308,7 @@ int ninlil_flash_store_append(ninlil_flash_store *store, uint8_t type,
     int rc;
 
     if (!store || !io_valid(&store->io) || store->poisoned || type < 1u ||
-        type > 4u || length > NINLIL_FLASH_MAX_PAYLOAD ||
+        type > FLASH_MAX_TYPE || length > NINLIL_FLASH_MAX_PAYLOAD ||
         (length > 0u && !payload))
         return store && store->poisoned ? NINLIL_ERR_IO : NINLIL_ERR_INVALID;
     total_length = record_size(length);
@@ -323,7 +326,7 @@ int ninlil_flash_store_append(ninlil_flash_store *store, uint8_t type,
     record[0] = 'N';
     record[1] = 'J';
     record[2] = 'F';
-    record[3] = '2';
+    record[3] = '3';
     record[4] = FLASH_VERSION;
     record[5] = type;
     put_be16(record + 6, length);
@@ -371,6 +374,8 @@ int ninlil_flash_store_append(ninlil_flash_store *store, uint8_t type,
         goto poison;
     }
 
+    if (payload_offset)
+        *payload_offset = store->append_offset + FLASH_HEADER_SIZE;
     store->append_offset += total_length;
     store->next_sequence++;
     return NINLIL_OK;
@@ -378,6 +383,28 @@ int ninlil_flash_store_append(ninlil_flash_store *store, uint8_t type,
 poison:
     store->poisoned = 1u;
     return rc == NINLIL_OK ? NINLIL_ERR_IO : rc;
+}
+
+int ninlil_flash_store_append(ninlil_flash_store *store, uint8_t type,
+                              const uint8_t *payload, uint16_t length)
+{
+    return ninlil_flash_store_append_ref(store, type, payload, length, NULL);
+}
+
+int ninlil_flash_store_read(const ninlil_flash_store *store,
+                            size_t payload_offset, uint16_t record_length,
+                            uint16_t relative_offset, uint8_t *buffer,
+                            uint16_t length)
+{
+    if (!store || !io_valid(&store->io) || store->poisoned ||
+        (length > 0u && !buffer) || relative_offset > record_length ||
+        length > (uint16_t)(record_length - relative_offset) ||
+        payload_offset > store->io.size ||
+        relative_offset > store->io.size - payload_offset ||
+        length > store->io.size - payload_offset - relative_offset)
+        return NINLIL_ERR_INVALID;
+    return read_exact(&store->io, payload_offset + relative_offset, buffer,
+                      length);
 }
 
 int ninlil_flash_store_format(const ninlil_flash_io *io)

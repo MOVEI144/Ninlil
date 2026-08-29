@@ -120,9 +120,11 @@ static ninlil_flash_io memory_io(memory_flash *flash, size_t size)
 }
 
 static int capture_record(void *ctx, uint8_t type, const uint8_t *payload,
-                          uint16_t length)
+                          uint16_t length, size_t payload_offset)
 {
     capture *records = ctx;
+
+    (void)payload_offset;
 
     if (records->count >= MAX_CAPTURED || length > NINLIL_FLASH_MAX_PAYLOAD)
         return NINLIL_ERR_CAPACITY;

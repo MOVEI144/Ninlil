@@ -39,9 +39,19 @@ function(ninlil_m1_strict_target target)
   endif()
 endfunction()
 
-add_library(ninlil_m1_posix STATIC
+set(NINLIL_M1_DELIVERY_SOURCES
   ${NINLIL_ROOT}/src/ninlil.c
+  ${NINLIL_ROOT}/src/ninlil_authorization.c
+  ${NINLIL_ROOT}/src/ninlil_policy.c
+  ${NINLIL_ROOT}/src/ninlil_profile.c
+  ${NINLIL_ROOT}/src/ninlil_receive.c
+  ${NINLIL_ROOT}/src/ninlil_send.c
+  ${NINLIL_ROOT}/src/ninlil_storage.c
   ${NINLIL_ROOT}/src/ninlil_wire.c
+)
+
+add_library(ninlil_m1_posix STATIC
+  ${NINLIL_M1_DELIVERY_SOURCES}
   ${NINLIL_ROOT}/ports/posix/ninlil_journal.c
 )
 target_include_directories(ninlil_m1_posix
@@ -72,8 +82,7 @@ target_include_directories(ninlil_m1_flash_store
 ninlil_m1_strict_target(ninlil_m1_flash_store)
 
 add_library(ninlil_m1_flash_runtime STATIC
-  ${NINLIL_ROOT}/src/ninlil.c
-  ${NINLIL_ROOT}/src/ninlil_wire.c
+  ${NINLIL_M1_DELIVERY_SOURCES}
   ${NINLIL_ROOT}/ports/flash/ninlil_flash_journal_file.c
 )
 target_include_directories(ninlil_m1_flash_runtime
