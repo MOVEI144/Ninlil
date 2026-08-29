@@ -30,7 +30,7 @@ The standard local outbound reserves are:
 | Powered Relay local traffic | 2 | 4 | 10 | 0 |
 | Site Gateway radio custody | 16 | 32 | 80 | 8 |
 
-Reserved slots are minimum protected capacity, not class-specific hard partitions. CRITICAL may use CRITICAL reserve plus free shared capacity. NORMAL and BULK may never consume protected CRITICAL or CONTROL reserve.
+Reserved slots are minimum protected capacity, not class-specific hard partitions. CRITICAL may use CRITICAL reserve plus free shared capacity but may not consume the CONTROL reserve. CONTROL may use its reserve plus shared capacity but may not consume the CRITICAL reserve. NORMAL and BULK may never consume protected CRITICAL or CONTROL reserve.
 
 The default local scheduling weight is `CRITICAL:CONTROL:NORMAL:BULK = 8:4:3:1`, with a maximum of 8 consecutive CRITICAL selections when another class is pending. Empty, clock-blocked, and proven-expired attempted entries are skipped, so one deadline-bearing item cannot head-of-line block eligible traffic. A packet already handed to a bearer is never preempted. Every traffic-class input is validated across the complete `CRITICAL..BULK` range before any mask, shift, schedule lookup, or class-array index.
 
@@ -206,7 +206,7 @@ Service IDs `0x0000..0x00ff` are reserved for Ninlil control traffic. Applicatio
 
 The per-role service-grant limits are the values in Decision 1. A capability or service-grant change requires a higher membership epoch and a fresh authenticated session before use.
 
-An authenticated but unauthorized message is rejected before authoritative inbox mutation. The receiver may return a generic permanent-rejection receipt, rate-limited and deduplicated by message ID. The four-step interval is consumed by every Link attempt, including `BUSY` and `CAPACITY`, so a high-work step cannot spin on a failing bearer. It must not reveal secret policy details or create an amplification path.
+An authenticated but unauthorized message is rejected before authoritative inbox mutation. Before returning a generic permanent-rejection receipt, the receiver commits an exact-contract tombstone in a `max_inbound`-bounded table. Matching duplicates re-arm that rejection across restart and policy changes; conflicting identity reuse fails closed. Tombstones are not evicted, so full capacity or storage failure backpressures without emitting a terminal receipt that cannot be upheld. The four-step interval is consumed by every Link attempt, including `BUSY` and `CAPACITY`, so a high-work step cannot spin on a failing bearer. The receipt must not reveal secret policy details or create an amplification path.
 
 A Relay forwards protected payload under Relay authority without receiving Application service permission and without learning plaintext merely to forward it.
 

@@ -99,7 +99,7 @@ They order messages already owned by one local runtime. They do not create a Par
 
 Scheduling is non-preemptive at the packet boundary: a frame already handed to the radio is never interrupted for a higher class.
 
-Each role profile must declare finite capacities and reserved admission for CRITICAL and CONTROL traffic. Once durable ownership is accepted, a lower class message is never silently evicted.
+Each role profile must declare finite capacities and reserved admission for CRITICAL and CONTROL traffic. CRITICAL admission preserves the configured CONTROL reserve, just as CONTROL and lower classes preserve capacity reserved for higher classes. Once durable ownership is accepted, a lower class message is never silently evicted.
 
 The default scheduler is starvation-bounded weighted service, with CRITICAL selected first when pending but with configured service opportunities for CONTROL and NORMAL. BULK receives service only within an explicit bounded share and must not delay control traffic.
 

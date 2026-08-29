@@ -19,12 +19,13 @@
 #define OLD_OUT_CREATE 1u
 #define OLD_OUT_HEADER 52u
 #define IN_RECORD_HEADER 36u
-#define CURRENT_RECORD_VERSION 3u
+#define CURRENT_RECORD_VERSION 4u
 #define DEADLINE_PRESENT 1u
 #define OUT_ATTEMPT_RECORD 2u
 #define OUT_EVIDENCE_RECORD 3u
 #define OUT_TERMINAL_RECORD 4u
 #define IN_APPLICATION_ACCEPT_RECORD 6u
+#define IN_REJECTION_RECORD 8u
 
 #define CHECK(expression)                                                      \
     do {                                                                       \
@@ -354,6 +355,29 @@ static int wait_for_attempt(ninlil_runtime *runtime,
         rc = ninlil_step(runtime);
         if (rc != NINLIL_OK && rc != NINLIL_ERR_CAPACITY)
             return rc;
+    }
+    return NINLIL_ERR_FAULT;
+}
+
+static int wait_for_receipt(ninlil_runtime *runtime, scripted_link *link,
+                            const ninlil_id *message_id, uint8_t status)
+{
+    uint8_t first = link->receipt_count;
+    unsigned int attempt;
+
+    for (attempt = 0u; attempt < 16u; attempt++) {
+        uint8_t index;
+        int rc = ninlil_step(runtime);
+
+        if (rc != NINLIL_OK && rc != NINLIL_ERR_CAPACITY &&
+            rc != NINLIL_ERR_BUSY)
+            return rc;
+        for (index = first; index < link->receipt_count; index++) {
+            if (memcmp(link->receipt_message_id[index].bytes, message_id->bytes,
+                       NINLIL_ID_BYTES) == 0 &&
+                link->receipt_status[index] == status)
+                return NINLIL_OK;
+        }
     }
     return NINLIL_ERR_FAULT;
 }
@@ -1092,7 +1116,7 @@ static int test_old_delivery_record_is_rejected(void)
     CHECK(setup_leaf(directory, path, &profile, &policy) == 0);
     memset(&link, 0, sizeof(link));
     memset(old_record, 0, sizeof(old_record));
-    old_record[0] = 2u;
+    old_record[0] = 3u;
     CHECK(ninlil_journal_open(&journal, path, profile.flash_ceiling_bytes,
                               accept_journal_record, NULL) == NINLIL_OK);
     CHECK(ninlil_journal_append(journal, OLD_OUT_CREATE, old_record,
@@ -1272,9 +1296,135 @@ static int test_policy_error_classification(void)
     CHECK(link.last_sent_length == NINLIL_WIRE_RECEIPT_SIZE);
     CHECK(link.last_sent[3] == NINLIL_WIRE_RECEIPT);
     CHECK(link.last_sent[24] == NINLIL_RECEIPT_PERMANENT_REJECTION);
-    CHECK(journal_size(path, &current_size) == 0 && current_size == empty_size);
+    CHECK(journal_size(path, &current_size) == 0 && current_size > empty_size);
 
     ninlil_close(runtime);
+    test_remove_directory(directory, path, NULL);
+    return 0;
+}
+
+static int test_durable_permanent_rejection_tombstones(void)
+{
+    char directory[40];
+    char path[80];
+    scripted_link link;
+    controlled_policy policy;
+    ninlil_role_profile profile;
+    ninlil_runtime *runtime = NULL;
+    ninlil_id rejected_id;
+    ninlil_inbound inbound;
+    uint32_t random_state = 39u;
+    uint8_t payload = UINT8_C(0x39);
+    off_t empty_size;
+    off_t rejected_size;
+    off_t current_size;
+    uint32_t send_calls;
+    unsigned int index;
+
+    CHECK(setup_leaf(directory, path, &profile, &policy) == 0);
+    memset(&link, 0, sizeof(link));
+    policy.result = NINLIL_ERR_NOT_FOUND;
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    CHECK(journal_size(path, &empty_size) == 0);
+    test_fill_id(&rejected_id, UINT8_C(0x39));
+    CHECK(inject_data(&link, &rejected_id, NINLIL_EVIDENCE_REMOTE_STORED,
+                      payload) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(link.receipt_count == 0u);
+    CHECK(journal_size(path, &rejected_size) == 0 &&
+          rejected_size > empty_size);
+    CHECK(wait_for_receipt(runtime, &link, &rejected_id,
+                           NINLIL_RECEIPT_PERMANENT_REJECTION) == NINLIL_OK);
+    CHECK(ninlil_receive(runtime, &inbound) == NINLIL_ERR_EMPTY);
+    ninlil_close(runtime);
+    runtime = NULL;
+
+    policy.result = NINLIL_OK;
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    CHECK(inject_data(&link, &rejected_id, NINLIL_EVIDENCE_REMOTE_STORED,
+                      payload) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(ninlil_receive(runtime, &inbound) == NINLIL_ERR_EMPTY);
+    CHECK(wait_for_receipt(runtime, &link, &rejected_id,
+                           NINLIL_RECEIPT_PERMANENT_REJECTION) == NINLIL_OK);
+    CHECK(journal_size(path, &current_size) == 0 &&
+          current_size == rejected_size);
+
+    send_calls = link.send_calls;
+    CHECK(inject_data(&link, &rejected_id, NINLIL_EVIDENCE_REMOTE_STORED,
+                      (uint8_t)(payload + 1u)) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_CONFLICT);
+    for (index = 0u; index < 4u; index++)
+        CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(link.send_calls == send_calls);
+    CHECK(journal_size(path, &current_size) == 0 &&
+          current_size == rejected_size);
+    CHECK(ninlil_receive(runtime, &inbound) == NINLIL_ERR_EMPTY);
+
+    CHECK(flip_file_byte(path, 10L + (long)IN_RECORD_HEADER) == 0);
+    CHECK(inject_data(&link, &rejected_id, NINLIL_EVIDENCE_REMOTE_STORED,
+                      payload) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_CORRUPT);
+    CHECK(link.send_calls == send_calls);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_CORRUPT);
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_ERR_CORRUPT);
+    CHECK(runtime == NULL);
+    CHECK(remove(path) == 0);
+
+    memset(&link, 0, sizeof(link));
+    policy.result = NINLIL_ERR_NOT_FOUND;
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    for (index = 0u; index < profile.max_inbound; index++) {
+        test_fill_id(&rejected_id, (uint8_t)(UINT8_C(0x40) + (uint8_t)index));
+        CHECK(inject_data(&link, &rejected_id, NINLIL_EVIDENCE_REMOTE_STORED,
+                          (uint8_t)index) == NINLIL_OK);
+        CHECK(ninlil_step(runtime) == NINLIL_OK);
+        CHECK(wait_for_receipt(runtime, &link, &rejected_id,
+                               NINLIL_RECEIPT_PERMANENT_REJECTION) ==
+              NINLIL_OK);
+    }
+    CHECK(journal_size(path, &rejected_size) == 0);
+    test_fill_id(&rejected_id, UINT8_C(0x4F));
+    send_calls = link.send_calls;
+    CHECK(inject_data(&link, &rejected_id, NINLIL_EVIDENCE_REMOTE_STORED,
+                      payload) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_CAPACITY);
+    CHECK(journal_size(path, &current_size) == 0 &&
+          current_size == rejected_size);
+    for (index = 0u; index < 8u; index++)
+        CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(link.send_calls == send_calls);
+    CHECK(ninlil_receive(runtime, &inbound) == NINLIL_ERR_EMPTY);
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(remove(path) == 0);
+
+    {
+        uint8_t invalid[IN_RECORD_HEADER];
+
+        memset(invalid, 0, sizeof(invalid));
+        invalid[0] = CURRENT_RECORD_VERSION;
+        invalid[1] = NINLIL_OWNERSHIP_DURABLE;
+        invalid[2] = NINLIL_EVIDENCE_REMOTE_STORED;
+        invalid[3] = NINLIL_TRAFFIC_NORMAL;
+        invalid[5] = NINLIL_RECEIPT_EXPIRED;
+        put_be16(invalid + 6, 2u);
+        put_be16(invalid + 8, APP_SERVICE);
+        test_fill_id(&rejected_id, UINT8_C(0x50));
+        memcpy(invalid + 20, rejected_id.bytes, NINLIL_ID_BYTES);
+        CHECK(append_journal_record(path, profile.flash_ceiling_bytes,
+                                    IN_REJECTION_RECORD, invalid,
+                                    (uint16_t)sizeof(invalid)) == NINLIL_OK);
+        CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                           &profile) == NINLIL_ERR_CORRUPT);
+        CHECK(runtime == NULL);
+    }
     test_remove_directory(directory, path, NULL);
     return 0;
 }
@@ -1784,6 +1934,7 @@ static int (*const tests[])(void) = {
     test_old_delivery_record_is_rejected,
     test_handoff_marker_capacity_suppresses_resend,
     test_policy_error_classification,
+    test_durable_permanent_rejection_tombstones,
     test_rejection_attempts_consume_interval,
     test_posix_referenced_reads_revalidate_records,
     test_posix_runtime_stops_on_payload_corruption,

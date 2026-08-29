@@ -61,6 +61,17 @@ static ninlil_inbound_entry *free_inbound(ninlil_runtime *runtime)
     return NULL;
 }
 
+static ninlil_rejection_entry *free_rejection(ninlil_runtime *runtime)
+{
+    uint16_t index;
+
+    for (index = 0u; index < runtime->rejection_capacity; index++) {
+        if (!runtime->rejections[index].used)
+            return &runtime->rejections[index];
+    }
+    return NULL;
+}
+
 static int replay_out_create(ninlil_runtime *runtime, const uint8_t *payload,
                              uint16_t length,
                              const ninlil_journal_ref *reference)
@@ -157,6 +168,52 @@ static int replay_in_accept(ninlil_runtime *runtime, const uint8_t *payload,
     candidate.need_receipt = 1u;
     *slot = candidate;
     runtime->inbound_live++;
+    return NINLIL_OK;
+}
+
+static int replay_in_rejection(ninlil_runtime *runtime, const uint8_t *payload,
+                               uint16_t length,
+                               const ninlil_journal_ref *reference)
+{
+    ninlil_rejection_entry candidate;
+    ninlil_rejection_entry *slot;
+    uint64_t deadline;
+    uint16_t payload_len;
+
+    if (length < NINLIL_JRN_IN_HEADER ||
+        payload[0] != NINLIL_JRN_RECORD_VERSION ||
+        payload[5] != NINLIL_RECEIPT_PERMANENT_REJECTION)
+        return NINLIL_ERR_CORRUPT;
+    payload_len = get_be16(payload + 10);
+    deadline = get_be64(payload + 12);
+    if (payload_len > NINLIL_MAX_PAYLOAD ||
+        length != (uint16_t)(NINLIL_JRN_IN_HEADER + payload_len) ||
+        !contract_valid(payload[1], payload[2], payload[3], payload[4],
+                        deadline))
+        return NINLIL_ERR_CORRUPT;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.ownership = (ninlil_ownership)payload[1];
+    candidate.required_evidence = (ninlil_evidence)payload[2];
+    candidate.traffic_class = (ninlil_traffic_class)payload[3];
+    candidate.status = payload[5];
+    candidate.target = get_be16(payload + 6);
+    candidate.service = get_be16(payload + 8);
+    candidate.payload_len = payload_len;
+    candidate.absolute_deadline_ms = deadline;
+    memcpy(candidate.message_id.bytes, payload + 20, NINLIL_ID_BYTES);
+    if (candidate.target == 0u || candidate.target == UINT16_MAX ||
+        candidate.service < NINLIL_APPLICATION_SERVICE_MIN ||
+        !bytes_nonzero(candidate.message_id.bytes) ||
+        ninlil_id_in_use(runtime, &candidate.message_id))
+        return NINLIL_ERR_CORRUPT;
+    slot = free_rejection(runtime);
+    if (!slot)
+        return NINLIL_ERR_CORRUPT;
+    candidate.record_ref = *reference;
+    candidate.pending = 1u;
+    candidate.durable = 1u;
+    candidate.used = 1u;
+    *slot = candidate;
     return NINLIL_OK;
 }
 
@@ -264,6 +321,8 @@ int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
         return replay_out_create(runtime, payload, length, reference);
     if (type == NINLIL_JRN_IN_ACCEPT)
         return replay_in_accept(runtime, payload, length, reference);
+    if (type == NINLIL_JRN_IN_REJECTION)
+        return replay_in_rejection(runtime, payload, length, reference);
     if (type == NINLIL_JRN_OUT_ATTEMPT || type == NINLIL_JRN_OUT_EVIDENCE ||
         type == NINLIL_JRN_OUT_TERMINAL)
         return replay_out_update(runtime, type, payload, length);

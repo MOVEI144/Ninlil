@@ -175,11 +175,25 @@ ninlil_archive_entry *ninlil_find_archive_key(ninlil_runtime *runtime,
     return NULL;
 }
 
+ninlil_rejection_entry *ninlil_find_rejection(ninlil_runtime *runtime,
+                                              const ninlil_id *id)
+{
+    uint16_t index;
+
+    for (index = 0u; index < runtime->rejection_capacity; index++) {
+        if (runtime->rejections[index].used &&
+            ninlil_id_equal(&runtime->rejections[index].message_id, id))
+            return &runtime->rejections[index];
+    }
+    return NULL;
+}
+
 int ninlil_id_in_use(ninlil_runtime *runtime, const ninlil_id *id)
 {
     return ninlil_find_outbound(runtime, id) != NULL ||
            ninlil_find_inbound(runtime, id) != NULL ||
-           ninlil_find_archive_id(runtime, id) != NULL;
+           ninlil_find_archive_id(runtime, id) != NULL ||
+           ninlil_find_rejection(runtime, id) != NULL;
 }
 
 static int archive_replaceable(const ninlil_archive_entry *entry)
@@ -319,7 +333,7 @@ int ninlil_outbound_admission(const ninlil_runtime *runtime,
             ? 0u
             : (uint16_t)(profile->control_reserve -
                          runtime->live_by_class[NINLIL_TRAFFIC_CONTROL]);
-    required_free = traffic_class == NINLIL_TRAFFIC_CRITICAL ? 0u
+    required_free = traffic_class == NINLIL_TRAFFIC_CRITICAL ? missing_control
                     : traffic_class == NINLIL_TRAFFIC_CONTROL
                         ? missing_critical
                         : (uint32_t)missing_critical + missing_control;
@@ -390,6 +404,33 @@ int ninlil_log_inbound(ninlil_runtime *runtime,
         memcpy(record + NINLIL_JRN_IN_HEADER, payload, entry->payload_len);
     return ninlil_append_record(
         runtime, NINLIL_JRN_IN_ACCEPT, record,
+        (uint16_t)(NINLIL_JRN_IN_HEADER + entry->payload_len), reference);
+}
+
+int ninlil_log_rejection(ninlil_runtime *runtime,
+                         const ninlil_rejection_entry *entry,
+                         const uint8_t *payload, ninlil_journal_ref *reference)
+{
+    uint8_t record[NINLIL_JRN_IN_HEADER + NINLIL_MAX_PAYLOAD];
+
+    memset(record, 0, NINLIL_JRN_IN_HEADER);
+    record[0] = NINLIL_JRN_RECORD_VERSION;
+    record[1] = (uint8_t)entry->ownership;
+    record[2] = (uint8_t)entry->required_evidence;
+    record[3] = (uint8_t)entry->traffic_class;
+    record[4] = (uint8_t)(entry->absolute_deadline_ms == 0u
+                              ? 0u
+                              : NINLIL_JRN_DEADLINE_PRESENT);
+    record[5] = entry->status;
+    put_be16(record + 6, entry->target);
+    put_be16(record + 8, entry->service);
+    put_be16(record + 10, entry->payload_len);
+    put_be64(record + 12, entry->absolute_deadline_ms);
+    memcpy(record + 20, entry->message_id.bytes, NINLIL_ID_BYTES);
+    if (entry->payload_len > 0u)
+        memcpy(record + NINLIL_JRN_IN_HEADER, payload, entry->payload_len);
+    return ninlil_append_record(
+        runtime, NINLIL_JRN_IN_REJECTION, record,
         (uint16_t)(NINLIL_JRN_IN_HEADER + entry->payload_len), reference);
 }
 
