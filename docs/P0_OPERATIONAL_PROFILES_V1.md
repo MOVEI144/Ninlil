@@ -32,9 +32,9 @@ The standard local outbound reserves are:
 
 Reserved slots are minimum protected capacity, not class-specific hard partitions. CRITICAL may use CRITICAL reserve plus free shared capacity. NORMAL and BULK may never consume protected CRITICAL or CONTROL reserve.
 
-The default local scheduling weight is `CRITICAL:CONTROL:NORMAL:BULK = 8:4:3:1`, with a maximum of 8 consecutive CRITICAL selections when another class is pending. Empty classes are skipped. A packet already handed to a bearer is never preempted.
+The default local scheduling weight is `CRITICAL:CONTROL:NORMAL:BULK = 8:4:3:1`, with a maximum of 8 consecutive CRITICAL selections when another class is pending. Empty, clock-blocked, and proven-expired attempted entries are skipped, so one deadline-bearing item cannot head-of-line block eligible traffic. A packet already handed to a bearer is never preempted. Every traffic-class input is validated across the complete `CRITICAL..BULK` range before any mask, shift, schedule lookup, or class-array index.
 
-A standard Host Adapter profile is bounded to 4,096 live transport messages, 64 MiB total spool bytes, and 8 pending downlinks per peer. Products may choose lower limits. Higher limits require an explicit memory, disk, recovery-time, and abuse analysis.
+A standard Host Adapter profile is bounded to 4,096 live transport messages, 64 MiB total spool bytes, and 8 pending downlinks per peer. A zero-byte custody item is valid when it has a nonzero durable payload token: it consumes one live-message and per-peer slot but zero bytes. Products may choose lower limits. Higher limits require an explicit memory, disk, recovery-time, and abuse analysis.
 
 ## Decision 2 — Host, Adapter, Gateway, and Endpoint custody
 
@@ -132,7 +132,8 @@ Downlink rules:
 - simultaneous multi-Gateway downlink transmission is not a baseline feature;
 - the Host issues a bounded route lease containing active Gateway identity and a monotonic `route_epoch`;
 - failover increments `route_epoch` and preserves logical message identity;
-- a previous Gateway must release or lose its lease before a replacement transmits ordinary downlink traffic.
+- a previous Gateway must release or lose its lease before a replacement transmits ordinary downlink traffic;
+- authoritative replay rejects a different-Gateway lease whose start overlaps an unreleased prior lease, while allowing same-Gateway renewal, explicit release then replacement, and replacement whose start is at or after prior expiry.
 
 Gateway selection uses recent bidirectional delivery evidence, retry rate, queue health, radio faults, and signal history. RSSI alone is insufficient.
 
@@ -189,7 +190,7 @@ The initial generic capability set is:
 - `RELAY_CUSTODY`;
 - `GATEWAY_RADIO_HEAD`.
 
-Unknown capability bits are rejected during Join. A Battery Leaf with `RELAY_CUSTODY` is invalid even if a Host attempts to grant it.
+Unknown capability bits are rejected during Join and current policy validation. The persistent membership store is a generic bitset container and preserves unknown bits in structurally valid records so a newer writer does not make an older reader misclassify durable storage as corrupt. A Battery Leaf with `RELAY_CUSTODY` is invalid even if a Host attempts to grant it.
 
 Each service grant contains:
 
@@ -205,7 +206,7 @@ Service IDs `0x0000..0x00ff` are reserved for Ninlil control traffic. Applicatio
 
 The per-role service-grant limits are the values in Decision 1. A capability or service-grant change requires a higher membership epoch and a fresh authenticated session before use.
 
-An authenticated but unauthorized message is rejected before authoritative inbox mutation. The receiver may return a generic permanent-rejection receipt, rate-limited and deduplicated by message ID. It must not reveal secret policy details or create an amplification path.
+An authenticated but unauthorized message is rejected before authoritative inbox mutation. The receiver may return a generic permanent-rejection receipt, rate-limited and deduplicated by message ID. The four-step interval is consumed by every Link attempt, including `BUSY` and `CAPACITY`, so a high-work step cannot spin on a failing bearer. It must not reveal secret policy details or create an amplification path.
 
 A Relay forwards protected payload under Relay authority without receiving Application service permission and without learning plaintext merely to forward it.
 

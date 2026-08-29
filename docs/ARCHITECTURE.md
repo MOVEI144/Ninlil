@@ -50,4 +50,4 @@ Battery wake windows belong to the radio adapter. Multi-Gateway dedupe, active-p
 
 ## Persistence
 
-Persistent formats are protocols. Changes require versioning, corruption tests, torn-write tests, restart tests, and an explicit compatibility decision.
+Persistent formats are protocols. Changes require versioning, corruption tests, torn-write tests, restart tests, and an explicit compatibility decision. A payload reference is not a bypass around record integrity: each dereference validates the complete committed envelope and checksum/trailer before bytes reach a Link or Application boundary.
