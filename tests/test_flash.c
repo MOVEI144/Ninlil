@@ -471,11 +471,15 @@ static int test_referenced_reads_revalidate_complete_record(void)
         CHECK(ninlil_flash_store_append_ref(&store, 1u, &payload, 1u,
                                             &payload_offset) == NINLIL_OK);
         CHECK(payload_offset == TEST_FLASH_HEADER_SIZE);
+        CHECK(ninlil_flash_store_read(&store, payload_offset, 1u, 2u, 0u,
+                                      &result, 1u) == NINLIL_ERR_CORRUPT);
+        CHECK(ninlil_flash_store_read(&store, payload_offset, 1u, 1u, 0u,
+                                      &result, 1u) == NINLIL_OK);
         flash.bytes[mutation_offsets[index]] ^=
             mutation_offsets[index] == TEST_FLASH_COMMIT_OFFSET ? UINT8_C(0x02)
                                                                 : UINT8_C(0x01);
-        CHECK(ninlil_flash_store_read(&store, payload_offset, 1u, 0u, &result,
-                                      1u) == NINLIL_ERR_CORRUPT);
+        CHECK(ninlil_flash_store_read(&store, payload_offset, 1u, 1u, 0u,
+                                      &result, 1u) == NINLIL_ERR_CORRUPT);
         memset(&records, 0, sizeof(records));
         CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
               NINLIL_ERR_CORRUPT);

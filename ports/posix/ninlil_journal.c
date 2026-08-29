@@ -231,6 +231,7 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
 
             reference.offset = (uint64_t)(position + (off_t)JRN_HEADER);
             reference.length = length;
+            reference.type = header[5];
             rc = on_record(ctx, header[5], body, length, &reference);
             if (rc != NINLIL_OK) {
                 (void)close(fd);
@@ -305,6 +306,7 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
     if (reference) {
         reference->offset = (uint64_t)(start + (off_t)JRN_HEADER);
         reference->length = length;
+        reference->type = type;
     }
     return NINLIL_OK;
 }
@@ -331,7 +333,7 @@ int ninlil_journal_read(ninlil_journal *journal,
     rc = read_full_at(journal->fd, (off_t)record_offset, record, JRN_HEADER);
     if (rc != NINLIL_OK)
         return rc;
-    if (!header_valid(record, &stored_length) ||
+    if (!header_valid(record, &stored_length) || record[5] != reference->type ||
         stored_length != reference->length)
         return NINLIL_ERR_CORRUPT;
     total_length = JRN_HEADER + (size_t)stored_length + JRN_CRC;
@@ -341,7 +343,7 @@ int ninlil_journal_read(ninlil_journal *journal,
     if (rc != NINLIL_OK)
         return rc;
     if (!header_valid(record, &verified_length) ||
-        verified_length != stored_length ||
+        record[5] != reference->type || verified_length != stored_length ||
         get_be32(record + JRN_HEADER + stored_length) !=
             crc32_ieee(record, JRN_HEADER + (size_t)stored_length))
         return NINLIL_ERR_CORRUPT;
