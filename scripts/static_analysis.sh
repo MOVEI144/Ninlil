@@ -12,12 +12,23 @@ common=(
   -I"$root/ports/esp32s3"
   -I"$root/ports/esp32s3/include"
   -I"$root/tests/esp_stub"
-  -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
+  -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion -Wsign-conversion
   -Wformat=2 -Wundef -Wcast-align -Wstrict-prototypes
   -Wmissing-prototypes -Wvla -fno-common
 )
 host_sources=(
   "$root/src/ninlil.c"
+  "$root/src/ninlil_authorization.c"
+  "$root/src/ninlil_custody.c"
+  "$root/src/ninlil_group.c"
+  "$root/src/ninlil_leaf.c"
+  "$root/src/ninlil_policy.c"
+  "$root/src/ninlil_profile.c"
+  "$root/src/ninlil_receive.c"
+  "$root/src/ninlil_replay.c"
+  "$root/src/ninlil_send.c"
+  "$root/src/ninlil_storage.c"
+  "$root/src/ninlil_topology.c"
   "$root/src/ninlil_wire.c"
   "$root/src/ninlil_diag.c"
   "$root/src/ninlil_radio.c"
@@ -41,11 +52,11 @@ esp_sources=(
 
 for source in "${host_sources[@]}"; do
   "$clang_bin" "${common[@]}" --analyze \
-    -Xanalyzer -analyzer-output=text "$source"
+    -Xanalyzer -analyzer-output=text -Xanalyzer -analyzer-werror "$source"
 done
 for source in "${esp_sources[@]}"; do
   "$clang_bin" "${common[@]}" -DESP_PLATFORM=1 --analyze \
-    -Xanalyzer -analyzer-output=text "$source"
+    -Xanalyzer -analyzer-output=text -Xanalyzer -analyzer-werror "$source"
 done
 
 echo "Ninlil static analysis PASS"

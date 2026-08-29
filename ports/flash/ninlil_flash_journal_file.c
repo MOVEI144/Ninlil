@@ -21,7 +21,21 @@ struct file_flash_context {
 struct ninlil_journal {
     struct file_flash_context file;
     ninlil_flash_store store;
+    ninlil_journal_on_record on_record;
+    void *record_ctx;
 };
+
+static int replay_record(void *ctx, uint8_t type, const uint8_t *payload,
+                         uint16_t length, size_t payload_offset)
+{
+    ninlil_journal *journal = ctx;
+    ninlil_journal_ref reference;
+
+    reference.offset = payload_offset;
+    reference.length = length;
+    return journal->on_record(journal->record_ctx, type, payload, length,
+                              &reference);
+}
 
 static int pread_full(int fd, size_t offset, uint8_t *buffer, size_t length)
 {
@@ -127,7 +141,37 @@ static int initialize_file(int fd)
     return file_erase(&context, 0u, FILE_FLASH_SIZE);
 }
 
+static int fsync_parent(const char *path)
+{
+    char *copy = strdup(path);
+    const char *directory = ".";
+    char *slash;
+    int fd;
+    int rc;
+
+    if (!copy)
+        return -1;
+    slash = strrchr(copy, '/');
+    if (slash) {
+        if (slash == copy)
+            copy[1] = '\0';
+        else
+            *slash = '\0';
+        directory = copy;
+    }
+    fd = open(directory, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    if (fd < 0) {
+        free(copy);
+        return -1;
+    }
+    rc = fsync(fd);
+    (void)close(fd);
+    free(copy);
+    return rc;
+}
+
 int ninlil_journal_open(ninlil_journal **out, const char *location,
+                        uint64_t maximum_bytes,
                         ninlil_journal_on_record on_record, void *ctx)
 {
     ninlil_journal *journal;
@@ -137,7 +181,8 @@ int ninlil_journal_open(ninlil_journal **out, const char *location,
     int fd;
     int rc;
 
-    if (!out || !location || location[0] == '\0' || !on_record)
+    if (!out || !location || location[0] == '\0' || !on_record ||
+        maximum_bytes < FILE_FLASH_SIZE)
         return NINLIL_ERR_INVALID;
     *out = NULL;
     fd = open(location, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
@@ -157,8 +202,9 @@ int ninlil_journal_open(ninlil_journal **out, const char *location,
                    : NINLIL_ERR_IO;
     }
     if (fstat(fd, &status) != 0 || !S_ISREG(status.st_mode) ||
-        (created ? initialize_file(fd) != 0
-                 : status.st_size != (off_t)FILE_FLASH_SIZE)) {
+        (!created && status.st_size != (off_t)FILE_FLASH_SIZE) ||
+        (created &&
+         (initialize_file(fd) != 0 || fsync_parent(location) != 0))) {
         (void)close(fd);
         return NINLIL_ERR_IO;
     }
@@ -169,13 +215,15 @@ int ninlil_journal_open(ninlil_journal **out, const char *location,
         return NINLIL_ERR_IO;
     }
     journal->file.fd = fd;
+    journal->on_record = on_record;
+    journal->record_ctx = ctx;
     memset(&io, 0, sizeof(io));
     io.read = file_read;
     io.write = file_write;
     io.erase = file_erase;
     io.ctx = &journal->file;
     io.size = FILE_FLASH_SIZE;
-    rc = ninlil_flash_store_open(&journal->store, &io, on_record, ctx);
+    rc = ninlil_flash_store_open(&journal->store, &io, replay_record, journal);
     if (rc != NINLIL_OK) {
         (void)close(fd);
         free(journal);
@@ -186,11 +234,33 @@ int ninlil_journal_open(ninlil_journal **out, const char *location,
 }
 
 int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
-                          const uint8_t *payload, uint16_t length)
+                          const uint8_t *payload, uint16_t length,
+                          ninlil_journal_ref *reference)
 {
+    size_t payload_offset;
+    int rc;
+
     if (!journal)
         return NINLIL_ERR_INVALID;
-    return ninlil_flash_store_append(&journal->store, type, payload, length);
+    rc = ninlil_flash_store_append_ref(&journal->store, type, payload, length,
+                                       &payload_offset);
+    if (rc == NINLIL_OK && reference) {
+        reference->offset = payload_offset;
+        reference->length = length;
+    }
+    return rc;
+}
+
+int ninlil_journal_read(ninlil_journal *journal,
+                        const ninlil_journal_ref *reference,
+                        uint16_t relative_offset, uint8_t *buffer,
+                        uint16_t length)
+{
+    if (!journal || !reference || reference->offset > SIZE_MAX)
+        return NINLIL_ERR_INVALID;
+    return ninlil_flash_store_read(&journal->store, (size_t)reference->offset,
+                                   reference->length, relative_offset, buffer,
+                                   length);
 }
 
 void ninlil_journal_close(ninlil_journal *journal)

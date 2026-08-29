@@ -694,6 +694,14 @@ static int test_membership_rejects_rollback_and_authority_change(void)
     changed.membership_epoch = 6u;
     changed.authority_fingerprint[0] ^= UINT8_C(0x01);
     CHECK(ninlil_membership_activate(&store, &changed) == NINLIL_ERR_CONFLICT);
+    changed = active;
+    changed.membership_epoch = 6u;
+    changed.capabilities = UINT32_C(0x80000000);
+    CHECK(ninlil_membership_activate(&store, &changed) == NINLIL_OK);
+    ninlil_membership_close(&store);
+    CHECK(ninlil_membership_open(&store, &io) == NINLIL_OK);
+    CHECK(ninlil_membership_get(&store, &changed) == NINLIL_OK);
+    CHECK(changed.capabilities == UINT32_C(0x80000000));
     return 0;
 }
 
@@ -822,6 +830,30 @@ static int test_membership_corruption_is_fail_closed(void)
     return 0;
 }
 
+static int test_membership_unknown_capability_fixture_is_preserved(void)
+{
+    memory_flash flash;
+    ninlil_security_io io;
+    ninlil_membership_store store;
+    ninlil_membership_record active;
+    ninlil_membership_record loaded;
+
+    memory_flash_init(&flash);
+    io = memory_io(&flash);
+    active = membership_record(93u, 31u, 1u, 1u, 1u);
+    CHECK(ninlil_membership_open(&store, &io) == NINLIL_OK);
+    CHECK(ninlil_membership_activate(&store, &active) == NINLIL_OK);
+    ninlil_membership_close(&store);
+
+    put_be32(flash.bytes + 44u, UINT32_C(0x80000001));
+    refresh_record_crc(flash.bytes);
+    CHECK(ninlil_membership_open(&store, &io) == NINLIL_OK);
+    CHECK(ninlil_membership_get(&store, &loaded) == NINLIL_OK);
+    CHECK(loaded.capabilities == UINT32_C(0x80000001));
+    ninlil_membership_close(&store);
+    return 0;
+}
+
 static int (*const tests[])(void) = {
     test_format_and_invalid_input,
     test_counter_config_generation_budget,
@@ -841,6 +873,7 @@ static int (*const tests[])(void) = {
     test_membership_torn_and_ambiguous_commit,
     test_membership_partial_commit_is_fail_closed,
     test_membership_corruption_is_fail_closed,
+    test_membership_unknown_capability_fixture_is_preserved,
 };
 
 int main(void)

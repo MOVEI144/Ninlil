@@ -8,7 +8,8 @@ This repository, `MOVEI144/Ninlil`, is the canonical project repository from 202
 
 | Area | State |
 |---|---|
-| POSIX durable delivery core | Host-tested baseline |
+| P0 delivery evidence, bounded profiles, and Host operational contracts | Implementation candidate; acceptance gates pending |
+| POSIX durable delivery core | P0 host-test candidate |
 | SX1262 direct-radio software | Software candidate; physical RF acceptance pending |
 | ESP32 raw-flash delivery journal | Software candidate; hard-power acceptance pending |
 | Persistent security counter and membership stores | Software candidate; physical power-cut acceptance pending |
@@ -26,7 +27,7 @@ Ninlil owns communication mechanics:
 
 Ninlil does not own product policy, cloud APIs, dashboards, building or equipment models, safety-rule decisions, or tenant authorization. Product integrations such as KG consume Ninlil through a narrow transport adapter.
 
-The authoritative responsibility boundary and delivery semantics are defined in [`docs/FOUNDATIONS.md`](docs/FOUNDATIONS.md).
+The authoritative responsibility boundary and delivery semantics are defined in [`docs/FOUNDATIONS.md`](docs/FOUNDATIONS.md). The implemented P0 API, format versions, and non-claims are summarized in [`docs/P0_IMPLEMENTATION.md`](docs/P0_IMPLEMENTATION.md).
 
 ## Build and test
 
@@ -54,12 +55,13 @@ Read in this order:
 2. [`docs/FOUNDATIONS.md`](docs/FOUNDATIONS.md)
 3. [`docs/P0_DELIVERY_CONTRACT_V2.md`](docs/P0_DELIVERY_CONTRACT_V2.md)
 4. [`docs/P0_OPERATIONAL_PROFILES_V1.md`](docs/P0_OPERATIONAL_PROFILES_V1.md)
-5. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-6. [`docs/ENGINEERING_STANDARD.md`](docs/ENGINEERING_STANDARD.md)
-7. [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md)
-8. [`docs/FAILURE_MODEL.md`](docs/FAILURE_MODEL.md)
-9. [`docs/TESTING.md`](docs/TESTING.md)
-10. [`docs/ROADMAP.md`](docs/ROADMAP.md)
+5. [`docs/P0_IMPLEMENTATION.md`](docs/P0_IMPLEMENTATION.md)
+6. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+7. [`docs/ENGINEERING_STANDARD.md`](docs/ENGINEERING_STANDARD.md)
+8. [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md)
+9. [`docs/FAILURE_MODEL.md`](docs/FAILURE_MODEL.md)
+10. [`docs/TESTING.md`](docs/TESTING.md)
+11. [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
 ## License
 

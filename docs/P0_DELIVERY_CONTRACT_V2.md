@@ -67,16 +67,20 @@ A duplicate of one logical message and an older distinct logical message are dif
 
 ## Decision 5 — Deadline and terminal outcome semantics
 
-Deadline support requires an explicit platform time source and time quality. A message with an enforceable absolute deadline is admitted only when the configured clock contract can determine that deadline safely across the required lifecycle. The runtime never guesses elapsed wall time after a power loss.
+Deadline support requires an explicit platform time source and time quality. The P0 enforceable profile permits a nonzero absolute deadline only with required evidence `REMOTE_STORED`. Combining a deadline with `APPLICATION_ACCEPTED` is invalid at submission, DATA decode, and durable replay because P0 has not defined whether post-storage Application delay means expiry, cancellation, or an Application-owned result. That semantic is explicitly deferred.
+
+A first inbound admission and each outbound attempt or retry of deadline-bearing DATA require a successful `RESTART_SAFE` reading. Missing, failed, unavailable, or runtime-only time cannot prove validity or expiry, so that deadline-bearing work is skipped without mutating the inbox or transmitting DATA; unrelated eligible work continues. Duplicate DATA that exactly matches a contract already durably accepted is not a new admission: it may trigger one bounded retransmission of the stored receipt without a clock and after the deadline. This exception preserves recovery from receipt loss and never creates a second inbox record. The runtime never guesses elapsed wall time after a power loss.
+
+A locally proven-expired message becomes terminal `EXPIRED` only if no transmission attempt was durably recorded. If an attempt may have crossed the remote boundary, expiry suppresses further DATA retries but the message remains `ACTIVE` and ambiguous until authoritative evidence or an explicit recovery decision arrives. A peer `EXPIRED` receipt is committed only for an attempted message with a nonzero deadline, unsatisfied required evidence, and local restart-safe time proving `now >= deadline`. Live receipts that fail those tests are ignored; durable histories containing zero-deadline expiry or expiry after satisfying evidence are corruption.
 
 Terminal meanings are:
 
-- `EXPIRED`: the runtime can prove that the declared deadline passed before the required evidence was reached.
+- `EXPIRED`: the runtime can prove that the declared deadline passed before any local attempt, or can validate a peer expiry after an attempt under the conservative rules above.
 - `FAILED`: an authenticated peer or local policy returned an explicit permanent rejection, or the operation was proven impossible without ambiguity.
 - `UNKNOWN`: transmission or remote action may have occurred, but the required evidence cannot be determined safely.
 - `CANCELLED`: cancellation was durably committed before the operation could have reached the remote responsibility boundary, or a later cancellation protocol explicitly confirmed it.
 
-`ACK missing` is not proof of failure.
+`ACK missing` is not proof of failure. A deadline-bearing inbound message admitted before expiry has already reached the P0 `REMOTE_STORED` boundary; P0 does not later discard it before Application handoff.
 
 `SUPERSEDED` is not a portable core outcome in P0. Products represent replacement through their own generation/revision semantics and may cancel an older message when cancellation is still safe.
 
@@ -117,7 +121,7 @@ Exact queue counts and weights are role-profile decisions and will be fixed in t
 - Rename or separate current `APPLIED` APIs so they cannot be read as transport success.
 - Persist ownership, traffic class, and required evidence in versioned journal records.
 - Version the DATA and receipt wire contracts.
-- Add a platform clock boundary before implementing enforceable deadlines.
+- Require restart-safe clock evidence at each deadline-bearing first admission and DATA attempt, while allowing stored duplicate receipt recovery without that clock.
 - Keep Application handoff acknowledgement separate from Application business results.
 - Add tests for duplicate receipt, restart redelivery, stale-state ordering, capacity reserve, starvation bounds, and ambiguous timeout outcomes.
 

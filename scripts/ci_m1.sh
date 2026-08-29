@@ -78,8 +78,10 @@ mapfile -d '' format_files < <(
 )
 format_files+=(
   "$root/tests/test_core.c"
+  "$root/tests/test_delivery_state.c"
   "$root/tests/test_diag_radio.c"
   "$root/tests/test_flash.c"
+  "$root/tests/test_operations.c"
   "$root/tests/test_radio_delivery.c"
   "$root/tests/test_support.c"
   "$root/tests/test_support.h"
@@ -92,6 +94,7 @@ format_files+=(
 CC="$gcc_bin" CLANG="$clang_bin" "$root/scripts/check_esp_syntax.sh"
 "$root/scripts/static_analysis.sh" "$gcc_bin" "$clang_bin"
 "$root/scripts/loc_m1_software.sh"
+"$root/scripts/loc_p0.sh"
 
 if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git -C "$root" diff --check

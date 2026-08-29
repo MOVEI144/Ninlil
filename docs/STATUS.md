@@ -17,6 +17,10 @@ The first review branch imports a compact C11 baseline containing:
 - fail-closed persistent security-counter and membership stores;
 - host, fault-injection, and fake-hardware tests.
 
+## P0 implementation candidate
+
+The P0 implementation candidate adds versioned per-message delivery evidence, immediate durable-store receipts, at-least-once Application handoff, restart-safe deadline boundaries, bounded role scheduling, default-deny service grants, and caller-backed Host custody/topology/group contracts. This is not accepted hardware or production-security evidence. See [`P0_IMPLEMENTATION.md`](P0_IMPLEMENTATION.md).
+
 ## Important non-claims
 
 The official baseline does **not** yet contain a completed secure-link layer, EDHOC integration, Join protocol, multi-peer Gateway authority store, Relay, scheduled MAC, or fragmentation. Earlier conversational milestones do not become official implementation evidence unless their source and tests are imported and reviewed here.

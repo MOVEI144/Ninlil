@@ -10,6 +10,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#define APP_SERVICE UINT16_C(0x0100)
+#define BATCH_MESSAGES 20u
+#define TOTAL_MESSAGES 100u
+#define FLASH_PAYLOAD_OFFSET 32L
+#define OUTBOUND_PAYLOAD_OFFSET 52L
+#define INBOUND_PAYLOAD_OFFSET 36L
+
 #define CHECK(expression)                                                      \
     do {                                                                       \
         if (!(expression)) {                                                   \
@@ -28,6 +35,8 @@ typedef struct radio_pair {
     uint8_t duplicate_second_to_first;
 } radio_pair;
 
+static test_policy delivery_policy;
+
 static int initialize_radio(ninlil_radio_link *radio, ninlil_link *link)
 {
     ninlil_radio_link_init(radio);
@@ -37,23 +46,67 @@ static int initialize_radio(ninlil_radio_link *radio, ninlil_link *link)
     return ninlil_radio_mark_initialized(radio);
 }
 
-static int open_runtime(ninlil_runtime **runtime, const char *path,
-                        uint16_t node_id, ninlil_link link,
-                        uint32_t *random_state)
+static int open_runtime_work(ninlil_runtime **runtime, const char *path,
+                             uint16_t node_id, ninlil_link link,
+                             uint32_t *random_state, uint32_t max_work)
 {
     ninlil_config config;
 
     memset(&config, 0, sizeof(config));
     config.journal_location = path;
     config.node_id = node_id;
-    config.max_outbound = 128u;
-    config.max_inbound = 128u;
     config.retry_interval_steps = 1u;
-    config.max_work_per_step = 8u;
+    config.max_work_per_step = max_work;
     config.link = link;
     config.random.fill = test_rng_fill;
     config.random.ctx = random_state;
+    config.policy_lookup = test_policy_lookup;
+    config.policy_ctx = &delivery_policy;
+    if (ninlil_role_profile_standard(NINLIL_ROLE_POWERED_ENDPOINT,
+                                     &config.profile) != NINLIL_OK)
+        return NINLIL_ERR_INVALID;
     return ninlil_open(runtime, &config);
+}
+
+static int open_runtime(ninlil_runtime **runtime, const char *path,
+                        uint16_t node_id, ninlil_link link,
+                        uint32_t *random_state)
+{
+    return open_runtime_work(runtime, path, node_id, link, random_state, 8u);
+}
+
+static int flip_file_byte(const char *path, long offset)
+{
+    FILE *file = fopen(path, "r+b");
+    int value;
+    int result = -1;
+
+    if (!file)
+        return -1;
+    if (fseek(file, offset, SEEK_SET) == 0) {
+        value = fgetc(file);
+        if (value != EOF && fseek(file, offset, SEEK_SET) == 0 &&
+            fputc(value ^ 1, file) != EOF && fflush(file) == 0)
+            result = 0;
+    }
+    if (fclose(file) != 0)
+        result = -1;
+    return result;
+}
+
+static int submit_message(ninlil_runtime *runtime, const ninlil_id *key,
+                          uint16_t target, const uint8_t *payload,
+                          uint16_t payload_len, ninlil_id *message_id)
+{
+    ninlil_submission request;
+
+    ninlil_submission_defaults(&request);
+    request.idempotency_key = *key;
+    request.target = target;
+    request.service = APP_SERVICE;
+    request.payload = payload;
+    request.payload_len = payload_len;
+    return ninlil_submit(runtime, &request, message_id);
 }
 
 static int air_move(ninlil_radio_link *source, ninlil_radio_link *target,
@@ -88,6 +141,7 @@ static int cycle(radio_pair *pair, ninlil_runtime *first,
                  ninlil_runtime *second)
 {
     int rc = ninlil_step(first);
+
     if (rc != NINLIL_OK && rc != NINLIL_ERR_CAPACITY)
         return rc;
     rc = air_move(&pair->first, &pair->second, &pair->drop_first_to_second,
@@ -101,20 +155,20 @@ static int cycle(radio_pair *pair, ninlil_runtime *first,
                     &pair->duplicate_second_to_first);
 }
 
-static int apply_all(ninlil_runtime *runtime, size_t *applied)
+static int accept_all(ninlil_runtime *runtime, size_t *accepted)
 {
     for (;;) {
         ninlil_inbound inbound;
         int rc = ninlil_receive(runtime, &inbound);
+
         if (rc == NINLIL_ERR_EMPTY)
             return NINLIL_OK;
         if (rc != NINLIL_OK)
             return rc;
-        rc = ninlil_complete(runtime, &inbound.message_id,
-                             NINLIL_PROGRESS_APPLIED);
+        rc = ninlil_application_accept(runtime, &inbound.message_id);
         if (rc != NINLIL_OK)
             return rc;
-        (*applied)++;
+        (*accepted)++;
     }
 }
 
@@ -133,7 +187,7 @@ static int test_direct_delivery_with_loss_and_duplicates(void)
     ninlil_id key;
     ninlil_id message_id;
     ninlil_info info;
-    size_t applied = 0u;
+    size_t accepted = 0u;
     unsigned int index;
 
     CHECK(test_make_directory(directory, sizeof(directory)) == 0);
@@ -153,13 +207,13 @@ static int test_direct_delivery_with_loss_and_duplicates(void)
     pair.drop_second_to_first = 1u;
     pair.duplicate_first_to_second = 1u;
     test_fill_id(&key, UINT8_C(0x51));
-    CHECK(ninlil_submit(first, &key, 2u, 1u, (const uint8_t *)"radio", 5u,
-                        &message_id) == NINLIL_OK);
+    CHECK(submit_message(first, &key, 2u, (const uint8_t *)"radio", 5u,
+                         &message_id) == NINLIL_OK);
     for (index = 0u; index < 40u; index++) {
         CHECK(cycle(&pair, first, second) == NINLIL_OK);
-        CHECK(apply_all(second, &applied) == NINLIL_OK);
+        CHECK(accept_all(second, &accepted) == NINLIL_OK);
     }
-    CHECK(applied == 1u);
+    CHECK(accepted == 1u);
     CHECK(ninlil_query(first, &message_id, &info) == NINLIL_OK);
     CHECK(info.outcome == NINLIL_OUTCOME_SATISFIED);
 
@@ -181,10 +235,10 @@ static int test_bidirectional_hundred_messages(void)
     ninlil_runtime *second = NULL;
     uint32_t first_random = 30u;
     uint32_t second_random = 40u;
-    ninlil_id first_ids[100];
-    ninlil_id second_ids[100];
-    size_t first_applied = 0u;
-    size_t second_applied = 0u;
+    ninlil_id first_ids[TOTAL_MESSAGES];
+    ninlil_id second_ids[TOTAL_MESSAGES];
+    size_t first_accepted = 0u;
+    size_t second_accepted = 0u;
     unsigned int index;
 
     CHECK(test_make_directory(directory, sizeof(directory)) == 0);
@@ -200,36 +254,52 @@ static int test_bidirectional_hundred_messages(void)
     CHECK(open_runtime(&second, second_path, 2u, second_link, &second_random) ==
           NINLIL_OK);
 
-    for (index = 0u; index < 100u; index++) {
-        ninlil_id key;
-        uint8_t payload[8];
+    for (index = 0u; index < TOTAL_MESSAGES; index += BATCH_MESSAGES) {
+        unsigned int item;
+        unsigned int cycle_index;
+        size_t expected = index + BATCH_MESSAGES;
 
-        test_fill_id(&key, (uint8_t)(index + 1u));
-        memset(payload, (int)(uint8_t)index, sizeof(payload));
-        CHECK(ninlil_submit(first, &key, 2u, 11u, payload, sizeof(payload),
-                            &first_ids[index]) == NINLIL_OK);
-        key.bytes[0] ^= UINT8_C(0xA5);
-        CHECK(ninlil_submit(second, &key, 1u, 12u, payload, sizeof(payload),
-                            &second_ids[index]) == NINLIL_OK);
-    }
-    for (index = 0u; index < 2000u; index++) {
-        CHECK(cycle(&pair, first, second) == NINLIL_OK);
-        CHECK(apply_all(first, &first_applied) == NINLIL_OK);
-        CHECK(apply_all(second, &second_applied) == NINLIL_OK);
-        if (first_applied == 100u && second_applied == 100u) {
-            ninlil_info first_info;
-            ninlil_info second_info;
-            if (ninlil_query(first, &first_ids[99], &first_info) == NINLIL_OK &&
-                ninlil_query(second, &second_ids[99], &second_info) ==
-                    NINLIL_OK &&
-                first_info.outcome == NINLIL_OUTCOME_SATISFIED &&
-                second_info.outcome == NINLIL_OUTCOME_SATISFIED)
+        for (item = index; item < index + BATCH_MESSAGES; item++) {
+            ninlil_id key;
+            uint8_t payload[8];
+
+            test_fill_id(&key, (uint8_t)(item + 1u));
+            memset(payload, (int)(uint8_t)item, sizeof(payload));
+            CHECK(submit_message(first, &key, 2u, payload, sizeof(payload),
+                                 &first_ids[item]) == NINLIL_OK);
+            key.bytes[0] ^= UINT8_C(0xA5);
+            CHECK(submit_message(second, &key, 1u, payload, sizeof(payload),
+                                 &second_ids[item]) == NINLIL_OK);
+        }
+        for (cycle_index = 0u; cycle_index < 1000u; cycle_index++) {
+            int all_satisfied = 1;
+
+            CHECK(cycle(&pair, first, second) == NINLIL_OK);
+            CHECK(accept_all(first, &first_accepted) == NINLIL_OK);
+            CHECK(accept_all(second, &second_accepted) == NINLIL_OK);
+            if (first_accepted != expected || second_accepted != expected)
+                continue;
+            for (item = index; item < index + BATCH_MESSAGES; item++) {
+                ninlil_info first_info;
+                ninlil_info second_info;
+
+                if (ninlil_query(first, &first_ids[item], &first_info) !=
+                        NINLIL_OK ||
+                    ninlil_query(second, &second_ids[item], &second_info) !=
+                        NINLIL_OK ||
+                    first_info.outcome != NINLIL_OUTCOME_SATISFIED ||
+                    second_info.outcome != NINLIL_OUTCOME_SATISFIED) {
+                    all_satisfied = 0;
+                    break;
+                }
+            }
+            if (all_satisfied)
                 break;
         }
+        CHECK(cycle_index < 1000u);
     }
-    CHECK(index < 2000u);
-    CHECK(first_applied == 100u);
-    CHECK(second_applied == 100u);
+    CHECK(first_accepted == TOTAL_MESSAGES);
+    CHECK(second_accepted == TOTAL_MESSAGES);
 
     ninlil_close(first);
     ninlil_close(second);
@@ -265,9 +335,10 @@ static int test_submit_survives_abrupt_exit(void)
         ninlil_id child_message;
         int rc =
             open_runtime(&child_runtime, journal_path, 1u, link, &child_random);
+
         if (rc == NINLIL_OK) {
-            rc = ninlil_submit(child_runtime, &key, 2u, 1u,
-                               (const uint8_t *)"owned", 5u, &child_message);
+            rc = submit_message(child_runtime, &key, 2u,
+                                (const uint8_t *)"owned", 5u, &child_message);
         }
         _exit(rc == NINLIL_OK ? 0 : 1);
     }
@@ -275,8 +346,8 @@ static int test_submit_survives_abrupt_exit(void)
     CHECK(WIFEXITED(status) && WEXITSTATUS(status) == 0);
     CHECK(open_runtime(&runtime, journal_path, 1u, link, &random_state) ==
           NINLIL_OK);
-    CHECK(ninlil_submit(runtime, &key, 2u, 1u, (const uint8_t *)"owned", 5u,
-                        &message_id) == NINLIL_OK);
+    CHECK(submit_message(runtime, &key, 2u, (const uint8_t *)"owned", 5u,
+                         &message_id) == NINLIL_OK);
     CHECK(ninlil_query(runtime, &message_id, &info) == NINLIL_OK);
     CHECK(info.outcome == NINLIL_OUTCOME_ACTIVE);
 
@@ -285,18 +356,95 @@ static int test_submit_survives_abrupt_exit(void)
     return 0;
 }
 
+static int test_flash_runtime_stops_on_payload_corruption(void)
+{
+    char directory[40];
+    char first_path[80];
+    char second_path[80];
+    radio_pair pair;
+    ninlil_link first_link;
+    ninlil_link second_link;
+    ninlil_runtime *first = NULL;
+    ninlil_runtime *second = NULL;
+    uint32_t first_random = 60u;
+    uint32_t second_random = 61u;
+    ninlil_id key;
+    ninlil_id message_id;
+    ninlil_inbound inbound;
+    uint8_t payload = UINT8_C(0x60);
+    int rc;
+
+    CHECK(test_make_directory(directory, sizeof(directory)) == 0);
+    CHECK(test_make_path(first_path, sizeof(first_path), directory,
+                         "out.flash") == 0);
+    CHECK(test_make_path(second_path, sizeof(second_path), directory,
+                         "in.flash") == 0);
+    memset(&pair, 0, sizeof(pair));
+    CHECK(initialize_radio(&pair.first, &first_link) == NINLIL_OK);
+    CHECK(open_runtime(&first, first_path, 1u, first_link, &first_random) ==
+          NINLIL_OK);
+    test_fill_id(&key, UINT8_C(0x60));
+    CHECK(submit_message(first, &key, 2u, &payload, 1u, &message_id) ==
+          NINLIL_OK);
+    CHECK(flip_file_byte(first_path,
+                         FLASH_PAYLOAD_OFFSET + OUTBOUND_PAYLOAD_OFFSET) == 0);
+    CHECK(ninlil_step(first) == NINLIL_ERR_CORRUPT);
+    CHECK(pair.first.tx_pending == 0u);
+    ninlil_close(first);
+    first = NULL;
+    CHECK(open_runtime(&first, first_path, 1u, first_link, &first_random) ==
+          NINLIL_ERR_CORRUPT);
+    CHECK(first == NULL);
+    CHECK(remove(first_path) == 0);
+
+    memset(&pair, 0, sizeof(pair));
+    CHECK(initialize_radio(&pair.first, &first_link) == NINLIL_OK);
+    CHECK(initialize_radio(&pair.second, &second_link) == NINLIL_OK);
+    CHECK(open_runtime(&first, first_path, 1u, first_link, &first_random) ==
+          NINLIL_OK);
+    CHECK(open_runtime_work(&second, second_path, 2u, second_link,
+                            &second_random, 1u) == NINLIL_OK);
+    test_fill_id(&key, UINT8_C(0x61));
+    CHECK(submit_message(first, &key, 2u, &payload, 1u, &message_id) ==
+          NINLIL_OK);
+    rc = ninlil_step(first);
+    CHECK(rc == NINLIL_OK || rc == NINLIL_ERR_BUSY);
+    CHECK(pair.first.tx_pending == 1u);
+    CHECK(air_move(&pair.first, &pair.second, &pair.drop_first_to_second,
+                   &pair.duplicate_first_to_second) == NINLIL_OK);
+    CHECK(ninlil_step(second) == NINLIL_OK);
+    CHECK(pair.second.tx_pending == 0u);
+    CHECK(flip_file_byte(second_path,
+                         FLASH_PAYLOAD_OFFSET + INBOUND_PAYLOAD_OFFSET) == 0);
+    CHECK(ninlil_receive(second, &inbound) == NINLIL_ERR_CORRUPT);
+    CHECK(ninlil_step(second) == NINLIL_ERR_CORRUPT);
+    CHECK(pair.second.tx_pending == 0u);
+    ninlil_close(first);
+    ninlil_close(second);
+    first = NULL;
+    second = NULL;
+    CHECK(open_runtime_work(&second, second_path, 2u, second_link,
+                            &second_random, 1u) == NINLIL_ERR_CORRUPT);
+    CHECK(second == NULL);
+    test_remove_directory(directory, first_path, second_path);
+    return 0;
+}
+
 static int (*const tests[])(void) = {
     test_direct_delivery_with_loss_and_duplicates,
     test_bidirectional_hundred_messages,
     test_submit_survives_abrupt_exit,
+    test_flash_runtime_stops_on_payload_corruption,
 };
 
 int main(void)
 {
     size_t index;
 
+    test_policy_init(&delivery_policy, APP_SERVICE, 128u);
     for (index = 0u; index < sizeof(tests) / sizeof(tests[0]); index++) {
         int rc = tests[index]();
+
         printf("delivery_%02zu %s\n", index + 1u, rc == 0 ? "PASS" : "FAIL");
         if (rc != 0)
             return rc;

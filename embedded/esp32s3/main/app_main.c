@@ -16,10 +16,9 @@
 #include <string.h>
 
 #define JOURNAL_LABEL "ninlil_journal"
-#define APP_SERVICE 1u
+#define APP_SERVICE UINT16_C(0x0100)
 #define LOOP_DELAY_MS 10u
 #define RECOVERY_DELAY_MS 20u
-#define RUNTIME_CAPACITY 128u
 #define STACK_MIN_FREE_PERCENT 25u
 #define DIAG_PING_PERIOD_MS 100u
 #define DIAG_PING_DEADLINE_MS 1000u
@@ -142,6 +141,30 @@ static int random_fill(void *context, uint8_t *output, size_t length)
     (void)context;
     esp_fill_random(output, length);
     return 0;
+}
+
+static int delivery_policy_lookup(void *context, uint16_t peer,
+                                  ninlil_peer_policy *policy)
+{
+    static const ninlil_service_grant grant = {
+        .service_id = APP_SERVICE,
+        .maximum_payload_bytes = NINLIL_MAX_PAYLOAD,
+        .maximum_live_messages = 32u,
+        .directions = NINLIL_SERVICE_BOTH,
+        .traffic_class_mask = UINT8_C(0x0F),
+    };
+
+    (void)context;
+    if (!policy || peer == 0u || peer == UINT16_MAX)
+        return NINLIL_ERR_NOT_FOUND;
+    memset(policy, 0, sizeof(*policy));
+    policy->role = NINLIL_ROLE_POWERED_ENDPOINT;
+    policy->capabilities = NINLIL_CAP_APP_SEND | NINLIL_CAP_APP_RECEIVE;
+    policy->membership_epoch = 1u;
+    policy->session_membership_epoch = 1u;
+    policy->grants = &grant;
+    policy->grant_count = 1u;
+    return NINLIL_OK;
 }
 
 static int pump_radio_rx(ninlil_sx1262_radio *physical, ninlil_radio_link *link)
@@ -288,8 +311,15 @@ static int advance_hil_batch(ninlil_runtime *runtime, hil_batch *batch)
 
         hil_key(&key, batch->sequence);
         hil_payload(payload, batch->sequence);
-        rc = ninlil_submit(runtime, &key, CONFIG_NINLIL_PEER_ID, APP_SERVICE,
-                           payload, sizeof(payload), &batch->message_id);
+        ninlil_submission request;
+
+        ninlil_submission_defaults(&request);
+        request.idempotency_key = key;
+        request.target = CONFIG_NINLIL_PEER_ID;
+        request.service = APP_SERVICE;
+        request.payload = payload;
+        request.payload_len = sizeof(payload);
+        rc = ninlil_submit(runtime, &request, &batch->message_id);
         if (rc != NINLIL_OK)
             return rc;
         batch->active = true;
@@ -304,7 +334,7 @@ static void run_delivery(ninlil_sx1262_radio *physical)
     ninlil_link link;
     ninlil_config config;
     ninlil_runtime *runtime = NULL;
-    uint32_t inbound_applied = 0u;
+    uint32_t inbound_accepted = 0u;
     bool fatal = false;
 #if defined(CONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT)
     hil_batch batch = {.sequence = 1u};
@@ -319,13 +349,14 @@ static void run_delivery(ninlil_sx1262_radio *physical)
     memset(&config, 0, sizeof(config));
     config.journal_location = JOURNAL_LABEL;
     config.node_id = CONFIG_NINLIL_NODE_ID;
-    config.max_outbound = RUNTIME_CAPACITY;
-    config.max_inbound = RUNTIME_CAPACITY;
     config.retry_interval_steps = 50u;
     config.max_work_per_step = 8u;
     config.link = link;
     config.random.fill = random_fill;
-    if (ninlil_open(&runtime, &config) != NINLIL_OK) {
+    config.policy_lookup = delivery_policy_lookup;
+    if (ninlil_role_profile_standard(NINLIL_ROLE_POWERED_ENDPOINT,
+                                     &config.profile) != NINLIL_OK ||
+        ninlil_open(&runtime, &config) != NINLIL_OK) {
         ESP_LOGE(TAG, "durable Runtime open failed");
         return;
     }
@@ -361,16 +392,15 @@ static void run_delivery(ninlil_sx1262_radio *physical)
                 fatal = true;
                 break;
             }
-            rc = ninlil_complete(runtime, &inbound.message_id,
-                                 NINLIL_PROGRESS_APPLIED);
+            rc = ninlil_application_accept(runtime, &inbound.message_id);
             if (rc != NINLIL_OK) {
-                ESP_LOGE(TAG, "APPLIED durable commit failed: %d", rc);
+                ESP_LOGE(TAG, "Application acceptance commit failed: %d", rc);
                 fatal = true;
                 break;
             }
-            inbound_applied++;
-            ESP_LOGI(TAG, "Application APPLIED count=%lu service=%u len=%u",
-                     (unsigned long)inbound_applied,
+            inbound_accepted++;
+            ESP_LOGI(TAG, "Application ACCEPTED count=%lu service=%u len=%u",
+                     (unsigned long)inbound_accepted,
                      (unsigned int)inbound.service,
                      (unsigned int)inbound.payload_len);
         }

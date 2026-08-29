@@ -92,6 +92,39 @@ void test_link_duplicate_next(test_link *link, uint8_t side, uint8_t count)
     link->endpoint[side].duplicate_next = count;
 }
 
+void test_policy_init(test_policy *policy, uint16_t service,
+                      uint16_t maximum_live_messages)
+{
+    memset(policy, 0, sizeof(*policy));
+    policy->role = NINLIL_ROLE_POWERED_ENDPOINT;
+    policy->capabilities =
+        NINLIL_CAP_APP_SEND | NINLIL_CAP_APP_RECEIVE | NINLIL_CAP_POLL_DOWNLINK;
+    policy->membership_epoch = 1u;
+    policy->session_membership_epoch = 1u;
+    policy->grant_count = 1u;
+    policy->grants[0].service_id = service;
+    policy->grants[0].directions = NINLIL_SERVICE_BOTH;
+    policy->grants[0].maximum_payload_bytes = NINLIL_MAX_PAYLOAD;
+    policy->grants[0].traffic_class_mask = UINT8_C(0x0F);
+    policy->grants[0].maximum_live_messages = maximum_live_messages;
+}
+
+int test_policy_lookup(void *ctx, uint16_t peer, ninlil_peer_policy *policy)
+{
+    test_policy *configured = ctx;
+
+    if (!configured || !policy || peer == 0u || peer == UINT16_MAX)
+        return NINLIL_ERR_NOT_FOUND;
+    memset(policy, 0, sizeof(*policy));
+    policy->role = configured->role;
+    policy->capabilities = configured->capabilities;
+    policy->membership_epoch = configured->membership_epoch;
+    policy->session_membership_epoch = configured->session_membership_epoch;
+    policy->grants = configured->grants;
+    policy->grant_count = configured->grant_count;
+    return NINLIL_OK;
+}
+
 int test_rng_fill(void *ctx, uint8_t *buffer, size_t length)
 {
     uint32_t *state = ctx;

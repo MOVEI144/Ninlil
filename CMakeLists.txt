@@ -37,9 +37,24 @@ function(ninlil_strict_target target)
   endif()
 endfunction()
 
-add_library(ninlil_posix STATIC
+set(NINLIL_DELIVERY_SOURCES
   src/ninlil.c
+  src/ninlil_authorization.c
+  src/ninlil_custody.c
+  src/ninlil_group.c
+  src/ninlil_leaf.c
+  src/ninlil_policy.c
+  src/ninlil_profile.c
+  src/ninlil_receive.c
+  src/ninlil_replay.c
+  src/ninlil_send.c
+  src/ninlil_storage.c
+  src/ninlil_topology.c
   src/ninlil_wire.c
+)
+
+add_library(ninlil_posix STATIC
+  ${NINLIL_DELIVERY_SOURCES}
   ports/posix/ninlil_journal.c
 )
 target_include_directories(ninlil_posix
@@ -76,8 +91,7 @@ target_include_directories(ninlil_security_state
 ninlil_strict_target(ninlil_security_state)
 
 add_library(ninlil_flash_runtime STATIC
-  src/ninlil.c
-  src/ninlil_wire.c
+  ${NINLIL_DELIVERY_SOURCES}
   ports/flash/ninlil_flash_journal_file.c
 )
 target_include_directories(ninlil_flash_runtime
@@ -99,6 +113,27 @@ target_include_directories(test_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(test_core PRIVATE ninlil_posix)
 ninlil_strict_target(test_core)
 add_test(NAME m1_core COMMAND test_core)
+
+add_executable(test_delivery_state
+  tests/test_delivery_state.c
+  tests/test_support.c
+)
+target_include_directories(test_delivery_state PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+target_link_libraries(test_delivery_state PRIVATE ninlil_posix)
+ninlil_strict_target(test_delivery_state)
+add_test(NAME p0_delivery_state COMMAND test_delivery_state)
+
+add_executable(test_operations
+  tests/test_operations.c
+  tests/test_support.c
+)
+target_include_directories(test_operations PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+target_link_libraries(test_operations PRIVATE ninlil_posix)
+ninlil_strict_target(test_operations)
+add_test(NAME p0_operations COMMAND test_operations)
 
 add_executable(test_diag_radio tests/test_diag_radio.c)
 target_link_libraries(test_diag_radio PRIVATE ninlil_radio_model)

@@ -39,9 +39,24 @@ function(ninlil_m1_strict_target target)
   endif()
 endfunction()
 
-add_library(ninlil_m1_posix STATIC
+set(NINLIL_M1_DELIVERY_SOURCES
   ${NINLIL_ROOT}/src/ninlil.c
+  ${NINLIL_ROOT}/src/ninlil_authorization.c
+  ${NINLIL_ROOT}/src/ninlil_custody.c
+  ${NINLIL_ROOT}/src/ninlil_group.c
+  ${NINLIL_ROOT}/src/ninlil_leaf.c
+  ${NINLIL_ROOT}/src/ninlil_policy.c
+  ${NINLIL_ROOT}/src/ninlil_profile.c
+  ${NINLIL_ROOT}/src/ninlil_receive.c
+  ${NINLIL_ROOT}/src/ninlil_replay.c
+  ${NINLIL_ROOT}/src/ninlil_send.c
+  ${NINLIL_ROOT}/src/ninlil_storage.c
+  ${NINLIL_ROOT}/src/ninlil_topology.c
   ${NINLIL_ROOT}/src/ninlil_wire.c
+)
+
+add_library(ninlil_m1_posix STATIC
+  ${NINLIL_M1_DELIVERY_SOURCES}
   ${NINLIL_ROOT}/ports/posix/ninlil_journal.c
 )
 target_include_directories(ninlil_m1_posix
@@ -72,8 +87,7 @@ target_include_directories(ninlil_m1_flash_store
 ninlil_m1_strict_target(ninlil_m1_flash_store)
 
 add_library(ninlil_m1_flash_runtime STATIC
-  ${NINLIL_ROOT}/src/ninlil.c
-  ${NINLIL_ROOT}/src/ninlil_wire.c
+  ${NINLIL_M1_DELIVERY_SOURCES}
   ${NINLIL_ROOT}/ports/flash/ninlil_flash_journal_file.c
 )
 target_include_directories(ninlil_m1_flash_runtime
@@ -95,6 +109,27 @@ target_include_directories(test_m1_core PRIVATE ${NINLIL_ROOT}/tests)
 target_link_libraries(test_m1_core PRIVATE ninlil_m1_posix)
 ninlil_m1_strict_target(test_m1_core)
 add_test(NAME m1_core COMMAND test_m1_core)
+
+add_executable(test_p0_delivery_state
+  ${NINLIL_ROOT}/tests/test_delivery_state.c
+  ${NINLIL_ROOT}/tests/test_support.c
+)
+target_include_directories(test_p0_delivery_state PRIVATE
+  ${NINLIL_ROOT}/src
+  ${NINLIL_ROOT}/tests
+)
+target_link_libraries(test_p0_delivery_state PRIVATE ninlil_m1_posix)
+ninlil_m1_strict_target(test_p0_delivery_state)
+add_test(NAME p0_delivery_state COMMAND test_p0_delivery_state)
+
+add_executable(test_p0_operations
+  ${NINLIL_ROOT}/tests/test_operations.c
+  ${NINLIL_ROOT}/tests/test_support.c
+)
+target_include_directories(test_p0_operations PRIVATE ${NINLIL_ROOT}/tests)
+target_link_libraries(test_p0_operations PRIVATE ninlil_m1_posix)
+ninlil_m1_strict_target(test_p0_operations)
+add_test(NAME p0_operations COMMAND test_p0_operations)
 
 add_executable(test_m1_diag_radio ${NINLIL_ROOT}/tests/test_diag_radio.c)
 target_link_libraries(test_m1_diag_radio PRIVATE ninlil_m1_radio_model)

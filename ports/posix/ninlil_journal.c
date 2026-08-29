@@ -11,14 +11,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define JRN_VERSION 1u
+#define JRN_VERSION 2u
 #define JRN_HEADER 10u
 #define JRN_CRC 4u
-#define JRN_MAX_PAYLOAD 294u
+#define JRN_MAX_PAYLOAD 320u
+#define JRN_MAX_TYPE 7u
 
 struct ninlil_journal {
     int fd;
     int poisoned;
+    uint64_t maximum_bytes;
 };
 
 static uint32_t crc32_ieee(const uint8_t *data, size_t length)
@@ -131,8 +133,8 @@ static int header_valid(const uint8_t *header, uint16_t *length)
     uint16_t complement;
 
     if (header[0] != 'N' || header[1] != 'J' || header[2] != 'L' ||
-        header[3] != '1' || header[4] != JRN_VERSION || header[5] < 1u ||
-        header[5] > 4u)
+        header[3] != '2' || header[4] != JRN_VERSION || header[5] < 1u ||
+        header[5] > JRN_MAX_TYPE)
         return 0;
     stored_length = get_be16(header + 6);
     complement = get_be16(header + 8);
@@ -144,6 +146,7 @@ static int header_valid(const uint8_t *header, uint16_t *length)
 }
 
 int ninlil_journal_open(ninlil_journal **out, const char *path,
+                        uint64_t maximum_bytes,
                         ninlil_journal_on_record on_record, void *ctx)
 {
     struct stat status;
@@ -153,7 +156,9 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
     int created = 0;
     int fd;
 
-    if (!out || !path || path[0] == '\0' || !on_record)
+    if (!out || !path || path[0] == '\0' || !on_record ||
+        maximum_bytes < JRN_HEADER + JRN_CRC ||
+        maximum_bytes > (uint64_t)INT64_MAX)
         return NINLIL_ERR_INVALID;
     *out = NULL;
     fd = open(path, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
@@ -176,6 +181,10 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
     if (fstat(fd, &status) != 0 || !S_ISREG(status.st_mode)) {
         (void)close(fd);
         return NINLIL_ERR_IO;
+    }
+    if (status.st_size < 0 || (uint64_t)status.st_size > maximum_bytes) {
+        (void)close(fd);
+        return NINLIL_ERR_CAPACITY;
     }
     if (created && (fsync(fd) != 0 || fsync_parent(path) != NINLIL_OK)) {
         (void)close(fd);
@@ -217,10 +226,16 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
             (void)close(fd);
             return NINLIL_ERR_CORRUPT;
         }
-        rc = on_record(ctx, header[5], body, length);
-        if (rc != NINLIL_OK) {
-            (void)close(fd);
-            return rc;
+        {
+            ninlil_journal_ref reference;
+
+            reference.offset = (uint64_t)(position + (off_t)JRN_HEADER);
+            reference.length = length;
+            rc = on_record(ctx, header[5], body, length, &reference);
+            if (rc != NINLIL_OK) {
+                (void)close(fd);
+                return rc;
+            }
         }
         position += required;
         good = position;
@@ -240,12 +255,14 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
         return NINLIL_ERR_IO;
     }
     journal->fd = fd;
+    journal->maximum_bytes = maximum_bytes;
     *out = journal;
     return NINLIL_OK;
 }
 
 int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
-                          const uint8_t *payload, uint16_t length)
+                          const uint8_t *payload, uint16_t length,
+                          ninlil_journal_ref *reference)
 {
     uint8_t record[JRN_HEADER + JRN_MAX_PAYLOAD + JRN_CRC];
     off_t start;
@@ -253,13 +270,13 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
 
     if (!journal || journal->fd < 0 || journal->poisoned ||
         (length > 0u && !payload) || length > JRN_MAX_PAYLOAD || type < 1u ||
-        type > 4u)
+        type > JRN_MAX_TYPE)
         return journal && journal->poisoned ? NINLIL_ERR_IO
                                             : NINLIL_ERR_INVALID;
     record[0] = 'N';
     record[1] = 'J';
     record[2] = 'L';
-    record[3] = '1';
+    record[3] = '2';
     record[4] = JRN_VERSION;
     record[5] = type;
     put_be16(record + 6, length);
@@ -273,6 +290,10 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
         journal->poisoned = 1;
         return NINLIL_ERR_IO;
     }
+    if (start < 0 || (uint64_t)start > journal->maximum_bytes ||
+        JRN_HEADER + (uint64_t)length + JRN_CRC >
+            journal->maximum_bytes - (uint64_t)start)
+        return NINLIL_ERR_CAPACITY;
     rc = write_full(journal->fd, record, JRN_HEADER + (size_t)length + JRN_CRC);
     if (rc != NINLIL_OK || fdatasync(journal->fd) != 0) {
         (void)ftruncate(journal->fd, start);
@@ -281,6 +302,51 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
         journal->poisoned = 1;
         return NINLIL_ERR_IO;
     }
+    if (reference) {
+        reference->offset = (uint64_t)(start + (off_t)JRN_HEADER);
+        reference->length = length;
+    }
+    return NINLIL_OK;
+}
+
+int ninlil_journal_read(ninlil_journal *journal,
+                        const ninlil_journal_ref *reference,
+                        uint16_t relative_offset, uint8_t *buffer,
+                        uint16_t length)
+{
+    uint8_t record[JRN_HEADER + JRN_MAX_PAYLOAD + JRN_CRC];
+    uint64_t record_offset;
+    uint16_t stored_length;
+    uint16_t verified_length;
+    size_t total_length;
+    int rc;
+
+    if (!journal || journal->fd < 0 || journal->poisoned || !reference ||
+        (length > 0u && !buffer) || relative_offset > reference->length ||
+        length > (uint16_t)(reference->length - relative_offset) ||
+        reference->offset < JRN_HEADER ||
+        reference->offset > (uint64_t)INT64_MAX)
+        return NINLIL_ERR_INVALID;
+    record_offset = reference->offset - JRN_HEADER;
+    rc = read_full_at(journal->fd, (off_t)record_offset, record, JRN_HEADER);
+    if (rc != NINLIL_OK)
+        return rc;
+    if (!header_valid(record, &stored_length) ||
+        stored_length != reference->length)
+        return NINLIL_ERR_CORRUPT;
+    total_length = JRN_HEADER + (size_t)stored_length + JRN_CRC;
+    if (record_offset > (uint64_t)INT64_MAX - total_length)
+        return NINLIL_ERR_INVALID;
+    rc = read_full_at(journal->fd, (off_t)record_offset, record, total_length);
+    if (rc != NINLIL_OK)
+        return rc;
+    if (!header_valid(record, &verified_length) ||
+        verified_length != stored_length ||
+        get_be32(record + JRN_HEADER + stored_length) !=
+            crc32_ieee(record, JRN_HEADER + (size_t)stored_length))
+        return NINLIL_ERR_CORRUPT;
+    if (length > 0u)
+        memcpy(buffer, record + JRN_HEADER + relative_offset, length);
     return NINLIL_OK;
 }
 
