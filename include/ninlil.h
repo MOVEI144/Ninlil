@@ -166,7 +166,9 @@ typedef struct ninlil_config {
 } ninlil_config;
 
 /* The payload is borrowed only for the synchronous submit call. Durable
- * submit returns OK only after the complete body and contract are committed. */
+ * submit returns OK only after the complete body and contract are committed.
+ * A nonzero absolute deadline remains active until required_evidence is met
+ * and requires restart-safe time at each pending deadline boundary. */
 typedef struct ninlil_submission {
     uint16_t struct_version;
     ninlil_id idempotency_key;

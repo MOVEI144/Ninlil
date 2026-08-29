@@ -309,6 +309,58 @@ int ninlil_archive_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry,
     return NINLIL_OK;
 }
 
+int ninlil_rejection_admission(const ninlil_runtime *runtime, uint16_t *slot)
+{
+    uint16_t index;
+
+    if (!runtime || !slot)
+        return NINLIL_ERR_INVALID;
+    for (index = 0u; index < runtime->rejection_capacity; index++) {
+        if (!runtime->rejections[index].used) {
+            *slot = index;
+            return NINLIL_OK;
+        }
+    }
+    return NINLIL_ERR_CAPACITY;
+}
+
+int ninlil_expire_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry)
+{
+    ninlil_rejection_entry *rejection;
+    uint16_t slot;
+    int rc;
+
+    if (!runtime || !entry || !entry->used ||
+        entry->required_evidence != NINLIL_EVIDENCE_APPLICATION_ACCEPTED ||
+        entry->absolute_deadline_ms == 0u)
+        return NINLIL_ERR_INVALID;
+    rc = ninlil_rejection_admission(runtime, &slot);
+    if (rc != NINLIL_OK)
+        return rc;
+    rc = ninlil_log_id(runtime, NINLIL_JRN_IN_EXPIRED, &entry->message_id);
+    if (rc != NINLIL_OK)
+        return rc;
+    rejection = &runtime->rejections[slot];
+    memset(rejection, 0, sizeof(*rejection));
+    rejection->message_id = entry->message_id;
+    rejection->record_ref = entry->record_ref;
+    rejection->absolute_deadline_ms = entry->absolute_deadline_ms;
+    rejection->target = entry->source;
+    rejection->service = entry->service;
+    rejection->payload_len = entry->payload_len;
+    rejection->ownership = entry->ownership;
+    rejection->required_evidence = entry->required_evidence;
+    rejection->latest_evidence = NINLIL_EVIDENCE_REMOTE_STORED;
+    rejection->traffic_class = entry->traffic_class;
+    rejection->status = NINLIL_RECEIPT_EXPIRED;
+    rejection->pending = 1u;
+    rejection->durable = 1u;
+    rejection->used = 1u;
+    memset(entry, 0, sizeof(*entry));
+    runtime->inbound_live--;
+    return NINLIL_OK;
+}
+
 int ninlil_outbound_admission(const ninlil_runtime *runtime,
                               ninlil_traffic_class traffic_class)
 {

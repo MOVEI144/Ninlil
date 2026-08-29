@@ -150,13 +150,13 @@ static int test_append_replay(void)
           NINLIL_OK);
     CHECK(ninlil_flash_store_append(&store, 1u, (const uint8_t *)"one", 3u) ==
           NINLIL_OK);
-    CHECK(ninlil_flash_store_append(&store, 8u, (const uint8_t *)"two", 3u) ==
+    CHECK(ninlil_flash_store_append(&store, 9u, (const uint8_t *)"two", 3u) ==
           NINLIL_OK);
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_OK);
     CHECK(records.count == 2u);
-    CHECK(records.types[0] == 1u && records.types[1] == 8u);
+    CHECK(records.types[0] == 1u && records.types[1] == 9u);
     CHECK(records.lengths[0] == 3u &&
           memcmp(records.payloads[0], "one", 3u) == 0);
     CHECK(records.lengths[1] == 3u &&

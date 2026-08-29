@@ -642,7 +642,7 @@ static int test_mtu_and_incompatible_journal_rejected(void)
 
     file = fopen(path, "wb");
     CHECK(file != NULL);
-    CHECK(fwrite("NJL2\x02\x01\x00\x00\xff\xff", 1u, 10u, file) == 10u);
+    CHECK(fwrite("NJL3\x03\x01\x00\x00\xff\xff", 1u, 10u, file) == 10u);
     CHECK(fclose(file) == 0);
     CHECK(open_runtime(&runtime, path, 1u, link, &random_state, &policy,
                        &profile, NULL) == NINLIL_ERR_CORRUPT);

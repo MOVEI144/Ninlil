@@ -34,7 +34,6 @@ static int contract_valid(uint8_t ownership, uint8_t required, uint8_t traffic,
            (required == NINLIL_EVIDENCE_REMOTE_STORED ||
             required == NINLIL_EVIDENCE_APPLICATION_ACCEPTED) &&
            traffic <= NINLIL_TRAFFIC_BULK &&
-           (deadline == 0u || required == NINLIL_EVIDENCE_REMOTE_STORED) &&
            (flags & (uint8_t)~NINLIL_JRN_DEADLINE_PRESENT) == 0u &&
            (((flags & NINLIL_JRN_DEADLINE_PRESENT) == 0u) == (deadline == 0u));
 }
@@ -182,14 +181,16 @@ static int replay_in_rejection(ninlil_runtime *runtime, const uint8_t *payload,
 
     if (length < NINLIL_JRN_IN_HEADER ||
         payload[0] != NINLIL_JRN_RECORD_VERSION ||
-        payload[5] != NINLIL_RECEIPT_PERMANENT_REJECTION)
+        (payload[5] != NINLIL_RECEIPT_PERMANENT_REJECTION &&
+         payload[5] != NINLIL_RECEIPT_EXPIRED))
         return NINLIL_ERR_CORRUPT;
     payload_len = get_be16(payload + 10);
     deadline = get_be64(payload + 12);
     if (payload_len > NINLIL_MAX_PAYLOAD ||
         length != (uint16_t)(NINLIL_JRN_IN_HEADER + payload_len) ||
         !contract_valid(payload[1], payload[2], payload[3], payload[4],
-                        deadline))
+                        deadline) ||
+        (payload[5] == NINLIL_RECEIPT_EXPIRED && deadline == 0u))
         return NINLIL_ERR_CORRUPT;
     memset(&candidate, 0, sizeof(candidate));
     candidate.ownership = (ninlil_ownership)payload[1];
@@ -214,6 +215,43 @@ static int replay_in_rejection(ninlil_runtime *runtime, const uint8_t *payload,
     candidate.durable = 1u;
     candidate.used = 1u;
     *slot = candidate;
+    return NINLIL_OK;
+}
+
+static int replay_in_expired(ninlil_runtime *runtime, const uint8_t *payload,
+                             uint16_t length)
+{
+    ninlil_rejection_entry *rejection;
+    ninlil_inbound_entry *entry;
+    ninlil_id id;
+
+    if (length != 1u + NINLIL_ID_BYTES ||
+        payload[0] != NINLIL_JRN_RECORD_VERSION)
+        return NINLIL_ERR_CORRUPT;
+    memcpy(id.bytes, payload + 1, NINLIL_ID_BYTES);
+    entry = ninlil_find_inbound(runtime, &id);
+    rejection = free_rejection(runtime);
+    if (!entry || !rejection ||
+        entry->required_evidence != NINLIL_EVIDENCE_APPLICATION_ACCEPTED ||
+        entry->absolute_deadline_ms == 0u)
+        return NINLIL_ERR_CORRUPT;
+    memset(rejection, 0, sizeof(*rejection));
+    rejection->message_id = entry->message_id;
+    rejection->record_ref = entry->record_ref;
+    rejection->absolute_deadline_ms = entry->absolute_deadline_ms;
+    rejection->target = entry->source;
+    rejection->service = entry->service;
+    rejection->payload_len = entry->payload_len;
+    rejection->ownership = entry->ownership;
+    rejection->required_evidence = entry->required_evidence;
+    rejection->latest_evidence = NINLIL_EVIDENCE_REMOTE_STORED;
+    rejection->traffic_class = entry->traffic_class;
+    rejection->status = NINLIL_RECEIPT_EXPIRED;
+    rejection->pending = 1u;
+    rejection->durable = 1u;
+    rejection->used = 1u;
+    memset(entry, 0, sizeof(*entry));
+    runtime->inbound_live--;
     return NINLIL_OK;
 }
 
@@ -324,6 +362,8 @@ int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
         return replay_in_accept(runtime, payload, length, reference);
     if (type == NINLIL_JRN_IN_REJECTION)
         return replay_in_rejection(runtime, payload, length, reference);
+    if (type == NINLIL_JRN_IN_EXPIRED)
+        return replay_in_expired(runtime, payload, length);
     if (type == NINLIL_JRN_OUT_ATTEMPT || type == NINLIL_JRN_OUT_EVIDENCE ||
         type == NINLIL_JRN_OUT_TERMINAL)
         return replay_out_update(runtime, type, payload, length);

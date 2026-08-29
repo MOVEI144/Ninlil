@@ -67,9 +67,11 @@ A duplicate of one logical message and an older distinct logical message are dif
 
 ## Decision 5 — Deadline and terminal outcome semantics
 
-Deadline support requires an explicit platform time source and time quality. The P0 enforceable profile permits a nonzero absolute deadline only with required evidence `REMOTE_STORED`. Combining a deadline with `APPLICATION_ACCEPTED` is invalid at submission, DATA decode, and durable replay because P0 has not defined whether post-storage Application delay means expiry, cancellation, or an Application-owned result. That semantic is explicitly deferred.
+Deadline support requires an explicit platform time source and time quality. A nonzero absolute deadline applies until the message reaches its declared required evidence, whether `REMOTE_STORED` or `APPLICATION_ACCEPTED`. Intermediate evidence does not end the deadline contract.
 
-A first inbound admission and each outbound attempt or retry of deadline-bearing DATA require a successful `RESTART_SAFE` reading. Missing, failed, unavailable, or runtime-only time cannot prove validity or expiry, so that deadline-bearing work is skipped without mutating the inbox or transmitting DATA; unrelated eligible work continues. Duplicate DATA that exactly matches a contract already durably accepted is not a new admission: it may trigger one bounded retransmission of the stored receipt without a clock and after the deadline. This exception preserves recovery from receipt loss and never creates a second inbox record. The runtime never guesses elapsed wall time after a power loss.
+A first inbound admission and each outbound attempt or retry of deadline-bearing DATA require a successful `RESTART_SAFE` reading. Missing, failed, unavailable, or runtime-only time cannot prove validity or expiry, so that deadline-bearing work is skipped without mutating the inbox or transmitting DATA; unrelated eligible work continues. Duplicate DATA that exactly matches a contract whose required evidence is already durably satisfied is not a new admission: it may trigger one bounded retransmission of the stored receipt without a clock and after the deadline. An exact duplicate of a durable receiver terminal tombstone likewise re-arms that same terminal receipt without revisiting policy or time. These exceptions preserve receipt-loss recovery without creating another inbox record. The runtime never guesses elapsed wall time after a power loss.
+
+For `APPLICATION_ACCEPTED`, Application offer and acceptance also require restart-safe time while the deadline remains pending. If the deadline is reached first, the receiver commits a bounded replay-safe `EXPIRED` tombstone before removing the live inbox entry or sending the receipt. The message is never offered or accepted afterward. If Application acceptance committed first, later stale expiry cannot regress that durable evidence.
 
 A locally proven-expired message becomes terminal `EXPIRED` only if no transmission attempt was durably recorded. If an attempt may have crossed the remote boundary, expiry suppresses further DATA retries but the message remains `ACTIVE` and ambiguous until authoritative evidence or an explicit recovery decision arrives. A peer `EXPIRED` receipt is committed only for an attempted message with a nonzero deadline, unsatisfied required evidence, and local restart-safe time proving `now >= deadline`. Live receipts that fail those tests are ignored; durable histories containing zero-deadline expiry or expiry after satisfying evidence are corruption.
 
@@ -80,7 +82,7 @@ Terminal meanings are:
 - `UNKNOWN`: transmission or remote action may have occurred, but the required evidence cannot be determined safely.
 - `CANCELLED`: cancellation was durably committed before the operation could have reached the remote responsibility boundary, or a later cancellation protocol explicitly confirmed it.
 
-`ACK missing` is not proof of failure. A deadline-bearing inbound message admitted before expiry has already reached the P0 `REMOTE_STORED` boundary; P0 does not later discard it before Application handoff.
+`ACK missing` is not proof of failure. For a message requiring `REMOTE_STORED`, an inbound commit satisfies the deadline and later Application delay cannot expire it. For a message requiring `APPLICATION_ACCEPTED`, `REMOTE_STORED` remains intermediate and the receiver enforces the deadline until durable Application acceptance.
 
 `SUPERSEDED` is not a portable core outcome in P0. Products represent replacement through their own generation/revision semantics and may cancel an older message when cancellation is still safe.
 
@@ -121,7 +123,7 @@ Exact queue counts and weights are role-profile decisions and will be fixed in t
 - Rename or separate current `APPLIED` APIs so they cannot be read as transport success.
 - Persist ownership, traffic class, and required evidence in versioned journal records.
 - Version the DATA and receipt wire contracts.
-- Require restart-safe clock evidence at each deadline-bearing first admission and DATA attempt, while allowing stored duplicate receipt recovery without that clock.
+- Require restart-safe clock evidence at each deadline-bearing first admission, DATA attempt, and pending Application handoff boundary, while allowing terminal or satisfied duplicate receipt recovery without that clock.
 - Keep Application handoff acknowledgement separate from Application business results.
 - Add tests for duplicate receipt, restart redelivery, stale-state ordering, capacity reserve, starvation bounds, and ambiguous timeout outcomes.
 

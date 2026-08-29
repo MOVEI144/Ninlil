@@ -11,11 +11,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define JRN_VERSION 3u
+#define JRN_VERSION 4u
 #define JRN_HEADER 10u
 #define JRN_CRC 4u
 #define JRN_MAX_PAYLOAD 320u
-#define JRN_MAX_TYPE 8u
+#define JRN_MAX_TYPE 9u
 
 struct ninlil_journal {
     int fd;
@@ -133,7 +133,7 @@ static int header_valid(const uint8_t *header, uint16_t *length)
     uint16_t complement;
 
     if (header[0] != 'N' || header[1] != 'J' || header[2] != 'L' ||
-        header[3] != '3' || header[4] != JRN_VERSION || header[5] < 1u ||
+        header[3] != '4' || header[4] != JRN_VERSION || header[5] < 1u ||
         header[5] > JRN_MAX_TYPE)
         return 0;
     stored_length = get_be16(header + 6);
@@ -276,7 +276,7 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
     record[0] = 'N';
     record[1] = 'J';
     record[2] = 'L';
-    record[3] = '3';
+    record[3] = '4';
     record[4] = JRN_VERSION;
     record[5] = type;
     put_be16(record + 6, length);
