@@ -354,7 +354,8 @@ int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
 {
     ninlil_runtime *runtime = ctx;
 
-    if (!payload || !reference || reference->length != length)
+    if (!payload || !reference || reference->length != length ||
+        reference->type != type)
         return NINLIL_ERR_CORRUPT;
     if (type == NINLIL_JRN_OUT_CREATE)
         return replay_out_create(runtime, payload, length, reference);

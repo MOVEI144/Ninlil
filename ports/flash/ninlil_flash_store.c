@@ -394,8 +394,8 @@ int ninlil_flash_store_append(ninlil_flash_store *store, uint8_t type,
 
 int ninlil_flash_store_read(const ninlil_flash_store *store,
                             size_t payload_offset, uint16_t record_length,
-                            uint16_t relative_offset, uint8_t *buffer,
-                            uint16_t length)
+                            uint8_t record_type, uint16_t relative_offset,
+                            uint8_t *buffer, uint16_t length)
 {
     uint8_t header[FLASH_HEADER_SIZE];
     uint8_t record[FLASH_MAX_RECORD_SIZE];
@@ -421,9 +421,8 @@ int ninlil_flash_store_read(const ninlil_flash_store *store,
         return rc;
     if (!header_parse(header, &type, &payload_length, &total_length,
                       &sequence) ||
-        payload_length != record_length)
+        type != record_type || payload_length != record_length)
         return NINLIL_ERR_CORRUPT;
-    (void)type;
     if (total_length > sizeof(record) || total_length > store->append_offset ||
         record_offset > store->append_offset - total_length ||
         record_offset / NINLIL_FLASH_SECTOR_SIZE !=

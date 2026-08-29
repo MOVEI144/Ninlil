@@ -33,6 +33,7 @@ static int replay_record(void *ctx, uint8_t type, const uint8_t *payload,
 
     reference.offset = payload_offset;
     reference.length = length;
+    reference.type = type;
     return journal->on_record(journal->record_ctx, type, payload, length,
                               &reference);
 }
@@ -247,6 +248,7 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
     if (rc == NINLIL_OK && reference) {
         reference->offset = payload_offset;
         reference->length = length;
+        reference->type = type;
     }
     return rc;
 }
@@ -259,8 +261,8 @@ int ninlil_journal_read(ninlil_journal *journal,
     if (!journal || !reference || reference->offset > SIZE_MAX)
         return NINLIL_ERR_INVALID;
     return ninlil_flash_store_read(&journal->store, (size_t)reference->offset,
-                                   reference->length, relative_offset, buffer,
-                                   length);
+                                   reference->length, reference->type,
+                                   relative_offset, buffer, length);
 }
 
 void ninlil_journal_close(ninlil_journal *journal)

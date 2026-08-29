@@ -1520,6 +1520,7 @@ static int test_posix_referenced_reads_revalidate_records(void)
          index++) {
         ninlil_journal *journal = NULL;
         ninlil_journal_ref reference;
+        ninlil_journal_ref wrong_type;
         uint8_t payload = UINT8_C(0xA5);
         uint8_t result = 0u;
 
@@ -1528,6 +1529,12 @@ static int test_posix_referenced_reads_revalidate_records(void)
                                   accept_journal_record, NULL) == NINLIL_OK);
         CHECK(ninlil_journal_append(journal, OLD_OUT_CREATE, &payload, 1u,
                                     &reference) == NINLIL_OK);
+        wrong_type = reference;
+        wrong_type.type = OUT_ATTEMPT_RECORD;
+        CHECK(ninlil_journal_read(journal, &wrong_type, 0u, &result, 1u) ==
+              NINLIL_ERR_CORRUPT);
+        CHECK(ninlil_journal_read(journal, &reference, 0u, &result, 1u) ==
+              NINLIL_OK);
         CHECK(flip_file_byte(path, mutation_offsets[index]) == 0);
         CHECK(ninlil_journal_read(journal, &reference, 0u, &result, 1u) ==
               NINLIL_ERR_CORRUPT);
