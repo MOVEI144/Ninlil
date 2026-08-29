@@ -1584,6 +1584,27 @@ static int test_posix_runtime_stops_on_payload_corruption(void)
     CHECK(runtime == NULL);
     CHECK(remove(path) == 0);
 
+    CHECK(test_make_path(path, sizeof(path), directory, "idempotency.j") == 0);
+    memset(&link, 0, sizeof(link));
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    test_fill_id(&key, UINT8_C(0x33));
+    submission = make_submission(key, NINLIL_EVIDENCE_REMOTE_STORED, &payload);
+    CHECK(ninlil_submit(runtime, &submission, &message_id) == NINLIL_OK);
+    CHECK(flip_file_byte(path, 10L + (long)OLD_OUT_HEADER) == 0);
+    send_calls = link.send_calls;
+    CHECK(ninlil_submit(runtime, &submission, &message_id) ==
+          NINLIL_ERR_CORRUPT);
+    CHECK(link.send_calls == send_calls);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_CORRUPT);
+    CHECK(link.send_calls == send_calls);
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_ERR_CORRUPT);
+    CHECK(runtime == NULL);
+    CHECK(remove(path) == 0);
+
     CHECK(test_make_path(path, sizeof(path), directory, "inbound.j") == 0);
     memset(&link, 0, sizeof(link));
     CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
