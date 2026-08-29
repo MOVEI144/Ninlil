@@ -275,7 +275,8 @@ static int replay_out_update(ninlil_runtime *runtime, uint8_t type,
             return NINLIL_ERR_CORRUPT;
         if ((outcome == NINLIL_OUTCOME_FAILED ||
              outcome == NINLIL_OUTCOME_EXPIRED) &&
-            entry->latest_evidence >= NINLIL_EVIDENCE_REMOTE_STORED)
+            ninlil_evidence_satisfies(entry->required_evidence,
+                                      entry->latest_evidence))
             return NINLIL_ERR_CORRUPT;
         return ninlil_archive_outbound(runtime, entry, outcome, archive_slot);
     }

@@ -579,9 +579,6 @@ static int test_reordered_receipts_are_monotonic(void)
     CHECK(inject_receipt(&link, &message_id, NINLIL_RECEIPT_EVIDENCE,
                          NINLIL_EVIDENCE_GATEWAY_CUSTODY) == NINLIL_OK);
     CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
-    CHECK(inject_receipt(&link, &message_id, NINLIL_RECEIPT_PERMANENT_REJECTION,
-                         NINLIL_EVIDENCE_NONE) == NINLIL_OK);
-    CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
     CHECK(inject_receipt(&link, &message_id, NINLIL_RECEIPT_EXPIRED,
                          NINLIL_EVIDENCE_NONE) == NINLIL_OK);
     CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
@@ -1055,7 +1052,7 @@ static int test_replay_rejects_protected_slot_collisions(void)
     return 0;
 }
 
-static int test_replay_rejects_terminal_after_remote_store(void)
+static int test_terminal_receipt_uses_required_evidence(void)
 {
     char directory[40];
     char path[80];
@@ -1066,8 +1063,8 @@ static int test_replay_rejects_terminal_after_remote_store(void)
     ninlil_id key;
     ninlil_id message_id;
     ninlil_submission submission;
+    ninlil_info info;
     uint32_t random_state = 24u;
-    uint8_t record[4u + NINLIL_ID_BYTES];
     uint8_t payload = 24u;
 
     CHECK(setup_leaf(directory, path, &profile, &policy) == 0);
@@ -1083,20 +1080,25 @@ static int test_replay_rejects_terminal_after_remote_store(void)
     CHECK(inject_receipt(&link, &message_id, NINLIL_RECEIPT_EVIDENCE,
                          NINLIL_EVIDENCE_REMOTE_STORED) == NINLIL_OK);
     CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    CHECK(ninlil_query(runtime, &message_id, &info) == NINLIL_OK);
+    CHECK(info.outcome == NINLIL_OUTCOME_ACTIVE);
+    CHECK(info.latest_evidence == NINLIL_EVIDENCE_REMOTE_STORED);
+
+    CHECK(inject_receipt(&link, &message_id, NINLIL_RECEIPT_PERMANENT_REJECTION,
+                         NINLIL_EVIDENCE_NONE) == NINLIL_OK);
+    CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    CHECK(ninlil_query(runtime, &message_id, &info) == NINLIL_OK);
+    CHECK(info.outcome == NINLIL_OUTCOME_FAILED);
+    CHECK(info.latest_evidence == NINLIL_EVIDENCE_REMOTE_STORED);
     ninlil_close(runtime);
     runtime = NULL;
 
-    memset(record, 0, sizeof(record));
-    record[0] = CURRENT_RECORD_VERSION;
-    memcpy(record + 1, message_id.bytes, NINLIL_ID_BYTES);
-    record[17] = (uint8_t)NINLIL_OUTCOME_FAILED;
-    put_be16(record + 18, 0u);
-    CHECK(append_journal_record(path, profile.flash_ceiling_bytes,
-                                OUT_TERMINAL_RECORD, record,
-                                (uint16_t)sizeof(record)) == NINLIL_OK);
     CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
-                       &profile) == NINLIL_ERR_CORRUPT);
-    CHECK(runtime == NULL);
+                       &profile) == NINLIL_OK);
+    CHECK(ninlil_query(runtime, &message_id, &info) == NINLIL_OK);
+    CHECK(info.outcome == NINLIL_OUTCOME_FAILED);
+    CHECK(info.latest_evidence == NINLIL_EVIDENCE_REMOTE_STORED);
+    ninlil_close(runtime);
     test_remove_directory(directory, path, NULL);
     return 0;
 }
@@ -1930,7 +1932,7 @@ static int (*const tests[])(void) = {
     test_protected_cursor_uses_safe_slot,
     test_outbound_archive_pressure,
     test_replay_rejects_protected_slot_collisions,
-    test_replay_rejects_terminal_after_remote_store,
+    test_terminal_receipt_uses_required_evidence,
     test_old_delivery_record_is_rejected,
     test_handoff_marker_capacity_suppresses_resend,
     test_policy_error_classification,
