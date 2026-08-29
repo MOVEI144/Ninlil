@@ -115,6 +115,7 @@ static int handle_duplicate(ninlil_runtime *runtime,
         if (!matches)
             return NINLIL_ERR_CONFLICT;
         inbound->need_receipt = 1u;
+        inbound->receipt_handoff_commit_pending = 0u;
         return NINLIL_OK;
     }
     rc = archive_contract_matches(runtime, archive, view, &matches);
@@ -123,6 +124,7 @@ static int handle_duplicate(ninlil_runtime *runtime,
     if (!matches)
         return NINLIL_ERR_CONFLICT;
     archive->need_receipt = 1u;
+    archive->receipt_handoff_commit_pending = 0u;
     return NINLIL_OK;
 }
 
@@ -153,11 +155,14 @@ static int handle_data(ninlil_runtime *runtime, const uint8_t *packet,
     if (expired)
         return queue_rejection(runtime, &view.message_id, view.source,
                                NINLIL_RECEIPT_EXPIRED);
-    if (authorize_data(runtime, &view,
-                       ninlil_live_service(runtime, view.source, view.service,
-                                           NINLIL_SERVICE_SEND)) != NINLIL_OK)
+    rc = authorize_data(runtime, &view,
+                        ninlil_live_service(runtime, view.source, view.service,
+                                            NINLIL_SERVICE_SEND));
+    if (rc == NINLIL_ERR_UNAUTHORIZED)
         return queue_rejection(runtime, &view.message_id, view.source,
                                NINLIL_RECEIPT_PERMANENT_REJECTION);
+    if (rc != NINLIL_OK)
+        return rc;
     if (runtime->inbound_live >= runtime->config.profile.max_inbound ||
         !ninlil_total_owned_available(runtime))
         return NINLIL_ERR_CAPACITY;
@@ -190,10 +195,16 @@ static int handle_data(ninlil_runtime *runtime, const uint8_t *packet,
 int ninlil_finish_outbound(ninlil_runtime *runtime,
                            ninlil_outbound_entry *entry, ninlil_outcome outcome)
 {
-    int rc = ninlil_log_terminal(runtime, &entry->message_id, outcome);
+    uint16_t archive_slot;
+    int rc = ninlil_archive_admission(runtime, &archive_slot);
 
-    return rc == NINLIL_OK ? ninlil_archive_outbound(runtime, entry, outcome)
-                           : rc;
+    if (rc != NINLIL_OK)
+        return rc;
+    rc =
+        ninlil_log_terminal(runtime, &entry->message_id, outcome, archive_slot);
+    return rc == NINLIL_OK
+               ? ninlil_archive_outbound(runtime, entry, outcome, archive_slot)
+               : rc;
 }
 
 static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
@@ -201,29 +212,39 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
 {
     ninlil_wire_receipt_view view;
     ninlil_outbound_entry *entry;
+    uint16_t archive_slot = NINLIL_ARCHIVE_SLOT_NONE;
     int rc;
 
     if (ninlil_wire_decode_receipt(packet, length, &view) != NINLIL_OK ||
         view.target != runtime->config.node_id)
         return NINLIL_OK;
     entry = ninlil_find_outbound(runtime, &view.message_id);
-    if (!entry || entry->target != view.source)
+    if (!entry || entry->target != view.source || !entry->attempted)
         return NINLIL_OK;
-    if (view.status == NINLIL_RECEIPT_PERMANENT_REJECTION)
-        return ninlil_finish_outbound(runtime, entry, NINLIL_OUTCOME_FAILED);
-    if (view.status == NINLIL_RECEIPT_EXPIRED)
-        return ninlil_finish_outbound(runtime, entry, NINLIL_OUTCOME_EXPIRED);
-    if (entry->latest_evidence == view.evidence)
+    if (view.status != NINLIL_RECEIPT_EVIDENCE) {
+        if (entry->latest_evidence >= NINLIL_EVIDENCE_REMOTE_STORED)
+            return NINLIL_OK;
+        return ninlil_finish_outbound(runtime, entry,
+                                      view.status ==
+                                              NINLIL_RECEIPT_PERMANENT_REJECTION
+                                          ? NINLIL_OUTCOME_FAILED
+                                          : NINLIL_OUTCOME_EXPIRED);
+    }
+    if (view.evidence <= entry->latest_evidence)
         return NINLIL_OK;
-    if (view.evidence < entry->latest_evidence)
-        return NINLIL_ERR_CONFLICT;
-    rc = ninlil_log_evidence(runtime, &entry->message_id, view.evidence);
+    if (ninlil_evidence_satisfies(entry->required_evidence, view.evidence)) {
+        rc = ninlil_archive_admission(runtime, &archive_slot);
+        if (rc != NINLIL_OK)
+            return rc;
+    }
+    rc = ninlil_log_evidence(runtime, &entry->message_id, view.evidence,
+                             archive_slot);
     if (rc != NINLIL_OK)
         return rc;
     entry->latest_evidence = view.evidence;
     if (ninlil_evidence_satisfies(entry->required_evidence, view.evidence))
-        return ninlil_archive_outbound(runtime, entry,
-                                       NINLIL_OUTCOME_SATISFIED);
+        return ninlil_archive_outbound(runtime, entry, NINLIL_OUTCOME_SATISFIED,
+                                       archive_slot);
     return NINLIL_OK;
 }
 
@@ -260,6 +281,26 @@ static int send_receipt(ninlil_runtime *runtime, uint16_t target,
     return runtime->config.link.send(runtime->config.link.ctx, packet, length);
 }
 
+static int commit_receipt_handoff(ninlil_runtime *runtime,
+                                  const ninlil_id *message_id,
+                                  uint8_t *need_receipt,
+                                  uint8_t *handoff_committed,
+                                  uint8_t *commit_pending)
+{
+    int rc;
+
+    if (!*handoff_committed) {
+        *commit_pending = 1u;
+        rc = ninlil_log_id(runtime, NINLIL_JRN_IN_RECEIPT_HANDOFF, message_id);
+        if (rc != NINLIL_OK)
+            return rc;
+        *handoff_committed = 1u;
+    }
+    *commit_pending = 0u;
+    *need_receipt = 0u;
+    return NINLIL_OK;
+}
+
 static int send_inbound_receipt(ninlil_runtime *runtime, int *worked)
 {
     uint16_t scanned;
@@ -276,12 +317,20 @@ static int send_inbound_receipt(ninlil_runtime *runtime, int *worked)
         runtime->inbound_receipt_cursor =
             (uint16_t)((index + 1u) % runtime->inbound_capacity);
         *worked = 1;
+        if (entry->receipt_handoff_commit_pending)
+            return commit_receipt_handoff(
+                runtime, &entry->message_id, &entry->need_receipt,
+                &entry->receipt_handoff_committed,
+                &entry->receipt_handoff_commit_pending);
         rc = send_receipt(runtime, entry->source, &entry->message_id,
                           NINLIL_RECEIPT_EVIDENCE,
                           NINLIL_EVIDENCE_REMOTE_STORED);
-        if (rc == NINLIL_OK)
-            entry->need_receipt = 0u;
-        return rc;
+        return rc == NINLIL_OK
+                   ? commit_receipt_handoff(
+                         runtime, &entry->message_id, &entry->need_receipt,
+                         &entry->receipt_handoff_committed,
+                         &entry->receipt_handoff_commit_pending)
+                   : rc;
     }
     return NINLIL_ERR_EMPTY;
 }
@@ -303,11 +352,19 @@ static int send_archive_receipt(ninlil_runtime *runtime, int *worked)
         runtime->archive_receipt_cursor =
             (uint16_t)((index + 1u) % runtime->archive_capacity);
         *worked = 1;
+        if (entry->receipt_handoff_commit_pending)
+            return commit_receipt_handoff(
+                runtime, &entry->message_id, &entry->need_receipt,
+                &entry->receipt_handoff_committed,
+                &entry->receipt_handoff_commit_pending);
         rc = send_receipt(runtime, entry->peer, &entry->message_id,
                           NINLIL_RECEIPT_EVIDENCE, entry->latest_evidence);
-        if (rc == NINLIL_OK)
-            entry->need_receipt = 0u;
-        return rc;
+        return rc == NINLIL_OK
+                   ? commit_receipt_handoff(
+                         runtime, &entry->message_id, &entry->need_receipt,
+                         &entry->receipt_handoff_committed,
+                         &entry->receipt_handoff_commit_pending)
+                   : rc;
     }
     return NINLIL_ERR_EMPTY;
 }
@@ -344,15 +401,24 @@ static int send_rejection(ninlil_runtime *runtime, int *worked)
 
 int ninlil_process_receipt_send(ninlil_runtime *runtime, int *worked)
 {
-    int rc;
+    uint8_t scanned;
 
     *worked = 0;
-    rc = send_inbound_receipt(runtime, worked);
-    if (rc != NINLIL_ERR_EMPTY)
-        return rc;
-    rc = send_archive_receipt(runtime, worked);
-    if (rc != NINLIL_ERR_EMPTY)
-        return rc;
-    rc = send_rejection(runtime, worked);
-    return rc == NINLIL_ERR_EMPTY ? NINLIL_OK : rc;
+    for (scanned = 0u; scanned < NINLIL_RECEIPT_CLASSES; scanned++) {
+        uint8_t receipt_class =
+            (uint8_t)((runtime->receipt_class_cursor + scanned) %
+                      NINLIL_RECEIPT_CLASSES);
+        int rc = receipt_class == 0u   ? send_inbound_receipt(runtime, worked)
+                 : receipt_class == 1u ? send_archive_receipt(runtime, worked)
+                                       : send_rejection(runtime, worked);
+
+        if (*worked) {
+            runtime->receipt_class_cursor =
+                (uint8_t)((receipt_class + 1u) % NINLIL_RECEIPT_CLASSES);
+            return rc;
+        }
+        if (rc != NINLIL_ERR_EMPTY)
+            return rc;
+    }
+    return NINLIL_OK;
 }

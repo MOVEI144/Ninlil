@@ -1,6 +1,6 @@
 # P0 contract implementation
 
-Status: implementation candidate. Host and target gates must be recorded in the draft PR before this status can be promoted.
+Status: implementation candidate. Host and target build evidence does not establish physical RF or power-cut acceptance.
 
 ## Delivery API and state
 
@@ -13,9 +13,9 @@ The supported end-to-end requirements are:
 
 `ninlil_submit()` returning `NINLIL_OK` means the complete body and contract committed to the local journal. It does not mean link transmission or remote success. A durable attempt marker commits before the first call to the Link send operation.
 
-Inbound DATA is completely decoded and authorized before journal mutation. After the authoritative inbox commit, the receiver schedules a `REMOTE_STORED` receipt without waiting for Application handling. `ninlil_receive()` offers a stored message at most once in one boot. A restart offers it again until `ninlil_application_accept()` commits explicit adoption. Application results remain independent opaque messages.
+Inbound DATA is completely decoded and authorized before journal mutation. Only a definitive authorization denial can schedule permanent rejection; transient policy errors propagate, and malformed local policy reports corruption. After the authoritative inbox commit, the receiver schedules a `REMOTE_STORED` receipt without waiting for Application handling. Live-inbox, archived, and rejection receipts receive bounded rotating service. `ninlil_receive()` offers a stored message at most once in one boot. A restart offers it again until `ninlil_application_accept()` commits explicit adoption. Application results remain independent opaque messages.
 
-A missing receipt leaves the message active. Local expiry is committed only if restart-safe time proves the deadline passed before any transmission attempt. After an attempt, lack of evidence is not enough to infer expiry or failure. `UNKNOWN` requires an explicit integration decision after an attempt; cancellation is allowed only before an attempt. An explicit peer permanent rejection produces `FAILED`.
+A missing receipt leaves the message active. Receipt evidence is monotonic, and delayed weaker or contradictory terminal receipts cannot override durable `REMOTE_STORED` evidence. Local expiry is committed only if restart-safe time proves the deadline passed before any transmission attempt. After an attempt, lack of evidence is not enough to infer expiry or failure. `UNKNOWN` requires an explicit integration decision after an attempt; cancellation is allowed only before an attempt. An explicit peer permanent rejection produces `FAILED` only before `REMOTE_STORED` is established.
 
 ## Versioned formats
 
@@ -23,12 +23,12 @@ The unreleased baseline formats are deliberately rejected rather than migrated s
 
 - DATA and receipt wire version: 2;
 - POSIX journal envelope: `NJL2`, version 2;
-- delivery journal record version: 2;
+- delivery journal record version: 3;
 - raw-Flash journal envelope and commit marker: version 3.
 
 DATA carries no generic correlation field. Application correlation remains in the opaque payload.
 
-Payload bodies stay in the authoritative journal. Runtime arrays contain bounded metadata and journal references; they do not retain one fixed payload buffer per live message. Journal growth is capped by the role's Flash ceiling and reports capacity rather than growing without bound. Completed identities remain in the role's bounded dedupe cache and are eventually replaced according to that declared bound.
+Payload bodies stay in the authoritative journal. Runtime arrays contain bounded metadata and journal references; they do not retain one fixed payload buffer per live message. Journal growth is capped by the role's Flash ceiling and reports capacity rather than growing without bound. Completed identities remain in the role's bounded dedupe cache and are eventually replaced according to that declared bound. Inbound archive entries with pending receipts are protected from replacement. After the Link accepts a receipt, a local `IN_RECEIPT_HANDOFF` record commits before that entry becomes replaceable. This record is only durable local eviction-safety state: it is not evidence that the peer received the receipt and never changes an outbound outcome. If the record cannot commit for capacity, bounded volatile state retries only the local commit and suppresses autonomous receipt retransmission; each duplicate DATA packet may trigger one new receipt attempt. Reopen without a committed marker conservatively restores the protected pending receipt. Archival transitions scan for any unused or unprotected slot, commit its index for deterministic replay, and return capacity before committing when no replay-safe slot exists. Replay rejects a recorded protected-slot collision as corruption.
 
 ## Operational modules
 

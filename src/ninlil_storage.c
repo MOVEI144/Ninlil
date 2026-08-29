@@ -177,45 +177,50 @@ int ninlil_id_in_use(ninlil_runtime *runtime, const ninlil_id *id)
            ninlil_find_archive_id(runtime, id) != NULL;
 }
 
-static ninlil_archive_entry *archive_slot(ninlil_runtime *runtime)
+static int archive_replaceable(const ninlil_archive_entry *entry)
 {
-    uint16_t capacity = runtime->archive_capacity;
+    return !entry->used || !entry->need_receipt;
+}
+
+int ninlil_archive_admission(const ninlil_runtime *runtime, uint16_t *slot)
+{
     uint16_t scanned;
 
-    if (capacity == 0u)
-        return NULL;
-    for (scanned = 0u; scanned < capacity; scanned++) {
+    if (!slot)
+        return NINLIL_ERR_INVALID;
+    for (scanned = 0u; scanned < runtime->archive_capacity; scanned++) {
         uint16_t index =
-            (uint16_t)((runtime->archive_replace_cursor + scanned) % capacity);
-        if (!runtime->archive[index].used) {
-            runtime->archive_replace_cursor =
-                (uint16_t)((index + 1u) % capacity);
-            return &runtime->archive[index];
+            (uint16_t)((runtime->archive_replace_cursor + scanned) %
+                       runtime->archive_capacity);
+        const ninlil_archive_entry *entry = &runtime->archive[index];
+
+        if (archive_replaceable(entry)) {
+            *slot = index;
+            return NINLIL_OK;
         }
     }
-    for (scanned = 0u; scanned < capacity; scanned++) {
-        uint16_t index =
-            (uint16_t)((runtime->archive_replace_cursor + scanned) % capacity);
-        if (!runtime->archive[index].need_receipt) {
-            runtime->archive_replace_cursor =
-                (uint16_t)((index + 1u) % capacity);
-            return &runtime->archive[index];
-        }
-    }
-    return &runtime->archive[runtime->archive_replace_cursor++ % capacity];
+    return NINLIL_ERR_CAPACITY;
+}
+
+static ninlil_archive_entry *archive_slot(ninlil_runtime *runtime,
+                                          uint16_t index)
+{
+    return index < runtime->archive_capacity ? &runtime->archive[index] : NULL;
 }
 
 int ninlil_archive_outbound(ninlil_runtime *runtime,
                             ninlil_outbound_entry *entry,
-                            ninlil_outcome outcome)
+                            ninlil_outcome outcome, uint16_t selected_slot)
 {
-    ninlil_archive_entry *archive = archive_slot(runtime);
+    ninlil_archive_entry *archive = archive_slot(runtime, selected_slot);
     ninlil_traffic_class traffic_class = entry->traffic_class;
 
-    if (!archive) {
-        runtime->fatal_error = NINLIL_ERR_STATE;
-        return runtime->fatal_error;
-    }
+    if (!archive)
+        return runtime->replaying ? NINLIL_ERR_CORRUPT : NINLIL_ERR_CAPACITY;
+    if (!archive_replaceable(archive))
+        return runtime->replaying ? NINLIL_ERR_CORRUPT : NINLIL_ERR_CAPACITY;
+    runtime->archive_replace_cursor =
+        (uint16_t)((selected_slot + 1u) % runtime->archive_capacity);
     memset(archive, 0, sizeof(*archive));
     archive->used = 1u;
     archive->kind = NINLIL_ARCHIVE_OUTBOUND;
@@ -241,14 +246,20 @@ int ninlil_archive_outbound(ninlil_runtime *runtime,
 }
 
 int ninlil_archive_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry,
-                           ninlil_evidence evidence, uint8_t need_receipt)
+                           ninlil_evidence evidence, uint8_t need_receipt,
+                           uint16_t selected_slot)
 {
-    ninlil_archive_entry *archive = archive_slot(runtime);
+    ninlil_archive_entry *archive = archive_slot(runtime, selected_slot);
+    uint8_t receipt_handoff_committed = entry->receipt_handoff_committed;
+    uint8_t receipt_handoff_commit_pending =
+        entry->receipt_handoff_commit_pending;
 
-    if (!archive) {
-        runtime->fatal_error = NINLIL_ERR_STATE;
-        return runtime->fatal_error;
-    }
+    if (!archive)
+        return runtime->replaying ? NINLIL_ERR_CORRUPT : NINLIL_ERR_CAPACITY;
+    if (!archive_replaceable(archive))
+        return runtime->replaying ? NINLIL_ERR_CORRUPT : NINLIL_ERR_CAPACITY;
+    runtime->archive_replace_cursor =
+        (uint16_t)((selected_slot + 1u) % runtime->archive_capacity);
     memset(archive, 0, sizeof(*archive));
     archive->used = 1u;
     archive->kind = NINLIL_ARCHIVE_INBOUND;
@@ -264,6 +275,14 @@ int ninlil_archive_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry,
     archive->traffic_class = entry->traffic_class;
     archive->outcome = NINLIL_OUTCOME_SATISFIED;
     archive->need_receipt = need_receipt;
+    archive->receipt_handoff_committed =
+        entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED
+            ? 0u
+            : receipt_handoff_committed;
+    archive->receipt_handoff_commit_pending =
+        entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED
+            ? 0u
+            : receipt_handoff_commit_pending;
     memset(entry, 0, sizeof(*entry));
     runtime->inbound_live--;
     return NINLIL_OK;
@@ -375,25 +394,39 @@ int ninlil_log_id(ninlil_runtime *runtime, uint8_t type, const ninlil_id *id)
 }
 
 int ninlil_log_evidence(ninlil_runtime *runtime, const ninlil_id *id,
-                        ninlil_evidence evidence)
+                        ninlil_evidence evidence, uint16_t archive_slot)
 {
-    uint8_t record[2u + NINLIL_ID_BYTES];
+    uint8_t record[4u + NINLIL_ID_BYTES];
 
     record[0] = NINLIL_JRN_RECORD_VERSION;
     memcpy(record + 1, id->bytes, NINLIL_ID_BYTES);
     record[17] = (uint8_t)evidence;
+    put_be16(record + 18, archive_slot);
     return ninlil_append_record(runtime, NINLIL_JRN_OUT_EVIDENCE, record,
                                 sizeof(record), NULL);
 }
 
 int ninlil_log_terminal(ninlil_runtime *runtime, const ninlil_id *id,
-                        ninlil_outcome outcome)
+                        ninlil_outcome outcome, uint16_t archive_slot)
 {
-    uint8_t record[2u + NINLIL_ID_BYTES];
+    uint8_t record[4u + NINLIL_ID_BYTES];
 
     record[0] = NINLIL_JRN_RECORD_VERSION;
     memcpy(record + 1, id->bytes, NINLIL_ID_BYTES);
     record[17] = (uint8_t)outcome;
+    put_be16(record + 18, archive_slot);
     return ninlil_append_record(runtime, NINLIL_JRN_OUT_TERMINAL, record,
                                 sizeof(record), NULL);
+}
+
+int ninlil_log_application_accept(ninlil_runtime *runtime, const ninlil_id *id,
+                                  uint16_t archive_slot)
+{
+    uint8_t record[3u + NINLIL_ID_BYTES];
+
+    record[0] = NINLIL_JRN_RECORD_VERSION;
+    memcpy(record + 1, id->bytes, NINLIL_ID_BYTES);
+    put_be16(record + 17, archive_slot);
+    return ninlil_append_record(runtime, NINLIL_JRN_IN_APPLICATION_ACCEPT,
+                                record, sizeof(record), NULL);
 }

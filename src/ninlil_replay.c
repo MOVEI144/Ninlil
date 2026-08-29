@@ -178,34 +178,76 @@ static int replay_out_update(ninlil_runtime *runtime, uint8_t type,
         entry->attempted = 1u;
         return NINLIL_OK;
     }
-    if (length != 2u + NINLIL_ID_BYTES)
+    if (length != 4u + NINLIL_ID_BYTES)
         return NINLIL_ERR_CORRUPT;
     if (type == NINLIL_JRN_OUT_EVIDENCE) {
         ninlil_evidence evidence = (ninlil_evidence)payload[17];
+        uint16_t archive_slot = get_be16(payload + 18);
+        int satisfies;
 
-        if ((evidence != NINLIL_EVIDENCE_GATEWAY_CUSTODY &&
+        if (!entry->attempted ||
+            (evidence != NINLIL_EVIDENCE_GATEWAY_CUSTODY &&
              evidence != NINLIL_EVIDENCE_REMOTE_STORED &&
              evidence != NINLIL_EVIDENCE_APPLICATION_ACCEPTED) ||
             evidence <= entry->latest_evidence)
             return NINLIL_ERR_CORRUPT;
+        satisfies =
+            ninlil_evidence_satisfies(entry->required_evidence, evidence);
+        if ((satisfies && archive_slot >= runtime->archive_capacity) ||
+            (!satisfies && archive_slot != NINLIL_ARCHIVE_SLOT_NONE))
+            return NINLIL_ERR_CORRUPT;
         entry->latest_evidence = evidence;
-        if (ninlil_evidence_satisfies(entry->required_evidence, evidence))
-            return ninlil_archive_outbound(runtime, entry,
-                                           NINLIL_OUTCOME_SATISFIED);
+        if (satisfies)
+            return ninlil_archive_outbound(
+                runtime, entry, NINLIL_OUTCOME_SATISFIED, archive_slot);
         return NINLIL_OK;
     }
     if (type == NINLIL_JRN_OUT_TERMINAL) {
         ninlil_outcome outcome = (ninlil_outcome)payload[17];
+        uint16_t archive_slot = get_be16(payload + 18);
 
         if (outcome < NINLIL_OUTCOME_EXPIRED ||
             outcome > NINLIL_OUTCOME_UNKNOWN ||
+            archive_slot >= runtime->archive_capacity ||
             (outcome == NINLIL_OUTCOME_CANCELLED && entry->attempted) ||
             (outcome == NINLIL_OUTCOME_FAILED && !entry->attempted) ||
             (outcome == NINLIL_OUTCOME_UNKNOWN && !entry->attempted))
             return NINLIL_ERR_CORRUPT;
-        return ninlil_archive_outbound(runtime, entry, outcome);
+        if ((outcome == NINLIL_OUTCOME_FAILED ||
+             outcome == NINLIL_OUTCOME_EXPIRED) &&
+            entry->latest_evidence >= NINLIL_EVIDENCE_REMOTE_STORED)
+            return NINLIL_ERR_CORRUPT;
+        return ninlil_archive_outbound(runtime, entry, outcome, archive_slot);
     }
     return NINLIL_ERR_CORRUPT;
+}
+
+static int replay_in_receipt_handoff(ninlil_runtime *runtime,
+                                     const uint8_t *payload, uint16_t length)
+{
+    ninlil_id id;
+    ninlil_inbound_entry *inbound;
+    ninlil_archive_entry *archive;
+
+    if (length != 1u + NINLIL_ID_BYTES ||
+        payload[0] != NINLIL_JRN_RECORD_VERSION)
+        return NINLIL_ERR_CORRUPT;
+    memcpy(id.bytes, payload + 1, NINLIL_ID_BYTES);
+    inbound = ninlil_find_inbound(runtime, &id);
+    archive = ninlil_find_archive_id(runtime, &id);
+    if (inbound) {
+        if (!inbound->need_receipt || inbound->receipt_handoff_committed)
+            return NINLIL_ERR_CORRUPT;
+        inbound->need_receipt = 0u;
+        inbound->receipt_handoff_committed = 1u;
+        return NINLIL_OK;
+    }
+    if (!archive || archive->kind != NINLIL_ARCHIVE_INBOUND ||
+        !archive->need_receipt || archive->receipt_handoff_committed)
+        return NINLIL_ERR_CORRUPT;
+    archive->need_receipt = 0u;
+    archive->receipt_handoff_committed = 1u;
+    return NINLIL_OK;
 }
 
 int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
@@ -222,22 +264,28 @@ int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
     if (type == NINLIL_JRN_OUT_ATTEMPT || type == NINLIL_JRN_OUT_EVIDENCE ||
         type == NINLIL_JRN_OUT_TERMINAL)
         return replay_out_update(runtime, type, payload, length);
+    if (type == NINLIL_JRN_IN_RECEIPT_HANDOFF)
+        return replay_in_receipt_handoff(runtime, payload, length);
     if (type == NINLIL_JRN_IN_APPLICATION_ACCEPT) {
         ninlil_id id;
         ninlil_inbound_entry *entry;
         uint8_t need_receipt;
+        uint16_t archive_slot;
 
-        if (length != 1u + NINLIL_ID_BYTES ||
+        if (length != 3u + NINLIL_ID_BYTES ||
             payload[0] != NINLIL_JRN_RECORD_VERSION)
             return NINLIL_ERR_CORRUPT;
         memcpy(id.bytes, payload + 1, NINLIL_ID_BYTES);
+        archive_slot = get_be16(payload + 17);
         entry = ninlil_find_inbound(runtime, &id);
-        if (!entry)
+        if (!entry || archive_slot >= runtime->archive_capacity)
             return NINLIL_ERR_CORRUPT;
-        need_receipt = (uint8_t)(entry->required_evidence ==
-                                 NINLIL_EVIDENCE_APPLICATION_ACCEPTED);
-        return ninlil_archive_inbound(
-            runtime, entry, NINLIL_EVIDENCE_APPLICATION_ACCEPTED, need_receipt);
+        need_receipt = (uint8_t)(entry->need_receipt ||
+                                 entry->required_evidence ==
+                                     NINLIL_EVIDENCE_APPLICATION_ACCEPTED);
+        return ninlil_archive_inbound(runtime, entry,
+                                      NINLIL_EVIDENCE_APPLICATION_ACCEPTED,
+                                      need_receipt, archive_slot);
     }
     return NINLIL_ERR_CORRUPT;
 }

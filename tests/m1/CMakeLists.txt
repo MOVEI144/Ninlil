@@ -110,6 +110,18 @@ target_link_libraries(test_m1_core PRIVATE ninlil_m1_posix)
 ninlil_m1_strict_target(test_m1_core)
 add_test(NAME m1_core COMMAND test_m1_core)
 
+add_executable(test_p0_delivery_state
+  ${NINLIL_ROOT}/tests/test_delivery_state.c
+  ${NINLIL_ROOT}/tests/test_support.c
+)
+target_include_directories(test_p0_delivery_state PRIVATE
+  ${NINLIL_ROOT}/src
+  ${NINLIL_ROOT}/tests
+)
+target_link_libraries(test_p0_delivery_state PRIVATE ninlil_m1_posix)
+ninlil_m1_strict_target(test_p0_delivery_state)
+add_test(NAME p0_delivery_state COMMAND test_p0_delivery_state)
+
 add_executable(test_p0_operations
   ${NINLIL_ROOT}/tests/test_operations.c
   ${NINLIL_ROOT}/tests/test_support.c

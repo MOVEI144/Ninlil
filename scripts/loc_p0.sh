@@ -31,6 +31,7 @@ paths=(
   "$root/ports/flash/ninlil_flash_journal_file.c"
   "$root/ports/esp32s3/ninlil_flash_journal.c"
   "$root/tests/test_core.c"
+  "$root/tests/test_delivery_state.c"
   "$root/tests/test_flash.c"
   "$root/tests/test_operations.c"
   "$root/tests/test_radio_delivery.c"

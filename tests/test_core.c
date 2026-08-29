@@ -538,8 +538,7 @@ static int test_service_direction_payload_class_and_quota(void)
           NINLIL_ERR_UNAUTHORIZED);
     policy.session_membership_epoch = 0u;
     test_fill_id(&request.idempotency_key, UINT8_C(0x7B));
-    CHECK(ninlil_submit(runtime, &request, &message_id) ==
-          NINLIL_ERR_UNAUTHORIZED);
+    CHECK(ninlil_submit(runtime, &request, &message_id) == NINLIL_ERR_STATE);
     ninlil_close(runtime);
     test_remove_directory(directory, path, NULL);
     return 0;

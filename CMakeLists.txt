@@ -114,6 +114,18 @@ target_link_libraries(test_core PRIVATE ninlil_posix)
 ninlil_strict_target(test_core)
 add_test(NAME m1_core COMMAND test_core)
 
+add_executable(test_delivery_state
+  tests/test_delivery_state.c
+  tests/test_support.c
+)
+target_include_directories(test_delivery_state PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+target_link_libraries(test_delivery_state PRIVATE ninlil_posix)
+ninlil_strict_target(test_delivery_state)
+add_test(NAME p0_delivery_state COMMAND test_delivery_state)
+
 add_executable(test_operations
   tests/test_operations.c
   tests/test_support.c

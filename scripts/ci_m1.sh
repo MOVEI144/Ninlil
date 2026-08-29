@@ -78,6 +78,7 @@ mapfile -d '' format_files < <(
 )
 format_files+=(
   "$root/tests/test_core.c"
+  "$root/tests/test_delivery_state.c"
   "$root/tests/test_diag_radio.c"
   "$root/tests/test_flash.c"
   "$root/tests/test_operations.c"

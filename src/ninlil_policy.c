@@ -23,20 +23,25 @@ int ninlil_authorize(ninlil_runtime *runtime, uint16_t peer, uint16_t service,
     uint32_t capability;
     int rc;
 
-    if (!runtime->config.policy_lookup ||
-        service < NINLIL_APPLICATION_SERVICE_MIN ||
+    if (service < NINLIL_APPLICATION_SERVICE_MIN ||
         traffic_class > NINLIL_TRAFFIC_BULK ||
         (direction != NINLIL_SERVICE_SEND &&
          direction != NINLIL_SERVICE_RECEIVE))
-        return NINLIL_ERR_UNAUTHORIZED;
+        return NINLIL_ERR_INVALID;
+    if (!runtime->config.policy_lookup)
+        return NINLIL_ERR_STATE;
     memset(&policy, 0, sizeof(policy));
     rc = runtime->config.policy_lookup(runtime->config.policy_ctx, peer,
                                        &policy);
-    if (rc != NINLIL_OK ||
-        ninlil_policy_validate(
-            &policy, runtime->config.profile.service_grants) != NINLIL_OK ||
-        policy.session_membership_epoch != policy.membership_epoch)
+    if (rc == NINLIL_ERR_NOT_FOUND || rc == NINLIL_ERR_UNAUTHORIZED)
         return NINLIL_ERR_UNAUTHORIZED;
+    if (rc != NINLIL_OK)
+        return rc;
+    if (ninlil_policy_validate(
+            &policy, runtime->config.profile.service_grants) != NINLIL_OK)
+        return NINLIL_ERR_CORRUPT;
+    if (policy.session_membership_epoch != policy.membership_epoch)
+        return NINLIL_ERR_STATE;
     capability = direction == NINLIL_SERVICE_SEND ? NINLIL_CAP_APP_SEND
                                                   : NINLIL_CAP_APP_RECEIVE;
     if ((policy.capabilities & capability) == 0u)

@@ -94,10 +94,12 @@ int ninlil_open(ninlil_runtime **out, const ninlil_config *config)
         ninlil_close(runtime);
         return NINLIL_ERR_IO;
     }
+    runtime->replaying = 1u;
     rc =
         ninlil_journal_open(&runtime->journal, runtime->config.journal_location,
                             runtime->config.profile.flash_ceiling_bytes,
                             ninlil_replay_record, runtime);
+    runtime->replaying = 0u;
     if (rc != NINLIL_OK) {
         ninlil_close(runtime);
         return rc;
@@ -396,6 +398,7 @@ int ninlil_application_accept(ninlil_runtime *runtime,
 {
     ninlil_inbound_entry *entry;
     ninlil_archive_entry *archive;
+    uint16_t archive_slot;
     int rc;
 
     if (!runtime || !message_id)
@@ -411,12 +414,18 @@ int ninlil_application_accept(ninlil_runtime *runtime,
     }
     if (!entry->handed)
         return NINLIL_ERR_STATE;
-    rc = ninlil_log_id(runtime, NINLIL_JRN_IN_APPLICATION_ACCEPT, message_id);
+    rc = ninlil_archive_admission(runtime, &archive_slot);
+    if (rc != NINLIL_OK)
+        return rc;
+    rc = ninlil_log_application_accept(runtime, message_id, archive_slot);
     if (rc != NINLIL_OK)
         return rc;
     return ninlil_archive_inbound(
         runtime, entry, NINLIL_EVIDENCE_APPLICATION_ACCEPTED,
-        entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED);
+        (uint8_t)(entry->need_receipt ||
+                  entry->required_evidence ==
+                      NINLIL_EVIDENCE_APPLICATION_ACCEPTED),
+        archive_slot);
 }
 
 static void info_from_outbound(const ninlil_outbound_entry *entry,

@@ -11,17 +11,20 @@
 #define NINLIL_JRN_OUT_TERMINAL 4u
 #define NINLIL_JRN_IN_ACCEPT 5u
 #define NINLIL_JRN_IN_APPLICATION_ACCEPT 6u
-#define NINLIL_JRN_RECORD_VERSION 2u
+#define NINLIL_JRN_IN_RECEIPT_HANDOFF 7u
+#define NINLIL_JRN_RECORD_VERSION 3u
 #define NINLIL_JRN_OUT_HEADER 52u
 #define NINLIL_JRN_IN_HEADER 36u
 #define NINLIL_JRN_DEADLINE_PRESENT 0x01u
 #define NINLIL_REJECTION_INTERVAL_STEPS 4u
 #define NINLIL_STEP_PHASES 3u
+#define NINLIL_RECEIPT_CLASSES 3u
 #define NINLIL_TRAFFIC_CLASS_COUNT 4u
 #define NINLIL_SCHEDULE_SLOTS 16u
 
 #define NINLIL_ARCHIVE_OUTBOUND 1u
 #define NINLIL_ARCHIVE_INBOUND 2u
+#define NINLIL_ARCHIVE_SLOT_NONE UINT16_MAX
 
 typedef struct ninlil_outbound_entry {
     ninlil_id message_id;
@@ -53,6 +56,8 @@ typedef struct ninlil_inbound_entry {
     uint8_t used;
     uint8_t handed;
     uint8_t need_receipt;
+    uint8_t receipt_handoff_committed;
+    uint8_t receipt_handoff_commit_pending;
 } ninlil_inbound_entry;
 
 typedef struct ninlil_archive_entry {
@@ -72,6 +77,8 @@ typedef struct ninlil_archive_entry {
     uint8_t used;
     uint8_t attempted;
     uint8_t need_receipt;
+    uint8_t receipt_handoff_committed;
+    uint8_t receipt_handoff_commit_pending;
 } ninlil_archive_entry;
 
 typedef struct ninlil_rejection_entry {
@@ -102,8 +109,10 @@ struct ninlil_runtime {
     uint16_t archive_receipt_cursor;
     uint16_t rejection_cursor;
     uint16_t archive_replace_cursor;
+    uint8_t receipt_class_cursor;
     uint8_t schedule_cursor;
     uint8_t phase_cursor;
+    uint8_t replaying;
     uint64_t step_count;
     uint64_t last_rejection_step;
     int fatal_error;
@@ -145,14 +154,18 @@ int ninlil_log_inbound(ninlil_runtime *runtime,
                        const uint8_t *payload, ninlil_journal_ref *reference);
 int ninlil_log_id(ninlil_runtime *runtime, uint8_t type, const ninlil_id *id);
 int ninlil_log_evidence(ninlil_runtime *runtime, const ninlil_id *id,
-                        ninlil_evidence evidence);
+                        ninlil_evidence evidence, uint16_t archive_slot);
 int ninlil_log_terminal(ninlil_runtime *runtime, const ninlil_id *id,
-                        ninlil_outcome outcome);
+                        ninlil_outcome outcome, uint16_t archive_slot);
+int ninlil_log_application_accept(ninlil_runtime *runtime, const ninlil_id *id,
+                                  uint16_t archive_slot);
+int ninlil_archive_admission(const ninlil_runtime *runtime, uint16_t *slot);
 int ninlil_archive_outbound(ninlil_runtime *runtime,
                             ninlil_outbound_entry *entry,
-                            ninlil_outcome outcome);
+                            ninlil_outcome outcome, uint16_t archive_slot);
 int ninlil_archive_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry,
-                           ninlil_evidence evidence, uint8_t need_receipt);
+                           ninlil_evidence evidence, uint8_t need_receipt,
+                           uint16_t archive_slot);
 int ninlil_outbound_admission(const ninlil_runtime *runtime,
                               ninlil_traffic_class traffic_class);
 int ninlil_total_owned_available(const ninlil_runtime *runtime);
