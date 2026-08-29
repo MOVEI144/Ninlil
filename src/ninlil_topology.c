@@ -220,6 +220,10 @@ int ninlil_topology_restore_route(ninlil_topology *topology,
             return NINLIL_OK;
         }
         if (lease->route_epoch > existing->route_epoch) {
+            if (!existing->released &&
+                lease->active_gateway_uid != existing->active_gateway_uid &&
+                lease->lease_from_ms < existing->lease_until_ms)
+                return NINLIL_ERR_CORRUPT;
             *existing = *lease;
             return NINLIL_OK;
         }

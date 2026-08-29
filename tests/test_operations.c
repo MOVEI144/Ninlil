@@ -182,6 +182,7 @@ static int test_custody_reconnect_and_capacity(void)
     custody_log log;
     ninlil_id first;
     ninlil_id second;
+    ninlil_id empty;
     ninlil_id extra;
     ninlil_custody_entry replayed;
     uint16_t cursor;
@@ -197,6 +198,7 @@ static int test_custody_reconnect_and_capacity(void)
     memset(&log, 0, sizeof(log));
     test_fill_id(&first, UINT8_C(0x11));
     test_fill_id(&second, UINT8_C(0x22));
+    test_fill_id(&empty, UINT8_C(0x23));
     CHECK(ninlil_custody_open(&spool, entries, 10u, 1024u, 8u, custody_commit,
                               &log) == NINLIL_OK);
     CHECK(ninlil_custody_admit(&spool, &first, 7u, 100u, 1u, 1u,
@@ -205,6 +207,19 @@ static int test_custody_reconnect_and_capacity(void)
     CHECK(ninlil_custody_admit(&spool, &second, 7u, 200u, 2u, 1u,
                                NINLIL_EVIDENCE_HOST_ADAPTER_STORED) ==
           NINLIL_OK);
+    CHECK(ninlil_custody_admit(&spool, &empty, 7u, 0u, 3u, 1u,
+                               NINLIL_EVIDENCE_HOST_ADAPTER_STORED) ==
+          NINLIL_OK);
+    CHECK(spool.live_bytes == 300u && spool.live == 3u);
+    test_fill_id(&extra, UINT8_C(0x24));
+    CHECK(ninlil_custody_admit(&spool, &extra, 7u, 0u, 0u, 1u,
+                               NINLIL_EVIDENCE_HOST_ADAPTER_STORED) ==
+          NINLIL_ERR_INVALID);
+    CHECK(spool.live_bytes == 300u && spool.live == 3u);
+    CHECK(ninlil_custody_note_evidence(
+              &spool, &empty, NINLIL_EVIDENCE_GATEWAY_CUSTODY) == NINLIL_OK);
+    CHECK(ninlil_custody_note_evidence(
+              &spool, &empty, NINLIL_EVIDENCE_REMOTE_STORED) == NINLIL_OK);
     CHECK(spool.live_bytes == 300u && spool.live == 2u);
     CHECK(ninlil_custody_note_evidence(
               &spool, &first, NINLIL_EVIDENCE_GATEWAY_CUSTODY) == NINLIL_OK);
@@ -366,13 +381,53 @@ static int test_multi_gateway_dedupe_and_route_epoch(void)
         lease.lease_from_ms = 1000u;
         lease.lease_until_ms = 2000u;
         CHECK(ninlil_topology_restore_route(&restored, &lease) == NINLIL_OK);
+        lease.active_gateway_uid = 2u;
+        lease.backup_gateway_uids[0] = 1u;
+        lease.route_epoch = 2u;
+        lease.lease_from_ms = 1200u;
+        lease.lease_until_ms = 2500u;
+        CHECK(ninlil_topology_restore_route(&restored, &lease) ==
+              NINLIL_ERR_CORRUPT);
+        lease.active_gateway_uid = 1u;
+        lease.backup_gateway_uids[0] = 2u;
+        CHECK(ninlil_topology_restore_route(&restored, &lease) == NINLIL_OK);
         lease.released = 1u;
         CHECK(ninlil_topology_restore_route(&restored, &lease) == NINLIL_OK);
-        CHECK(ninlil_topology_restore_route(&restored, &log.lease) ==
-              NINLIL_OK);
+        lease.released = 0u;
+        lease.active_gateway_uid = 2u;
+        lease.backup_gateway_uids[0] = 1u;
+        lease.route_epoch = 3u;
+        lease.lease_from_ms = 1300u;
+        lease.lease_until_ms = 2600u;
+        CHECK(ninlil_topology_restore_route(&restored, &lease) == NINLIL_OK);
         ninlil_topology_set_authority(&restored, 1);
-        CHECK(ninlil_topology_check_downlink(&restored, 10u, 2u, 2u, 1300u) ==
+        CHECK(ninlil_topology_check_downlink(&restored, 10u, 2u, 3u, 1400u) ==
               NINLIL_OK);
+    }
+    {
+        ninlil_route_lease restored_routes[1];
+        ninlil_route_lease lease;
+        ninlil_uplink_dedupe restored_dedupe[1];
+        ninlil_topology restored;
+
+        CHECK(ninlil_topology_open(&restored, restored_routes, 1u,
+                                   restored_dedupe, 1u, topology_commit, &log,
+                                   NULL, NULL) == NINLIL_OK);
+        CHECK(ninlil_topology_add_gateway(&restored, 1u) == NINLIL_OK);
+        CHECK(ninlil_topology_add_gateway(&restored, 2u) == NINLIL_OK);
+        memset(&lease, 0, sizeof(lease));
+        lease.used = 1u;
+        lease.peer = 11u;
+        lease.active_gateway_uid = 1u;
+        lease.route_epoch = 1u;
+        lease.lease_from_ms = 1000u;
+        lease.lease_until_ms = 2000u;
+        CHECK(ninlil_topology_restore_route(&restored, &lease) == NINLIL_OK);
+        lease.active_gateway_uid = 2u;
+        lease.route_epoch = 2u;
+        lease.lease_from_ms = 2000u;
+        lease.lease_until_ms = 3000u;
+        CHECK(ninlil_topology_restore_route(&restored, &lease) == NINLIL_OK);
     }
     return 0;
 }

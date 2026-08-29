@@ -65,6 +65,8 @@ int ninlil_custody_open(ninlil_custody_spool *spool,
 int ninlil_custody_restore(ninlil_custody_spool *spool,
                            ninlil_custody_record_type record_type,
                            const ninlil_custody_entry *entry);
+/* Zero payload bytes are valid, but payload_token must always identify a
+ * durable stored payload object. */
 int ninlil_custody_admit(ninlil_custody_spool *spool, const ninlil_id *id,
                          uint16_t peer, uint32_t payload_bytes,
                          uint64_t payload_token, uint64_t route_epoch,

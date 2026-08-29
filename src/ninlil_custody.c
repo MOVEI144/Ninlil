@@ -117,8 +117,8 @@ static int restored_entry_valid(const ninlil_custody_entry *entry)
 {
     return entry && entry->used == 1u && id_valid(&entry->message_id) &&
            entry->peer > 0u && entry->peer < UINT16_MAX &&
-           entry->payload_bytes > 0u && entry->payload_token != 0u &&
-           entry->route_epoch > 0u && evidence_valid(entry->evidence) &&
+           entry->payload_token != 0u && entry->route_epoch > 0u &&
+           evidence_valid(entry->evidence) &&
            entry->terminal ==
                (uint8_t)(entry->evidence == NINLIL_EVIDENCE_REMOTE_STORED);
 }
@@ -214,8 +214,7 @@ int ninlil_custody_admit(ninlil_custody_spool *spool, const ninlil_id *id,
     int rc;
 
     if (!spool || !id || !id_valid(id) || spool->poisoned || peer == 0u ||
-        peer == UINT16_MAX || payload_bytes == 0u || payload_token == 0u ||
-        route_epoch == 0u ||
+        peer == UINT16_MAX || payload_token == 0u || route_epoch == 0u ||
         (local_custody != NINLIL_EVIDENCE_HOST_ADAPTER_STORED &&
          local_custody != NINLIL_EVIDENCE_GATEWAY_CUSTODY))
         return NINLIL_ERR_INVALID;
