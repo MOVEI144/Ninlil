@@ -15,9 +15,13 @@
 #define RECEIPT_CLASSES 3u
 #define RECEIPT_FAIRNESS_ROUNDS 3u
 #define SCHEDULER_PHASES 3u
+#define REJECTION_INTERVAL_STEPS 4u
 #define OLD_OUT_CREATE 1u
 #define OLD_OUT_HEADER 52u
+#define IN_RECORD_HEADER 36u
 #define CURRENT_RECORD_VERSION 3u
+#define DEADLINE_PRESENT 1u
+#define OUT_ATTEMPT_RECORD 2u
 #define OUT_EVIDENCE_RECORD 3u
 #define OUT_TERMINAL_RECORD 4u
 #define IN_APPLICATION_ACCEPT_RECORD 6u
@@ -38,9 +42,11 @@ typedef struct scripted_link {
     size_t last_sent_length;
     uint32_t send_calls;
     ninlil_id receipt_message_id[64];
+    ninlil_id data_message_id[128];
     uint8_t receipt_status[64];
     uint8_t receipt_evidence[64];
     uint8_t receipt_count;
+    uint8_t data_count;
     int send_result;
 } scripted_link;
 
@@ -49,6 +55,12 @@ typedef struct controlled_policy {
     int result;
     uint8_t invalid;
 } controlled_policy;
+
+typedef struct fake_clock {
+    uint64_t now_ms;
+    ninlil_time_quality quality;
+    int result;
+} fake_clock;
 
 static int scripted_send(void *ctx, const uint8_t *data, size_t length)
 {
@@ -68,6 +80,13 @@ static int scripted_send(void *ctx, const uint8_t *data, size_t length)
         link->receipt_status[receipt_index] = data[24];
         link->receipt_evidence[receipt_index] = data[25];
         link->receipt_count++;
+    } else if (length >= NINLIL_WIRE_DATA_HEADER &&
+               data[3] == NINLIL_WIRE_DATA &&
+               link->data_count < sizeof(link->data_message_id) /
+                                      sizeof(link->data_message_id[0])) {
+        memcpy(link->data_message_id[link->data_count].bytes, data + 10,
+               NINLIL_ID_BYTES);
+        link->data_count++;
     }
     return link->send_result;
 }
@@ -120,6 +139,27 @@ static void put_be16(uint8_t *data, uint16_t value)
     data[1] = (uint8_t)value;
 }
 
+static void put_be64(uint8_t *data, uint64_t value)
+{
+    size_t index;
+
+    for (index = 0u; index < 8u; index++) {
+        data[7u - index] = (uint8_t)value;
+        value >>= 8;
+    }
+}
+
+static int clock_now(void *ctx, uint64_t *now_ms, ninlil_time_quality *quality)
+{
+    fake_clock *clock = ctx;
+
+    if (clock->result != NINLIL_OK)
+        return clock->result;
+    *now_ms = clock->now_ms;
+    *quality = clock->quality;
+    return NINLIL_OK;
+}
+
 static int controlled_lookup(void *ctx, uint16_t peer,
                              ninlil_peer_policy *policy)
 {
@@ -134,10 +174,12 @@ static int controlled_lookup(void *ctx, uint16_t peer,
     return rc;
 }
 
-static int open_runtime(ninlil_runtime **runtime, const char *path,
-                        scripted_link *transport, uint32_t *random_state,
-                        controlled_policy *policy,
-                        const ninlil_role_profile *profile)
+static int open_runtime_with_clock(ninlil_runtime **runtime, const char *path,
+                                   scripted_link *transport,
+                                   uint32_t *random_state,
+                                   controlled_policy *policy,
+                                   const ninlil_role_profile *profile,
+                                   fake_clock *clock)
 {
     ninlil_config config;
 
@@ -146,6 +188,44 @@ static int open_runtime(ninlil_runtime **runtime, const char *path,
     config.node_id = 1u;
     config.retry_interval_steps = 1u;
     config.max_work_per_step = 1u;
+    config.profile = *profile;
+    config.link.send = scripted_send;
+    config.link.recv = scripted_recv;
+    config.link.ctx = transport;
+    config.link.max_packet_size = NINLIL_WIRE_PACKET_MAX;
+    config.random.fill = test_rng_fill;
+    config.random.ctx = random_state;
+    config.policy_lookup = controlled_lookup;
+    config.policy_ctx = policy;
+    if (clock) {
+        config.clock.now = clock_now;
+        config.clock.ctx = clock;
+    }
+    return ninlil_open(runtime, &config);
+}
+
+static int open_runtime(ninlil_runtime **runtime, const char *path,
+                        scripted_link *transport, uint32_t *random_state,
+                        controlled_policy *policy,
+                        const ninlil_role_profile *profile)
+{
+    return open_runtime_with_clock(runtime, path, transport, random_state,
+                                   policy, profile, NULL);
+}
+
+static int open_runtime_high_work(ninlil_runtime **runtime, const char *path,
+                                  scripted_link *transport,
+                                  uint32_t *random_state,
+                                  controlled_policy *policy,
+                                  const ninlil_role_profile *profile)
+{
+    ninlil_config config;
+
+    memset(&config, 0, sizeof(config));
+    config.journal_location = path;
+    config.node_id = 1u;
+    config.retry_interval_steps = 1u;
+    config.max_work_per_step = 16u;
     config.profile = *profile;
     config.link.send = scripted_send;
     config.link.recv = scripted_recv;
@@ -225,6 +305,25 @@ static int inject_data(scripted_link *link, const ninlil_id *message_id,
     return inject_packet(link, packet, length);
 }
 
+static int inject_deadline_data(scripted_link *link,
+                                const ninlil_id *message_id,
+                                ninlil_evidence required, uint8_t payload,
+                                uint64_t deadline)
+{
+    ninlil_id key;
+    ninlil_submission submission;
+    uint8_t packet[NINLIL_WIRE_DATA_HEADER + 1u];
+    size_t length;
+
+    test_fill_id(&key, UINT8_C(0xF1));
+    submission = make_submission(key, required, &payload);
+    submission.target = 1u;
+    submission.absolute_deadline_ms = deadline;
+    length =
+        ninlil_wire_encode_data(packet, 2u, &submission, message_id, &payload);
+    return inject_packet(link, packet, length);
+}
+
 static int drain_incoming(ninlil_runtime *runtime, scripted_link *link)
 {
     unsigned int attempt;
@@ -269,9 +368,40 @@ static int journal_size(const char *path, off_t *size)
     return 0;
 }
 
+static int flip_file_byte(const char *path, long offset)
+{
+    FILE *file = fopen(path, "r+b");
+    int value;
+    int result = -1;
+
+    if (!file)
+        return -1;
+    if (fseek(file, offset, SEEK_SET) == 0) {
+        value = fgetc(file);
+        if (value != EOF && fseek(file, offset, SEEK_SET) == 0 &&
+            fputc(value ^ 1, file) != EOF && fflush(file) == 0)
+            result = 0;
+    }
+    if (fclose(file) != 0)
+        result = -1;
+    return result;
+}
+
 static int same_id(const ninlil_id *left, const ninlil_id *right)
 {
     return memcmp(left->bytes, right->bytes, NINLIL_ID_BYTES) == 0;
+}
+
+static uint8_t data_send_count(const scripted_link *link, const ninlil_id *id)
+{
+    uint8_t index;
+    uint8_t count = 0u;
+
+    for (index = 0u; index < link->data_count; index++) {
+        if (same_id(&link->data_message_id[index], id))
+            count++;
+    }
+    return count;
 }
 
 static void indexed_id(ninlil_id *id, uint32_t value)
@@ -1149,6 +1279,499 @@ static int test_policy_error_classification(void)
     return 0;
 }
 
+static int test_rejection_attempts_consume_interval(void)
+{
+    static const int results[] = {NINLIL_ERR_BUSY, NINLIL_ERR_CAPACITY};
+    char directory[40];
+    char path[80];
+    ninlil_role_profile profile;
+    controlled_policy policy;
+    size_t result_index;
+
+    CHECK(setup_leaf(directory, path, &profile, &policy) == 0);
+    for (result_index = 0u; result_index < sizeof(results) / sizeof(results[0]);
+         result_index++) {
+        scripted_link link;
+        ninlil_runtime *runtime = NULL;
+        ninlil_id rejected_id;
+        uint32_t random_state = (uint32_t)(40u + result_index);
+        uint8_t payload = UINT8_C(0x40);
+        unsigned int step;
+
+        memset(&link, 0, sizeof(link));
+        link.send_result = results[result_index];
+        policy.result = NINLIL_ERR_NOT_FOUND;
+        CHECK(open_runtime_high_work(&runtime, path, &link, &random_state,
+                                     &policy, &profile) == NINLIL_OK);
+        test_fill_id(&rejected_id, (uint8_t)(UINT8_C(0x60) + result_index));
+        CHECK(inject_data(&link, &rejected_id, NINLIL_EVIDENCE_REMOTE_STORED,
+                          payload) == NINLIL_OK);
+        CHECK(ninlil_step(runtime) == results[result_index]);
+        CHECK(link.send_calls == 1u);
+        for (step = 0u; step < REJECTION_INTERVAL_STEPS - 1u; step++) {
+            CHECK(ninlil_step(runtime) == NINLIL_OK);
+            CHECK(link.send_calls == 1u);
+        }
+        CHECK(ninlil_step(runtime) == results[result_index]);
+        CHECK(link.send_calls == 2u);
+        ninlil_close(runtime);
+        CHECK(remove(path) == 0);
+    }
+    test_remove_directory(directory, NULL, NULL);
+    return 0;
+}
+
+static int test_posix_referenced_reads_revalidate_records(void)
+{
+    static const long mutation_offsets[] = {0L, 10L, 11L};
+    char directory[40];
+    char path[80];
+    size_t index;
+
+    CHECK(test_make_directory(directory, sizeof(directory)) == 0);
+    for (index = 0u;
+         index < sizeof(mutation_offsets) / sizeof(mutation_offsets[0]);
+         index++) {
+        ninlil_journal *journal = NULL;
+        ninlil_journal_ref reference;
+        uint8_t payload = UINT8_C(0xA5);
+        uint8_t result = 0u;
+
+        CHECK(test_make_path(path, sizeof(path), directory, "record.j") == 0);
+        CHECK(ninlil_journal_open(&journal, path, UINT64_C(4096),
+                                  accept_journal_record, NULL) == NINLIL_OK);
+        CHECK(ninlil_journal_append(journal, OLD_OUT_CREATE, &payload, 1u,
+                                    &reference) == NINLIL_OK);
+        CHECK(flip_file_byte(path, mutation_offsets[index]) == 0);
+        CHECK(ninlil_journal_read(journal, &reference, 0u, &result, 1u) ==
+              NINLIL_ERR_CORRUPT);
+        ninlil_journal_close(journal);
+        journal = NULL;
+        CHECK(ninlil_journal_open(&journal, path, UINT64_C(4096),
+                                  accept_journal_record,
+                                  NULL) == NINLIL_ERR_CORRUPT);
+        CHECK(journal == NULL);
+        CHECK(remove(path) == 0);
+    }
+    test_remove_directory(directory, NULL, NULL);
+    return 0;
+}
+
+static int test_posix_runtime_stops_on_payload_corruption(void)
+{
+    char directory[40];
+    char path[80];
+    scripted_link link;
+    controlled_policy policy;
+    ninlil_role_profile profile;
+    ninlil_runtime *runtime = NULL;
+    ninlil_id key;
+    ninlil_id message_id;
+    ninlil_id inbound_id;
+    ninlil_submission submission;
+    ninlil_inbound inbound;
+    uint32_t random_state = 31u;
+    uint8_t payload = UINT8_C(0x31);
+    uint32_t send_calls;
+
+    CHECK(setup_leaf(directory, path, &profile, &policy) == 0);
+    memset(&link, 0, sizeof(link));
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    test_fill_id(&key, UINT8_C(0x31));
+    submission = make_submission(key, NINLIL_EVIDENCE_REMOTE_STORED, &payload);
+    CHECK(ninlil_submit(runtime, &submission, &message_id) == NINLIL_OK);
+    CHECK(flip_file_byte(path, 10L + (long)OLD_OUT_HEADER) == 0);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_CORRUPT);
+    CHECK(link.send_calls == 0u);
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_ERR_CORRUPT);
+    CHECK(runtime == NULL);
+    CHECK(remove(path) == 0);
+
+    CHECK(test_make_path(path, sizeof(path), directory, "inbound.j") == 0);
+    memset(&link, 0, sizeof(link));
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    test_fill_id(&inbound_id, UINT8_C(0x32));
+    CHECK(inject_data(&link, &inbound_id, NINLIL_EVIDENCE_REMOTE_STORED,
+                      payload) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(link.incoming_length == 0u);
+    CHECK(flip_file_byte(path, 10L + (long)IN_RECORD_HEADER) == 0);
+    send_calls = link.send_calls;
+    CHECK(ninlil_receive(runtime, &inbound) == NINLIL_ERR_CORRUPT);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_CORRUPT);
+    CHECK(link.send_calls == send_calls);
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_ERR_CORRUPT);
+    CHECK(runtime == NULL);
+    test_remove_directory(directory, path, NULL);
+    return 0;
+}
+
+static int test_deadline_outbound_and_expired_receipts(void)
+{
+    char directory[40];
+    char path[80];
+    scripted_link link;
+    controlled_policy policy;
+    ninlil_role_profile profile;
+    fake_clock clock = {1000u, NINLIL_TIME_RESTART_SAFE, NINLIL_OK};
+    ninlil_runtime *runtime = NULL;
+    ninlil_id key;
+    ninlil_id receipt_id;
+    ninlil_id ambiguous_id;
+    ninlil_id unrelated_id;
+    ninlil_id unattempted_id;
+    ninlil_id no_deadline_id;
+    ninlil_submission submission;
+    ninlil_info info;
+    uint32_t random_state = 32u;
+    uint8_t payload = UINT8_C(0x32);
+    uint8_t sends_before;
+    off_t empty_size;
+    off_t attempted_size;
+    off_t current_size;
+    unsigned int index;
+
+    CHECK(setup_leaf(directory, path, &profile, &policy) == 0);
+    memset(&link, 0, sizeof(link));
+    CHECK(open_runtime_with_clock(&runtime, path, &link, &random_state, &policy,
+                                  &profile, &clock) == NINLIL_OK);
+    CHECK(journal_size(path, &empty_size) == 0);
+    test_fill_id(&key, UINT8_C(0x40));
+    submission =
+        make_submission(key, NINLIL_EVIDENCE_APPLICATION_ACCEPTED, &payload);
+    submission.absolute_deadline_ms = 1100u;
+    CHECK(ninlil_submit(runtime, &submission, &receipt_id) ==
+          NINLIL_ERR_INVALID);
+    CHECK(journal_size(path, &current_size) == 0 && current_size == empty_size);
+
+    submission.required_evidence = NINLIL_EVIDENCE_REMOTE_STORED;
+    clock.quality = NINLIL_TIME_UNAVAILABLE;
+    CHECK(ninlil_submit(runtime, &submission, &receipt_id) == NINLIL_ERR_STATE);
+    clock.quality = NINLIL_TIME_RUNTIME_ONLY;
+    CHECK(ninlil_submit(runtime, &submission, &receipt_id) == NINLIL_ERR_STATE);
+    clock.quality = (ninlil_time_quality)-1;
+    CHECK(ninlil_submit(runtime, &submission, &receipt_id) ==
+          NINLIL_ERR_INVALID);
+    clock.quality = NINLIL_TIME_RESTART_SAFE;
+    clock.result = NINLIL_ERR_IO;
+    CHECK(ninlil_submit(runtime, &submission, &receipt_id) == NINLIL_ERR_IO);
+    clock.result = NINLIL_OK;
+    clock.now_ms = 1100u;
+    CHECK(ninlil_submit(runtime, &submission, &receipt_id) ==
+          NINLIL_ERR_EXPIRED);
+    CHECK(journal_size(path, &current_size) == 0 && current_size == empty_size);
+
+    clock.now_ms = 1000u;
+    CHECK(ninlil_submit(runtime, &submission, &receipt_id) == NINLIL_OK);
+    CHECK(wait_for_attempt(runtime, &receipt_id) == NINLIL_OK);
+    CHECK(journal_size(path, &attempted_size) == 0);
+    clock.now_ms = 1050u;
+    CHECK(inject_receipt(&link, &receipt_id, NINLIL_RECEIPT_EXPIRED,
+                         NINLIL_EVIDENCE_NONE) == NINLIL_OK);
+    CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    CHECK(journal_size(path, &current_size) == 0 &&
+          current_size == attempted_size);
+    CHECK(ninlil_query(runtime, &receipt_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_ACTIVE);
+    clock.now_ms = 1200u;
+    clock.quality = NINLIL_TIME_RUNTIME_ONLY;
+    CHECK(inject_receipt(&link, &receipt_id, NINLIL_RECEIPT_EXPIRED,
+                         NINLIL_EVIDENCE_NONE) == NINLIL_OK);
+    CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    CHECK(journal_size(path, &current_size) == 0 &&
+          current_size == attempted_size);
+
+    sends_before = data_send_count(&link, &receipt_id);
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    for (index = 0u; index < 6u; index++)
+        CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(data_send_count(&link, &receipt_id) == sends_before);
+    CHECK(inject_receipt(&link, &receipt_id, NINLIL_RECEIPT_EXPIRED,
+                         NINLIL_EVIDENCE_NONE) == NINLIL_OK);
+    CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    CHECK(journal_size(path, &current_size) == 0 &&
+          current_size == attempted_size);
+    ninlil_close(runtime);
+    runtime = NULL;
+
+    clock.quality = NINLIL_TIME_RESTART_SAFE;
+    clock.now_ms = 1100u;
+    CHECK(open_runtime_with_clock(&runtime, path, &link, &random_state, &policy,
+                                  &profile, &clock) == NINLIL_OK);
+    CHECK(inject_receipt(&link, &receipt_id, NINLIL_RECEIPT_EXPIRED,
+                         NINLIL_EVIDENCE_NONE) == NINLIL_OK);
+    CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    CHECK(ninlil_query(runtime, &receipt_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_EXPIRED);
+
+    test_fill_id(&submission.idempotency_key, UINT8_C(0x41));
+    submission.absolute_deadline_ms = 1200u;
+    CHECK(ninlil_submit(runtime, &submission, &ambiguous_id) == NINLIL_OK);
+    CHECK(wait_for_attempt(runtime, &ambiguous_id) == NINLIL_OK);
+    sends_before = data_send_count(&link, &ambiguous_id);
+    clock.now_ms = 1200u;
+    for (index = 0u; index < 8u; index++)
+        CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(data_send_count(&link, &ambiguous_id) == sends_before);
+    CHECK(ninlil_query(runtime, &ambiguous_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_ACTIVE &&
+          info.remote_boundary_may_have_been_reached == 1u);
+
+    test_fill_id(&submission.idempotency_key, UINT8_C(0x42));
+    submission.absolute_deadline_ms = 0u;
+    CHECK(ninlil_submit(runtime, &submission, &unrelated_id) == NINLIL_OK);
+    CHECK(wait_for_attempt(runtime, &unrelated_id) == NINLIL_OK);
+    CHECK(data_send_count(&link, &unrelated_id) > 0u);
+
+    test_fill_id(&submission.idempotency_key, UINT8_C(0x43));
+    submission.absolute_deadline_ms = 1300u;
+    CHECK(ninlil_submit(runtime, &submission, &unattempted_id) == NINLIL_OK);
+    clock.now_ms = 1300u;
+    CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(ninlil_query(runtime, &unattempted_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_EXPIRED);
+    CHECK(data_send_count(&link, &unattempted_id) == 0u);
+
+    test_fill_id(&submission.idempotency_key, UINT8_C(0x44));
+    submission.absolute_deadline_ms = 0u;
+    CHECK(ninlil_submit(runtime, &submission, &no_deadline_id) == NINLIL_OK);
+    CHECK(wait_for_attempt(runtime, &no_deadline_id) == NINLIL_OK);
+    CHECK(journal_size(path, &attempted_size) == 0);
+    CHECK(inject_receipt(&link, &no_deadline_id, NINLIL_RECEIPT_EXPIRED,
+                         NINLIL_EVIDENCE_NONE) == NINLIL_OK);
+    CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    CHECK(journal_size(path, &current_size) == 0 &&
+          current_size == attempted_size);
+    CHECK(ninlil_query(runtime, &no_deadline_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_ACTIVE);
+
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(open_runtime_with_clock(&runtime, path, &link, &random_state, &policy,
+                                  &profile, &clock) == NINLIL_OK);
+    CHECK(ninlil_query(runtime, &receipt_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_EXPIRED);
+    CHECK(ninlil_query(runtime, &ambiguous_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_ACTIVE);
+    CHECK(ninlil_query(runtime, &unattempted_id, &info) == NINLIL_OK &&
+          info.outcome == NINLIL_OUTCOME_EXPIRED);
+    ninlil_close(runtime);
+    test_remove_directory(directory, path, NULL);
+    return 0;
+}
+
+static int test_deadline_inbound_and_replay_contract(void)
+{
+    char directory[40];
+    char path[80];
+    scripted_link link;
+    controlled_policy policy;
+    ninlil_role_profile profile;
+    fake_clock clock = {1000u, NINLIL_TIME_RESTART_SAFE, NINLIL_OK};
+    ninlil_runtime *runtime = NULL;
+    ninlil_id message_id;
+    ninlil_id key;
+    ninlil_inbound inbound;
+    uint32_t random_state = 33u;
+    uint8_t payload = UINT8_C(0x33);
+    off_t empty_size;
+    off_t current_size;
+    uint8_t create[OLD_OUT_HEADER];
+    uint8_t attempt[1u + NINLIL_ID_BYTES];
+    uint8_t terminal[4u + NINLIL_ID_BYTES];
+
+    CHECK(setup_leaf(directory, path, &profile, &policy) == 0);
+    memset(&link, 0, sizeof(link));
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    CHECK(journal_size(path, &empty_size) == 0);
+    test_fill_id(&message_id, UINT8_C(0x50));
+    CHECK(inject_deadline_data(&link, &message_id,
+                               NINLIL_EVIDENCE_APPLICATION_ACCEPTED, payload,
+                               1100u) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(journal_size(path, &current_size) == 0 && current_size == empty_size);
+    CHECK(ninlil_receive(runtime, &inbound) == NINLIL_ERR_EMPTY);
+
+    test_fill_id(&message_id, UINT8_C(0x51));
+    CHECK(inject_deadline_data(&link, &message_id,
+                               NINLIL_EVIDENCE_REMOTE_STORED, payload,
+                               1100u) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_STATE);
+    CHECK(journal_size(path, &current_size) == 0 && current_size == empty_size);
+    ninlil_close(runtime);
+    runtime = NULL;
+
+    CHECK(open_runtime_with_clock(&runtime, path, &link, &random_state, &policy,
+                                  &profile, &clock) == NINLIL_OK);
+    clock.quality = NINLIL_TIME_UNAVAILABLE;
+    test_fill_id(&message_id, UINT8_C(0x52));
+    CHECK(inject_deadline_data(&link, &message_id,
+                               NINLIL_EVIDENCE_REMOTE_STORED, payload,
+                               1100u) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_STATE);
+    clock.quality = NINLIL_TIME_RUNTIME_ONLY;
+    test_fill_id(&message_id, UINT8_C(0x53));
+    CHECK(inject_deadline_data(&link, &message_id,
+                               NINLIL_EVIDENCE_REMOTE_STORED, payload,
+                               1100u) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_STATE);
+    clock.quality = (ninlil_time_quality)-1;
+    test_fill_id(&message_id, UINT8_C(0x54));
+    CHECK(inject_deadline_data(&link, &message_id,
+                               NINLIL_EVIDENCE_REMOTE_STORED, payload,
+                               1100u) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_INVALID);
+    clock.quality = NINLIL_TIME_RESTART_SAFE;
+    clock.result = NINLIL_ERR_IO;
+    test_fill_id(&message_id, UINT8_C(0x55));
+    CHECK(inject_deadline_data(&link, &message_id,
+                               NINLIL_EVIDENCE_REMOTE_STORED, payload,
+                               1100u) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_ERR_IO);
+    clock.result = NINLIL_OK;
+    clock.now_ms = 1100u;
+    test_fill_id(&message_id, UINT8_C(0x56));
+    CHECK(inject_deadline_data(&link, &message_id,
+                               NINLIL_EVIDENCE_REMOTE_STORED, payload,
+                               1100u) == NINLIL_OK);
+    CHECK(ninlil_step(runtime) == NINLIL_OK);
+    CHECK(journal_size(path, &current_size) == 0 && current_size == empty_size);
+
+    clock.now_ms = 1000u;
+    test_fill_id(&message_id, UINT8_C(0x57));
+    CHECK(inject_deadline_data(&link, &message_id,
+                               NINLIL_EVIDENCE_REMOTE_STORED, payload,
+                               1100u) == NINLIL_OK);
+    CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+    CHECK(journal_size(path, &current_size) == 0 && current_size > empty_size);
+    {
+        uint8_t receipts = link.receipt_count;
+        unsigned int step;
+
+        for (step = 0u; step < 4u && link.receipt_count == receipts; step++)
+            CHECK(ninlil_step(runtime) == NINLIL_OK);
+        CHECK(link.receipt_count == (uint8_t)(receipts + 1u));
+        CHECK(same_id(&link.receipt_message_id[receipts], &message_id));
+        CHECK(link.receipt_evidence[receipts] == NINLIL_EVIDENCE_REMOTE_STORED);
+    }
+    CHECK(journal_size(path, &empty_size) == 0);
+    ninlil_close(runtime);
+    runtime = NULL;
+
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    {
+        uint8_t receipts = link.receipt_count;
+        unsigned int step;
+
+        CHECK(inject_deadline_data(&link, &message_id,
+                                   NINLIL_EVIDENCE_REMOTE_STORED, payload,
+                                   1100u) == NINLIL_OK);
+        CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+        for (step = 0u; step < 4u && link.receipt_count == receipts; step++)
+            CHECK(ninlil_step(runtime) == NINLIL_OK);
+        CHECK(link.receipt_count == (uint8_t)(receipts + 1u));
+        CHECK(same_id(&link.receipt_message_id[receipts], &message_id));
+        for (step = 0u; step < 4u; step++)
+            CHECK(ninlil_step(runtime) == NINLIL_OK);
+        CHECK(link.receipt_count == (uint8_t)(receipts + 1u));
+        CHECK(journal_size(path, &current_size) == 0 &&
+              current_size == empty_size);
+    }
+    ninlil_close(runtime);
+    runtime = NULL;
+
+    clock.now_ms = 1100u;
+    CHECK(open_runtime_with_clock(&runtime, path, &link, &random_state, &policy,
+                                  &profile, &clock) == NINLIL_OK);
+    {
+        uint8_t receipts = link.receipt_count;
+        unsigned int step;
+
+        CHECK(inject_deadline_data(&link, &message_id,
+                                   NINLIL_EVIDENCE_REMOTE_STORED, payload,
+                                   1100u) == NINLIL_OK);
+        CHECK(drain_incoming(runtime, &link) == NINLIL_OK);
+        for (step = 0u; step < 4u && link.receipt_count == receipts; step++)
+            CHECK(ninlil_step(runtime) == NINLIL_OK);
+        CHECK(link.receipt_count == (uint8_t)(receipts + 1u));
+        CHECK(same_id(&link.receipt_message_id[receipts], &message_id));
+    }
+    CHECK(ninlil_receive(runtime, &inbound) == NINLIL_OK);
+    CHECK(same_id(&inbound.message_id, &message_id));
+    CHECK(ninlil_receive(runtime, &inbound) == NINLIL_ERR_EMPTY);
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(remove(path) == 0);
+
+    memset(create, 0, sizeof(create));
+    create[0] = CURRENT_RECORD_VERSION;
+    create[1] = NINLIL_OWNERSHIP_DURABLE;
+    create[2] = NINLIL_EVIDENCE_APPLICATION_ACCEPTED;
+    create[3] = NINLIL_TRAFFIC_NORMAL;
+    create[4] = DEADLINE_PRESENT;
+    put_be16(create + 6, 2u);
+    put_be16(create + 8, APP_SERVICE);
+    put_be64(create + 12, 1100u);
+    test_fill_id(&message_id, UINT8_C(0x58));
+    test_fill_id(&key, UINT8_C(0x59));
+    memcpy(create + 20, message_id.bytes, NINLIL_ID_BYTES);
+    memcpy(create + 36, key.bytes, NINLIL_ID_BYTES);
+    CHECK(append_journal_record(path, profile.flash_ceiling_bytes,
+                                OLD_OUT_CREATE, create,
+                                (uint16_t)sizeof(create)) == NINLIL_OK);
+    CHECK(open_runtime_with_clock(&runtime, path, &link, &random_state, &policy,
+                                  &profile, &clock) == NINLIL_ERR_CORRUPT);
+    CHECK(runtime == NULL);
+    CHECK(remove(path) == 0);
+
+    memset(create, 0, sizeof(create));
+    create[0] = CURRENT_RECORD_VERSION;
+    create[1] = NINLIL_OWNERSHIP_DURABLE;
+    create[2] = NINLIL_EVIDENCE_REMOTE_STORED;
+    create[3] = NINLIL_TRAFFIC_NORMAL;
+    put_be16(create + 6, 2u);
+    put_be16(create + 8, APP_SERVICE);
+    test_fill_id(&message_id, UINT8_C(0x5A));
+    test_fill_id(&key, UINT8_C(0x5B));
+    memcpy(create + 20, message_id.bytes, NINLIL_ID_BYTES);
+    memcpy(create + 36, key.bytes, NINLIL_ID_BYTES);
+    CHECK(append_journal_record(path, profile.flash_ceiling_bytes,
+                                OLD_OUT_CREATE, create,
+                                (uint16_t)sizeof(create)) == NINLIL_OK);
+    memset(attempt, 0, sizeof(attempt));
+    attempt[0] = CURRENT_RECORD_VERSION;
+    memcpy(attempt + 1, message_id.bytes, NINLIL_ID_BYTES);
+    CHECK(append_journal_record(path, profile.flash_ceiling_bytes,
+                                OUT_ATTEMPT_RECORD, attempt,
+                                (uint16_t)sizeof(attempt)) == NINLIL_OK);
+    memset(terminal, 0, sizeof(terminal));
+    terminal[0] = CURRENT_RECORD_VERSION;
+    memcpy(terminal + 1, message_id.bytes, NINLIL_ID_BYTES);
+    terminal[17] = NINLIL_OUTCOME_EXPIRED;
+    put_be16(terminal + 18, 0u);
+    CHECK(append_journal_record(path, profile.flash_ceiling_bytes,
+                                OUT_TERMINAL_RECORD, terminal,
+                                (uint16_t)sizeof(terminal)) == NINLIL_OK);
+    CHECK(open_runtime_with_clock(&runtime, path, &link, &random_state, &policy,
+                                  &profile, &clock) == NINLIL_ERR_CORRUPT);
+    CHECK(runtime == NULL);
+    test_remove_directory(directory, path, NULL);
+    return 0;
+}
+
 static int (*const tests[])(void) = {
     test_pre_attempt_receipts_do_not_mutate,
     test_reordered_receipts_are_monotonic,
@@ -1161,6 +1784,11 @@ static int (*const tests[])(void) = {
     test_old_delivery_record_is_rejected,
     test_handoff_marker_capacity_suppresses_resend,
     test_policy_error_classification,
+    test_rejection_attempts_consume_interval,
+    test_posix_referenced_reads_revalidate_records,
+    test_posix_runtime_stops_on_payload_corruption,
+    test_deadline_outbound_and_expired_receipts,
+    test_deadline_inbound_and_replay_contract,
 };
 
 int main(void)

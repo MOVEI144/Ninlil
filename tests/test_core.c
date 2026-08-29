@@ -519,6 +519,24 @@ static int test_service_direction_payload_class_and_quota(void)
     test_fill_id(&key, UINT8_C(0x79));
     request = submission(key, 2u, NINLIL_EVIDENCE_REMOTE_STORED,
                          NINLIL_TRAFFIC_CRITICAL, payload, sizeof(payload));
+    {
+        struct stat before;
+        struct stat after;
+
+        CHECK(stat(path, &before) == 0);
+        request.traffic_class = (ninlil_traffic_class)-1;
+        CHECK(NINLIL_TRAFFIC_MASK(request.traffic_class) == 0u);
+        CHECK(ninlil_submit(runtime, &request, &message_id) ==
+              NINLIL_ERR_INVALID);
+        request.traffic_class = (ninlil_traffic_class)(NINLIL_TRAFFIC_BULK + 1);
+        CHECK(NINLIL_TRAFFIC_MASK(request.traffic_class) == 0u);
+        CHECK(ninlil_submit(runtime, &request, &message_id) ==
+              NINLIL_ERR_INVALID);
+        CHECK(stat(path, &after) == 0 && before.st_size == after.st_size);
+        CHECK(ninlil_role_profile_standard((ninlil_role)-1, &profile) ==
+              NINLIL_ERR_INVALID);
+        request.traffic_class = NINLIL_TRAFFIC_CRITICAL;
+    }
     policy.grants[0].directions = NINLIL_SERVICE_SEND;
     CHECK(ninlil_submit(runtime, &request, &message_id) ==
           NINLIL_ERR_UNAUTHORIZED);

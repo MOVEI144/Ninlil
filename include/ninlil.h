@@ -41,7 +41,10 @@
 #define NINLIL_SERVICE_BOTH (NINLIL_SERVICE_SEND | NINLIL_SERVICE_RECEIVE)
 
 #define NINLIL_TRAFFIC_MASK(traffic_class)                                     \
-    ((uint8_t)(UINT8_C(1) << (unsigned int)(traffic_class)))
+    ((uint8_t)(((int)(traffic_class) >= (int)NINLIL_TRAFFIC_CRITICAL &&        \
+                (int)(traffic_class) <= (int)NINLIL_TRAFFIC_BULK)              \
+                   ? (UINT8_C(1) << (unsigned int)(traffic_class))             \
+                   : UINT8_C(0)))
 
 typedef enum ninlil_ownership {
     NINLIL_OWNERSHIP_DURABLE = 1,

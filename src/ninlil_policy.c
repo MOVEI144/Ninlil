@@ -24,7 +24,7 @@ int ninlil_authorize(ninlil_runtime *runtime, uint16_t peer, uint16_t service,
     int rc;
 
     if (service < NINLIL_APPLICATION_SERVICE_MIN ||
-        traffic_class > NINLIL_TRAFFIC_BULK ||
+        !ninlil_traffic_class_valid(traffic_class) ||
         (direction != NINLIL_SERVICE_SEND &&
          direction != NINLIL_SERVICE_RECEIVE))
         return NINLIL_ERR_INVALID;

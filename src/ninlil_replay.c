@@ -34,6 +34,7 @@ static int contract_valid(uint8_t ownership, uint8_t required, uint8_t traffic,
            (required == NINLIL_EVIDENCE_REMOTE_STORED ||
             required == NINLIL_EVIDENCE_APPLICATION_ACCEPTED) &&
            traffic <= NINLIL_TRAFFIC_BULK &&
+           (deadline == 0u || required == NINLIL_EVIDENCE_REMOTE_STORED) &&
            (flags & (uint8_t)~NINLIL_JRN_DEADLINE_PRESENT) == 0u &&
            (((flags & NINLIL_JRN_DEADLINE_PRESENT) == 0u) == (deadline == 0u));
 }
@@ -210,6 +211,8 @@ static int replay_out_update(ninlil_runtime *runtime, uint8_t type,
             outcome > NINLIL_OUTCOME_UNKNOWN ||
             archive_slot >= runtime->archive_capacity ||
             (outcome == NINLIL_OUTCOME_CANCELLED && entry->attempted) ||
+            (outcome == NINLIL_OUTCOME_EXPIRED &&
+             entry->absolute_deadline_ms == 0u) ||
             (outcome == NINLIL_OUTCOME_FAILED && !entry->attempted) ||
             (outcome == NINLIL_OUTCOME_UNKNOWN && !entry->attempted))
             return NINLIL_ERR_CORRUPT;

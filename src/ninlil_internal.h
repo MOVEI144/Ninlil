@@ -123,6 +123,7 @@ struct ninlil_runtime {
 
 int ninlil_id_equal(const ninlil_id *left, const ninlil_id *right);
 int ninlil_evidence_satisfies(ninlil_evidence required, ninlil_evidence actual);
+int ninlil_traffic_class_valid(ninlil_traffic_class traffic_class);
 int ninlil_clock_now(ninlil_runtime *runtime, uint64_t *now,
                      ninlil_time_quality *quality);
 int ninlil_deadline_passed(ninlil_runtime *runtime, uint64_t deadline,

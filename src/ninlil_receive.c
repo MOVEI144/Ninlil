@@ -222,7 +222,15 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
     if (!entry || entry->target != view.source || !entry->attempted)
         return NINLIL_OK;
     if (view.status != NINLIL_RECEIPT_EVIDENCE) {
+        int passed;
+
         if (entry->latest_evidence >= NINLIL_EVIDENCE_REMOTE_STORED)
+            return NINLIL_OK;
+        if (view.status == NINLIL_RECEIPT_EXPIRED &&
+            (entry->absolute_deadline_ms == 0u ||
+             ninlil_deadline_passed(runtime, entry->absolute_deadline_ms,
+                                    &passed) != NINLIL_OK ||
+             !passed))
             return NINLIL_OK;
         return ninlil_finish_outbound(runtime, entry,
                                       view.status ==
@@ -388,12 +396,11 @@ static int send_rejection(ninlil_runtime *runtime, int *worked)
         runtime->rejection_cursor =
             (uint16_t)((index + 1u) % runtime->rejection_capacity);
         *worked = 1;
+        runtime->last_rejection_step = runtime->step_count;
         rc = send_receipt(runtime, entry->target, &entry->message_id,
                           entry->status, NINLIL_EVIDENCE_NONE);
-        if (rc == NINLIL_OK) {
+        if (rc == NINLIL_OK)
             entry->pending = 0u;
-            runtime->last_rejection_step = runtime->step_count;
-        }
         return rc;
     }
     return NINLIL_ERR_EMPTY;

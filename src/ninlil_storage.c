@@ -33,6 +33,12 @@ int ninlil_evidence_satisfies(ninlil_evidence required, ninlil_evidence actual)
            actual == NINLIL_EVIDENCE_APPLICATION_ACCEPTED;
 }
 
+int ninlil_traffic_class_valid(ninlil_traffic_class traffic_class)
+{
+    return traffic_class >= NINLIL_TRAFFIC_CRITICAL &&
+           traffic_class <= NINLIL_TRAFFIC_BULK;
+}
+
 int ninlil_clock_now(ninlil_runtime *runtime, uint64_t *now,
                      ninlil_time_quality *quality)
 {
@@ -61,18 +67,17 @@ int ninlil_deadline_passed(ninlil_runtime *runtime, uint64_t deadline,
     ninlil_time_quality quality;
     int rc;
 
-    if (!passed)
+    if (!runtime || !passed)
         return NINLIL_ERR_INVALID;
     *passed = 0;
     if (deadline == 0u)
         return NINLIL_OK;
     rc = ninlil_clock_now(runtime, &now, &quality);
-    if (rc == NINLIL_ERR_NOT_FOUND)
-        return NINLIL_OK;
     if (rc != NINLIL_OK)
-        return rc;
-    if (quality == NINLIL_TIME_RESTART_SAFE && now >= deadline)
-        *passed = 1;
+        return rc == NINLIL_ERR_NOT_FOUND ? NINLIL_ERR_STATE : rc;
+    if (quality != NINLIL_TIME_RESTART_SAFE)
+        return NINLIL_ERR_STATE;
+    *passed = now >= deadline;
     return NINLIL_OK;
 }
 
@@ -215,6 +220,8 @@ int ninlil_archive_outbound(ninlil_runtime *runtime,
     ninlil_archive_entry *archive = archive_slot(runtime, selected_slot);
     ninlil_traffic_class traffic_class = entry->traffic_class;
 
+    if (!ninlil_traffic_class_valid(traffic_class))
+        return NINLIL_ERR_CORRUPT;
     if (!archive)
         return runtime->replaying ? NINLIL_ERR_CORRUPT : NINLIL_ERR_CAPACITY;
     if (!archive_replaceable(archive))
@@ -296,6 +303,8 @@ int ninlil_outbound_admission(const ninlil_runtime *runtime,
     uint32_t required_free;
     const ninlil_role_profile *profile = &runtime->config.profile;
 
+    if (!ninlil_traffic_class_valid(traffic_class))
+        return NINLIL_ERR_INVALID;
     if (runtime->outbound_live >= profile->max_outbound)
         return NINLIL_ERR_CAPACITY;
     missing_critical =

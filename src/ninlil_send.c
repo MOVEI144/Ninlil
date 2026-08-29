@@ -20,19 +20,35 @@ static int retry_ready(const ninlil_runtime *runtime,
                 runtime->config.retry_interval_steps);
 }
 
+static int deadline_sendable(ninlil_runtime *runtime,
+                             const ninlil_outbound_entry *entry)
+{
+    int passed;
+
+    if (entry->absolute_deadline_ms == 0u)
+        return 1;
+    if (ninlil_deadline_passed(runtime, entry->absolute_deadline_ms, &passed) !=
+        NINLIL_OK)
+        return 0;
+    return !passed;
+}
+
 static ninlil_outbound_entry *find_class_entry(ninlil_runtime *runtime,
                                                ninlil_traffic_class class)
 {
     uint16_t scanned;
-    uint16_t start = runtime->outbound_cursor[(unsigned int)class];
+    uint16_t start;
 
+    if (!ninlil_traffic_class_valid(class))
+        return NULL;
+    start = runtime->outbound_cursor[(unsigned int)class];
     for (scanned = 0u; scanned < runtime->outbound_capacity; scanned++) {
         uint16_t index =
             (uint16_t)((start + scanned) % runtime->outbound_capacity);
         ninlil_outbound_entry *entry = &runtime->outbound[index];
 
         if (!entry->used || entry->traffic_class != class ||
-            !retry_ready(runtime, entry))
+            !retry_ready(runtime, entry) || !deadline_sendable(runtime, entry))
             continue;
         runtime->outbound_cursor[(unsigned int)class] =
             (uint16_t)((index + 1u) % runtime->outbound_capacity);
@@ -76,7 +92,7 @@ int ninlil_expire_outbound(ninlil_runtime *runtime, int *worked)
         rc = ninlil_deadline_passed(runtime, entry->absolute_deadline_ms,
                                     &passed);
         if (rc != NINLIL_OK)
-            return rc;
+            continue;
         if (!passed)
             continue;
         *worked = 1;
@@ -122,6 +138,20 @@ int ninlil_process_outbound(ninlil_runtime *runtime, int *worked)
                              payload, entry->payload_len);
     if (rc != NINLIL_OK)
         return rc;
+    if (entry->absolute_deadline_ms != 0u) {
+        int passed;
+
+        rc = ninlil_deadline_passed(runtime, entry->absolute_deadline_ms,
+                                    &passed);
+        if (rc != NINLIL_OK)
+            return NINLIL_OK;
+        if (passed) {
+            if (entry->attempted)
+                return NINLIL_OK;
+            return ninlil_finish_outbound(runtime, entry,
+                                          NINLIL_OUTCOME_EXPIRED);
+        }
+    }
     entry_submission(entry, payload, &submission);
     length = ninlil_wire_encode_data(packet, runtime->config.node_id,
                                      &submission, &entry->message_id, payload);

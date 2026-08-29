@@ -140,7 +140,9 @@ static int submission_valid(const ninlil_submission *submission)
            (submission->required_evidence == NINLIL_EVIDENCE_REMOTE_STORED ||
             submission->required_evidence ==
                 NINLIL_EVIDENCE_APPLICATION_ACCEPTED) &&
-           submission->traffic_class <= NINLIL_TRAFFIC_BULK &&
+           ninlil_traffic_class_valid(submission->traffic_class) &&
+           (submission->absolute_deadline_ms == 0u ||
+            submission->required_evidence == NINLIL_EVIDENCE_REMOTE_STORED) &&
            submission->payload_len <= NINLIL_MAX_PAYLOAD &&
            (submission->payload_len == 0u || submission->payload);
 }
