@@ -53,12 +53,13 @@ Read in this order:
 1. [`docs/STATUS.md`](docs/STATUS.md)
 2. [`docs/FOUNDATIONS.md`](docs/FOUNDATIONS.md)
 3. [`docs/P0_DELIVERY_CONTRACT_V2.md`](docs/P0_DELIVERY_CONTRACT_V2.md)
-4. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-5. [`docs/ENGINEERING_STANDARD.md`](docs/ENGINEERING_STANDARD.md)
-6. [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md)
-7. [`docs/FAILURE_MODEL.md`](docs/FAILURE_MODEL.md)
-8. [`docs/TESTING.md`](docs/TESTING.md)
-9. [`docs/ROADMAP.md`](docs/ROADMAP.md)
+4. [`docs/P0_OPERATIONAL_PROFILES_V1.md`](docs/P0_OPERATIONAL_PROFILES_V1.md)
+5. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+6. [`docs/ENGINEERING_STANDARD.md`](docs/ENGINEERING_STANDARD.md)
+7. [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md)
+8. [`docs/FAILURE_MODEL.md`](docs/FAILURE_MODEL.md)
+9. [`docs/TESTING.md`](docs/TESTING.md)
+10. [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
 ## License
 
