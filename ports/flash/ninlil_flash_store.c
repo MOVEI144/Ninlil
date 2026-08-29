@@ -2,14 +2,14 @@
 
 #include <string.h>
 
-#define FLASH_VERSION 3u
+#define FLASH_VERSION 4u
 #define FLASH_HEADER_SIZE 32u
 #define FLASH_TRAILER_SIZE 16u
-#define FLASH_COMMIT UINT32_C(0x4E434D33) /* NCM3 */
+#define FLASH_COMMIT UINT32_C(0x4E434D34) /* NCM4 */
 #define FLASH_ERASED UINT8_C(0xFF)
 #define FLASH_ERASED_WORD UINT32_C(0xFFFFFFFF)
 #define FLASH_MAX_RECORD_SIZE 368u
-#define FLASH_MAX_TYPE 7u
+#define FLASH_MAX_TYPE 8u
 #define FLASH_HEADER_CRC_OFFSET 16u
 #define FLASH_COMMIT_OFFSET 24u
 
@@ -151,7 +151,7 @@ static int header_parse(const uint8_t *header, uint8_t *type,
     uint32_t stored_header_crc;
 
     if (classify_commit(header) != COMMIT_STATE_COMMITTED || header[0] != 'N' ||
-        header[1] != 'J' || header[2] != 'F' || header[3] != '3' ||
+        header[1] != 'J' || header[2] != 'F' || header[3] != '4' ||
         header[4] != FLASH_VERSION || header[5] < 1u ||
         header[5] > FLASH_MAX_TYPE)
         return 0;
@@ -327,7 +327,7 @@ int ninlil_flash_store_append_ref(ninlil_flash_store *store, uint8_t type,
     record[0] = 'N';
     record[1] = 'J';
     record[2] = 'F';
-    record[3] = '3';
+    record[3] = '4';
     record[4] = FLASH_VERSION;
     record[5] = type;
     put_be16(record + 6, length);
