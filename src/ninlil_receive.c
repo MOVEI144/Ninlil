@@ -297,7 +297,8 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
     if (view.status != NINLIL_RECEIPT_EVIDENCE) {
         int passed;
 
-        if (entry->latest_evidence >= NINLIL_EVIDENCE_REMOTE_STORED)
+        if (ninlil_evidence_satisfies(entry->required_evidence,
+                                      entry->latest_evidence))
             return NINLIL_OK;
         if (view.status == NINLIL_RECEIPT_EXPIRED &&
             (entry->absolute_deadline_ms == 0u ||
