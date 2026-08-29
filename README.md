@@ -26,6 +26,8 @@ Ninlil owns communication mechanics:
 
 Ninlil does not own product policy, cloud APIs, dashboards, building or equipment models, safety-rule decisions, or tenant authorization. Product integrations such as KG consume Ninlil through a narrow transport adapter.
 
+The authoritative responsibility boundary and delivery semantics are defined in [`docs/FOUNDATIONS.md`](docs/FOUNDATIONS.md).
+
 ## Build and test
 
 Host CI requires CMake, Ninja, GCC, Clang, and clang-format.
@@ -49,12 +51,13 @@ Neither command flashes hardware or enables RF transmission. Repository defaults
 Read in this order:
 
 1. [`docs/STATUS.md`](docs/STATUS.md)
-2. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-3. [`docs/ENGINEERING_STANDARD.md`](docs/ENGINEERING_STANDARD.md)
-4. [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md)
-5. [`docs/FAILURE_MODEL.md`](docs/FAILURE_MODEL.md)
-6. [`docs/TESTING.md`](docs/TESTING.md)
-7. [`docs/ROADMAP.md`](docs/ROADMAP.md)
+2. [`docs/FOUNDATIONS.md`](docs/FOUNDATIONS.md)
+3. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+4. [`docs/ENGINEERING_STANDARD.md`](docs/ENGINEERING_STANDARD.md)
+5. [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md)
+6. [`docs/FAILURE_MODEL.md`](docs/FAILURE_MODEL.md)
+7. [`docs/TESTING.md`](docs/TESTING.md)
+8. [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
 ## License
 
