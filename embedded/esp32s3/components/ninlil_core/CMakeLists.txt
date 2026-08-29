@@ -10,6 +10,7 @@ idf_component_register(
         "${NINLIL_CORE_ROOT}/src/ninlil_policy.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_profile.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_receive.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil_replay.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_send.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_storage.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_topology.c"

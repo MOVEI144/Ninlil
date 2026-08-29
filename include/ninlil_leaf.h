@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #define NINLIL_LEAF_MAX_RX_TOTAL_MS 3000u
+#define NINLIL_LEAF_MAX_RX_DELAY_MS 30000u
 #define NINLIL_LEAF_GATEWAY_STAGED_MAX 1u
 
 typedef struct ninlil_leaf_window_profile {

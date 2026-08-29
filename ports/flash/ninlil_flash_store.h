@@ -9,6 +9,7 @@
 #define NINLIL_FLASH_SECTOR_SIZE 4096u
 #define NINLIL_FLASH_ALIGNMENT 16u
 #define NINLIL_FLASH_MAX_PAYLOAD 320u
+#define NINLIL_FLASH_MAX_SIZE (1024u * 1024u)
 
 typedef int (*ninlil_flash_on_record)(void *ctx, uint8_t type,
                                       const uint8_t *payload, uint16_t length,

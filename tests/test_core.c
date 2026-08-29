@@ -173,10 +173,14 @@ static int test_remote_store_is_default_success_and_restart_handoff(void)
                        &policy, &profile, NULL) == NINLIL_OK);
     CHECK(open_runtime(&second, second_path, 2u, second_link, &second_random,
                        &policy, &profile, NULL) == NINLIL_OK);
+    ninlil_submission_defaults(&request);
+    CHECK(request.struct_version == NINLIL_API_VERSION);
+    CHECK(request.ownership == NINLIL_OWNERSHIP_DURABLE);
+    CHECK(request.required_evidence == NINLIL_EVIDENCE_REMOTE_STORED);
+    CHECK(request.traffic_class == NINLIL_TRAFFIC_NORMAL);
     test_fill_id(&key, UINT8_C(0x11));
     request = submission(key, 2u, NINLIL_EVIDENCE_REMOTE_STORED,
-                         NINLIL_TRAFFIC_NORMAL,
-                         (const uint8_t *)"durable", 7u);
+                         NINLIL_TRAFFIC_NORMAL, (const uint8_t *)"durable", 7u);
     CHECK(ninlil_submit(first, &request, &message_id) == NINLIL_OK);
     CHECK(pump(first, second, 4u) == NINLIL_OK);
     CHECK(ninlil_query(first, &message_id, &info) == NINLIL_OK);
@@ -188,15 +192,15 @@ static int test_remote_store_is_default_success_and_restart_handoff(void)
     CHECK(open_runtime(&second, second_path, 2u, second_link, &second_random,
                        &policy, &profile, NULL) == NINLIL_OK);
     CHECK(ninlil_receive(second, &inbound) == NINLIL_OK);
-    CHECK(memcmp(inbound.message_id.bytes, message_id.bytes,
-                 NINLIL_ID_BYTES) == 0);
+    CHECK(memcmp(inbound.message_id.bytes, message_id.bytes, NINLIL_ID_BYTES) ==
+          0);
     CHECK(ninlil_application_accept(second, &message_id) == NINLIL_OK);
     CHECK(ninlil_receive(second, &inbound) == NINLIL_ERR_EMPTY);
 
     test_fill_id(&result_key, UINT8_C(0x12));
-    result = submission(result_key, 1u, NINLIL_EVIDENCE_REMOTE_STORED,
-                        NINLIL_TRAFFIC_NORMAL, message_id.bytes,
-                        NINLIL_ID_BYTES);
+    result =
+        submission(result_key, 1u, NINLIL_EVIDENCE_REMOTE_STORED,
+                   NINLIL_TRAFFIC_NORMAL, message_id.bytes, NINLIL_ID_BYTES);
     CHECK(ninlil_submit(second, &result, &result_id) == NINLIL_OK);
     CHECK(pump(first, second, 4u) == NINLIL_OK);
     CHECK(ninlil_receive(first, &inbound) == NINLIL_OK);
@@ -258,6 +262,9 @@ static int test_application_evidence_and_receipt_loss(void)
     CHECK(open_runtime(&second, second_path, 2u, second_link, &second_random,
                        &policy, &profile, NULL) == NINLIL_OK);
     CHECK(ninlil_receive(second, &inbound) == NINLIL_OK);
+    /* Revocation blocks new admissions but cannot erase an accepted duplicate
+     * or replace its committed evidence with permanent rejection. */
+    policy.session_membership_epoch = 0u;
     test_link_drop_next(&transport, 1u, 1u);
     CHECK(ninlil_application_accept(second, &message_id) == NINLIL_OK);
     CHECK(pump(first, second, 12u) == NINLIL_OK);
@@ -366,8 +373,7 @@ static int test_reserve_and_starvation_bounds(void)
         test_fill_id(&key, UINT8_C(0x4F));
         request = submission(key, 2u, NINLIL_EVIDENCE_REMOTE_STORED,
                              NINLIL_TRAFFIC_NORMAL, &payload, 1u);
-        CHECK(ninlil_submit(runtime, &request, &ids[5]) ==
-              NINLIL_ERR_CAPACITY);
+        CHECK(ninlil_submit(runtime, &request, &ids[5]) == NINLIL_ERR_CAPACITY);
         request.traffic_class = NINLIL_TRAFFIC_CONTROL;
         CHECK(ninlil_submit(runtime, &request, &ids[5]) == NINLIL_OK);
         key.bytes[0]++;
@@ -380,8 +386,7 @@ static int test_reserve_and_starvation_bounds(void)
         key.bytes[0]++;
         request.idempotency_key = key;
         request.traffic_class = NINLIL_TRAFFIC_BULK;
-        CHECK(ninlil_submit(runtime, &request, &ids[8]) ==
-              NINLIL_ERR_CAPACITY);
+        CHECK(ninlil_submit(runtime, &request, &ids[8]) == NINLIL_ERR_CAPACITY);
     }
     ninlil_close(runtime);
     test_remove_directory(directory, path, NULL);
@@ -580,8 +585,7 @@ static int test_mtu_and_incompatible_journal_rejected(void)
 
     file = fopen(path, "wb");
     CHECK(file != NULL);
-    CHECK(fwrite("NJL1\x01\x01\x00\x00\xff\xff", 1u, 10u, file) ==
-          10u);
+    CHECK(fwrite("NJL1\x01\x01\x00\x00\xff\xff", 1u, 10u, file) == 10u);
     CHECK(fclose(file) == 0);
     CHECK(open_runtime(&runtime, path, 1u, link, &random_state, &policy,
                        &profile, NULL) == NINLIL_ERR_CORRUPT);

@@ -2,6 +2,16 @@
 
 #include <string.h>
 
+static int id_valid(const ninlil_id *id)
+{
+    uint8_t combined = 0u;
+    size_t index;
+
+    for (index = 0u; index < NINLIL_ID_BYTES; index++)
+        combined |= id->bytes[index];
+    return combined != 0u;
+}
+
 int ninlil_leaf_window_profile_lab(ninlil_leaf_window_profile *profile)
 {
     if (!profile)
@@ -21,12 +31,15 @@ int ninlil_leaf_window_profile_validate(
     uint64_t total;
 
     if (!profile || profile->rx1_duration_ms == 0u ||
+        profile->rx1_delay_ms > NINLIL_LEAF_MAX_RX_DELAY_MS ||
+        profile->rx2_delay_ms > NINLIL_LEAF_MAX_RX_DELAY_MS ||
         profile->rx2_enabled > 1u ||
         (profile->rx2_enabled == 0u &&
          (profile->rx2_delay_ms != 0u || profile->rx2_duration_ms != 0u)) ||
         (profile->rx2_enabled != 0u &&
          (profile->rx2_duration_ms == 0u ||
-          profile->rx2_delay_ms <= profile->rx1_delay_ms)))
+          (uint64_t)profile->rx2_delay_ms <
+              (uint64_t)profile->rx1_delay_ms + profile->rx1_duration_ms)))
         return NINLIL_ERR_INVALID;
     total = profile->rx1_duration_ms;
     if (profile->rx2_enabled)
@@ -59,16 +72,15 @@ int ninlil_leaf_opportunity_next(ninlil_leaf_opportunity *opportunity,
     if (!opportunity || !start_ms || !duration_ms || !opportunity->open)
         return NINLIL_ERR_INVALID;
     if (opportunity->next_window == 0u) {
-        *start_ms = opportunity->tx_complete_ms +
-                    opportunity->profile.rx1_delay_ms;
+        *start_ms =
+            opportunity->tx_complete_ms + opportunity->profile.rx1_delay_ms;
         *duration_ms = opportunity->profile.rx1_duration_ms;
         opportunity->next_window = 1u;
         return NINLIL_OK;
     }
-    if (opportunity->next_window == 1u &&
-        opportunity->profile.rx2_enabled) {
-        *start_ms = opportunity->tx_complete_ms +
-                    opportunity->profile.rx2_delay_ms;
+    if (opportunity->next_window == 1u && opportunity->profile.rx2_enabled) {
+        *start_ms =
+            opportunity->tx_complete_ms + opportunity->profile.rx2_delay_ms;
         *duration_ms = opportunity->profile.rx2_duration_ms;
         opportunity->next_window = 2u;
         return NINLIL_OK;
@@ -79,7 +91,8 @@ int ninlil_leaf_opportunity_next(ninlil_leaf_opportunity *opportunity,
 int ninlil_leaf_stage_downlink(ninlil_leaf_opportunity *opportunity,
                                const ninlil_id *message_id)
 {
-    if (!opportunity || !message_id || !opportunity->open)
+    if (!opportunity || !message_id || !id_valid(message_id) ||
+        !opportunity->open)
         return NINLIL_ERR_INVALID;
     if (opportunity->staged)
         return memcmp(opportunity->staged_message_id.bytes, message_id->bytes,

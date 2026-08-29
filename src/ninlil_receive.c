@@ -5,45 +5,56 @@
 static int payload_matches(ninlil_runtime *runtime,
                            const ninlil_journal_ref *reference,
                            uint16_t payload_offset, const uint8_t *payload,
-                           uint16_t payload_len)
+                           uint16_t payload_len, int *matches)
 {
     uint8_t stored[NINLIL_MAX_PAYLOAD];
     int rc;
 
+    *matches = 1;
     if (payload_len == 0u)
-        return 1;
+        return NINLIL_OK;
     rc = ninlil_read_payload(runtime, reference, payload_offset, stored,
                              payload_len);
-    return rc == NINLIL_OK && memcmp(stored, payload, payload_len) == 0;
+    if (rc != NINLIL_OK)
+        return rc;
+    *matches = memcmp(stored, payload, payload_len) == 0;
+    return NINLIL_OK;
 }
 
 static int inbound_contract_matches(ninlil_runtime *runtime,
                                     const ninlil_inbound_entry *entry,
-                                    const ninlil_wire_data_view *view)
+                                    const ninlil_wire_data_view *view,
+                                    int *matches)
 {
-    return entry->source == view->source && entry->service == view->service &&
-           entry->payload_len == view->payload_length &&
-           entry->ownership == view->ownership &&
-           entry->required_evidence == view->required_evidence &&
-           entry->traffic_class == view->traffic_class &&
-           entry->absolute_deadline_ms == view->absolute_deadline_ms &&
-           payload_matches(runtime, &entry->record_ref, NINLIL_JRN_IN_HEADER,
-                           view->payload, view->payload_length);
+    *matches = entry->source == view->source &&
+               entry->service == view->service &&
+               entry->payload_len == view->payload_length &&
+               entry->ownership == view->ownership &&
+               entry->required_evidence == view->required_evidence &&
+               entry->traffic_class == view->traffic_class &&
+               entry->absolute_deadline_ms == view->absolute_deadline_ms;
+    return *matches ? payload_matches(runtime, &entry->record_ref,
+                                      NINLIL_JRN_IN_HEADER, view->payload,
+                                      view->payload_length, matches)
+                    : NINLIL_OK;
 }
 
 static int archive_contract_matches(ninlil_runtime *runtime,
                                     const ninlil_archive_entry *entry,
-                                    const ninlil_wire_data_view *view)
+                                    const ninlil_wire_data_view *view,
+                                    int *matches)
 {
-    return entry->kind == NINLIL_ARCHIVE_INBOUND &&
-           entry->peer == view->source && entry->service == view->service &&
-           entry->payload_len == view->payload_length &&
-           entry->ownership == view->ownership &&
-           entry->required_evidence == view->required_evidence &&
-           entry->traffic_class == view->traffic_class &&
-           entry->absolute_deadline_ms == view->absolute_deadline_ms &&
-           payload_matches(runtime, &entry->record_ref, NINLIL_JRN_IN_HEADER,
-                           view->payload, view->payload_length);
+    *matches = entry->kind == NINLIL_ARCHIVE_INBOUND &&
+               entry->peer == view->source && entry->service == view->service &&
+               entry->payload_len == view->payload_length &&
+               entry->ownership == view->ownership &&
+               entry->required_evidence == view->required_evidence &&
+               entry->traffic_class == view->traffic_class &&
+               entry->absolute_deadline_ms == view->absolute_deadline_ms;
+    return *matches ? payload_matches(runtime, &entry->record_ref,
+                                      NINLIL_JRN_IN_HEADER, view->payload,
+                                      view->payload_length, matches)
+                    : NINLIL_OK;
 }
 
 static int queue_rejection(ninlil_runtime *runtime, const ninlil_id *id,
@@ -63,8 +74,9 @@ static int queue_rejection(ninlil_runtime *runtime, const ninlil_id *id,
     }
     if (!entry) {
         entry = &runtime->rejections[runtime->rejection_cursor];
-        runtime->rejection_cursor = (uint16_t)(
-            (runtime->rejection_cursor + 1u) % runtime->rejection_capacity);
+        runtime->rejection_cursor =
+            (uint16_t)((runtime->rejection_cursor + 1u) %
+                       runtime->rejection_capacity);
     }
     if (entry->used &&
         (!ninlil_id_equal(&entry->message_id, id) || entry->target != target))
@@ -91,23 +103,22 @@ static int handle_duplicate(ninlil_runtime *runtime,
                             ninlil_inbound_entry *inbound,
                             ninlil_archive_entry *archive)
 {
-    uint16_t live = ninlil_live_service(runtime, view->source, view->service,
-                                        NINLIL_SERVICE_SEND);
+    int matches;
+    int rc;
 
-    if (inbound && live > 0u)
-        live--;
-    if (authorize_data(runtime, view, live) != NINLIL_OK) {
-        (void)queue_rejection(runtime, &view->message_id, view->source,
-                              NINLIL_RECEIPT_PERMANENT_REJECTION);
-        return NINLIL_OK;
-    }
     if (inbound) {
-        if (!inbound_contract_matches(runtime, inbound, view))
+        rc = inbound_contract_matches(runtime, inbound, view, &matches);
+        if (rc != NINLIL_OK)
+            return rc;
+        if (!matches)
             return NINLIL_ERR_CONFLICT;
         inbound->need_receipt = 1u;
         return NINLIL_OK;
     }
-    if (!archive_contract_matches(runtime, archive, view))
+    rc = archive_contract_matches(runtime, archive, view, &matches);
+    if (rc != NINLIL_OK)
+        return rc;
+    if (!matches)
         return NINLIL_ERR_CONFLICT;
     archive->need_receipt = 1u;
     return NINLIL_OK;
@@ -179,8 +190,7 @@ static int handle_data(ninlil_runtime *runtime, const uint8_t *packet,
 }
 
 int ninlil_finish_outbound(ninlil_runtime *runtime,
-                           ninlil_outbound_entry *entry,
-                           ninlil_outcome outcome)
+                           ninlil_outbound_entry *entry, ninlil_outcome outcome)
 {
     int rc = ninlil_log_terminal(runtime, &entry->message_id, outcome);
 
@@ -208,6 +218,8 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
         return ninlil_finish_outbound(runtime, entry, NINLIL_OUTCOME_EXPIRED);
     if (entry->latest_evidence == view.evidence)
         return NINLIL_OK;
+    if (view.evidence < entry->latest_evidence)
+        return NINLIL_ERR_CONFLICT;
     rc = ninlil_log_evidence(runtime, &entry->message_id, view.evidence);
     if (rc != NINLIL_OK)
         return rc;
@@ -231,7 +243,7 @@ int ninlil_process_receive(ninlil_runtime *runtime, int *worked)
         return NINLIL_OK;
     *worked = 1;
     if (rc < 0)
-        return rc == NINLIL_ERR_INVALID ? NINLIL_OK : rc;
+        return rc;
     if (rc != 1 || length > sizeof(packet))
         return NINLIL_ERR_INVALID;
     if (ninlil_wire_packet_type(packet, length, &type) != NINLIL_OK)
@@ -255,8 +267,9 @@ static int send_inbound_receipt(ninlil_runtime *runtime, int *worked)
     uint16_t scanned;
 
     for (scanned = 0u; scanned < runtime->inbound_capacity; scanned++) {
-        uint16_t index = (uint16_t)((runtime->inbound_receipt_cursor + scanned) %
-                                    runtime->inbound_capacity);
+        uint16_t index =
+            (uint16_t)((runtime->inbound_receipt_cursor + scanned) %
+                       runtime->inbound_capacity);
         ninlil_inbound_entry *entry = &runtime->inbound[index];
         int rc;
 
@@ -280,8 +293,9 @@ static int send_archive_receipt(ninlil_runtime *runtime, int *worked)
     uint16_t scanned;
 
     for (scanned = 0u; scanned < runtime->archive_capacity; scanned++) {
-        uint16_t index = (uint16_t)((runtime->archive_receipt_cursor + scanned) %
-                                    runtime->archive_capacity);
+        uint16_t index =
+            (uint16_t)((runtime->archive_receipt_cursor + scanned) %
+                       runtime->archive_capacity);
         ninlil_archive_entry *entry = &runtime->archive[index];
         int rc;
 
@@ -304,6 +318,10 @@ static int send_rejection(ninlil_runtime *runtime, int *worked)
 {
     uint16_t scanned;
 
+    if (runtime->last_rejection_step != 0u &&
+        runtime->step_count - runtime->last_rejection_step <
+            NINLIL_REJECTION_INTERVAL_STEPS)
+        return NINLIL_ERR_EMPTY;
     for (scanned = 0u; scanned < runtime->rejection_capacity; scanned++) {
         uint16_t index = (uint16_t)((runtime->rejection_cursor + scanned) %
                                     runtime->rejection_capacity);
@@ -317,8 +335,10 @@ static int send_rejection(ninlil_runtime *runtime, int *worked)
         *worked = 1;
         rc = send_receipt(runtime, entry->target, &entry->message_id,
                           entry->status, NINLIL_EVIDENCE_NONE);
-        if (rc == NINLIL_OK)
+        if (rc == NINLIL_OK) {
             entry->pending = 0u;
+            runtime->last_rejection_step = runtime->step_count;
+        }
         return rc;
     }
     return NINLIL_ERR_EMPTY;

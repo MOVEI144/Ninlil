@@ -13,7 +13,7 @@ typedef enum ninlil_group_record_type {
     NINLIL_GROUP_RECORD_START = 1,
     NINLIL_GROUP_RECORD_ADMIT = 2,
     NINLIL_GROUP_RECORD_OUTCOME = 3,
-    NINLIL_GROUP_RECORD_FINISH = 4
+    NINLIL_GROUP_RECORD_FORGET = 4
 } ninlil_group_record_type;
 
 typedef struct ninlil_group_record {
@@ -34,6 +34,7 @@ typedef struct ninlil_group_operation {
     uint16_t inflight;
     uint16_t completed;
     uint8_t used;
+    uint8_t finished;
 } ninlil_group_operation;
 
 typedef struct ninlil_group_engine {
@@ -59,15 +60,22 @@ int ninlil_group_open(ninlil_group_engine *engine, uint16_t *target_workspace,
 int ninlil_group_start(ninlil_group_engine *engine,
                        const ninlil_id *operation_id, const uint16_t *targets,
                        uint16_t target_count);
+/* Replays authoritative records in commit order without emitting commits. */
+int ninlil_group_restore(ninlil_group_engine *engine,
+                         ninlil_group_record_type record_type,
+                         const ninlil_group_record *record);
 /* peek does not reserve or submit; the caller durably submits one logical
  * delivery and then calls mark_admitted. */
 int ninlil_group_peek(const ninlil_group_engine *engine,
                       ninlil_id *operation_id, uint16_t *target);
 int ninlil_group_mark_admitted(ninlil_group_engine *engine,
-                               const ninlil_id *operation_id,
-                               uint16_t target);
+                               const ninlil_id *operation_id, uint16_t target);
 int ninlil_group_mark_terminal(ninlil_group_engine *engine,
                                const ninlil_id *operation_id, uint16_t target,
                                ninlil_outcome outcome);
+/* Forget is explicit so an exact completed operation remains idempotent until
+ * its bounded slot is deliberately released. */
+int ninlil_group_forget(ninlil_group_engine *engine,
+                        const ninlil_id *operation_id);
 
 #endif

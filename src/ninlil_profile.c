@@ -5,8 +5,7 @@
 #define PROFILE_VERSION 1u
 #define KIB(value) ((uint32_t)(value) * UINT32_C(1024))
 
-int ninlil_role_profile_standard(ninlil_role role,
-                                 ninlil_role_profile *profile)
+int ninlil_role_profile_standard(ninlil_role role, ninlil_role_profile *profile)
 {
     if (!profile)
         return NINLIL_ERR_INVALID;
@@ -103,8 +102,7 @@ int ninlil_role_profile_validate(const ninlil_role_profile *profile)
         !profile_matches(profile, &limit) || profile->active_peers == 0u ||
         profile->max_outbound == 0u || profile->max_inbound == 0u ||
         profile->dedupe_ids == 0u || profile->service_grants == 0u ||
-        profile->dram_ceiling_bytes == 0u ||
-        profile->flash_ceiling_bytes == 0u)
+        profile->dram_ceiling_bytes == 0u || profile->flash_ceiling_bytes == 0u)
         return NINLIL_ERR_INVALID;
     admission_total = (uint32_t)profile->critical_reserve +
                       profile->control_reserve + profile->shared_slots;

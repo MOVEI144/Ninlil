@@ -62,6 +62,7 @@ static int partition_erase(void *ctx, size_t offset, size_t length)
 }
 
 int ninlil_journal_open(ninlil_journal **out, const char *location,
+                        uint64_t maximum_bytes,
                         ninlil_journal_on_record on_record, void *ctx)
 {
     const esp_partition_t *partition;
@@ -69,7 +70,8 @@ int ninlil_journal_open(ninlil_journal **out, const char *location,
     ninlil_flash_io io;
     int rc;
 
-    if (!out || !location || location[0] == '\0' || !on_record)
+    if (!out || !location || location[0] == '\0' || !on_record ||
+        maximum_bytes < NINLIL_FLASH_SECTOR_SIZE)
         return NINLIL_ERR_INVALID;
     *out = NULL;
     partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA,
@@ -77,6 +79,8 @@ int ninlil_journal_open(ninlil_journal **out, const char *location,
     if (!partition || partition->size < NINLIL_FLASH_SECTOR_SIZE ||
         partition->size % NINLIL_FLASH_SECTOR_SIZE != 0u)
         return NINLIL_ERR_NOT_FOUND;
+    if (partition->size > maximum_bytes)
+        return NINLIL_ERR_CAPACITY;
 
     journal = calloc(1u, sizeof(*journal));
     if (!journal)

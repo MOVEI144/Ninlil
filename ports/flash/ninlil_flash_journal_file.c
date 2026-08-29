@@ -141,7 +141,37 @@ static int initialize_file(int fd)
     return file_erase(&context, 0u, FILE_FLASH_SIZE);
 }
 
+static int fsync_parent(const char *path)
+{
+    char *copy = strdup(path);
+    const char *directory = ".";
+    char *slash;
+    int fd;
+    int rc;
+
+    if (!copy)
+        return -1;
+    slash = strrchr(copy, '/');
+    if (slash) {
+        if (slash == copy)
+            copy[1] = '\0';
+        else
+            *slash = '\0';
+        directory = copy;
+    }
+    fd = open(directory, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    if (fd < 0) {
+        free(copy);
+        return -1;
+    }
+    rc = fsync(fd);
+    (void)close(fd);
+    free(copy);
+    return rc;
+}
+
 int ninlil_journal_open(ninlil_journal **out, const char *location,
+                        uint64_t maximum_bytes,
                         ninlil_journal_on_record on_record, void *ctx)
 {
     ninlil_journal *journal;
@@ -151,7 +181,8 @@ int ninlil_journal_open(ninlil_journal **out, const char *location,
     int fd;
     int rc;
 
-    if (!out || !location || location[0] == '\0' || !on_record)
+    if (!out || !location || location[0] == '\0' || !on_record ||
+        maximum_bytes < FILE_FLASH_SIZE)
         return NINLIL_ERR_INVALID;
     *out = NULL;
     fd = open(location, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
@@ -171,8 +202,9 @@ int ninlil_journal_open(ninlil_journal **out, const char *location,
                    : NINLIL_ERR_IO;
     }
     if (fstat(fd, &status) != 0 || !S_ISREG(status.st_mode) ||
-        (created ? initialize_file(fd) != 0
-                 : status.st_size != (off_t)FILE_FLASH_SIZE)) {
+        (!created && status.st_size != (off_t)FILE_FLASH_SIZE) ||
+        (created &&
+         (initialize_file(fd) != 0 || fsync_parent(location) != 0))) {
         (void)close(fd);
         return NINLIL_ERR_IO;
     }

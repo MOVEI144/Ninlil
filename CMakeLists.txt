@@ -46,6 +46,7 @@ set(NINLIL_DELIVERY_SOURCES
   src/ninlil_policy.c
   src/ninlil_profile.c
   src/ninlil_receive.c
+  src/ninlil_replay.c
   src/ninlil_send.c
   src/ninlil_storage.c
   src/ninlil_topology.c

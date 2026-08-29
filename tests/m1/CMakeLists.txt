@@ -48,6 +48,7 @@ set(NINLIL_M1_DELIVERY_SOURCES
   ${NINLIL_ROOT}/src/ninlil_policy.c
   ${NINLIL_ROOT}/src/ninlil_profile.c
   ${NINLIL_ROOT}/src/ninlil_receive.c
+  ${NINLIL_ROOT}/src/ninlil_replay.c
   ${NINLIL_ROOT}/src/ninlil_send.c
   ${NINLIL_ROOT}/src/ninlil_storage.c
   ${NINLIL_ROOT}/src/ninlil_topology.c

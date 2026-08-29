@@ -99,6 +99,7 @@ static int io_valid(const ninlil_flash_io *io)
 {
     return io && io->read && io->write && io->erase &&
            io->size >= NINLIL_FLASH_SECTOR_SIZE &&
+           io->size <= NINLIL_FLASH_MAX_SIZE &&
            io->size % NINLIL_FLASH_SECTOR_SIZE == 0u;
 }
 

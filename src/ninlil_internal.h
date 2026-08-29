@@ -15,6 +15,7 @@
 #define NINLIL_JRN_OUT_HEADER 52u
 #define NINLIL_JRN_IN_HEADER 36u
 #define NINLIL_JRN_DEADLINE_PRESENT 0x01u
+#define NINLIL_REJECTION_INTERVAL_STEPS 4u
 #define NINLIL_STEP_PHASES 3u
 #define NINLIL_TRAFFIC_CLASS_COUNT 4u
 #define NINLIL_SCHEDULE_SLOTS 16u
@@ -59,7 +60,6 @@ typedef struct ninlil_archive_entry {
     ninlil_id idempotency_key;
     ninlil_journal_ref record_ref;
     uint64_t absolute_deadline_ms;
-    uint64_t sequence;
     uint16_t peer;
     uint16_t service;
     uint16_t payload_len;
@@ -104,14 +104,13 @@ struct ninlil_runtime {
     uint16_t archive_replace_cursor;
     uint8_t schedule_cursor;
     uint8_t phase_cursor;
-    uint64_t archive_sequence;
     uint64_t step_count;
+    uint64_t last_rejection_step;
     int fatal_error;
 };
 
 int ninlil_id_equal(const ninlil_id *left, const ninlil_id *right);
-int ninlil_evidence_satisfies(ninlil_evidence required,
-                              ninlil_evidence actual);
+int ninlil_evidence_satisfies(ninlil_evidence required, ninlil_evidence actual);
 int ninlil_clock_now(ninlil_runtime *runtime, uint64_t *now,
                      ninlil_time_quality *quality);
 int ninlil_deadline_passed(ninlil_runtime *runtime, uint64_t deadline,
@@ -125,28 +124,25 @@ int ninlil_read_payload(ninlil_runtime *runtime,
                         uint16_t payload_len);
 
 ninlil_outbound_entry *ninlil_find_outbound(ninlil_runtime *runtime,
-                                             const ninlil_id *id);
-ninlil_outbound_entry *
-ninlil_find_idempotency(ninlil_runtime *runtime, const ninlil_id *key);
+                                            const ninlil_id *id);
+ninlil_outbound_entry *ninlil_find_idempotency(ninlil_runtime *runtime,
+                                               const ninlil_id *key);
 ninlil_inbound_entry *ninlil_find_inbound(ninlil_runtime *runtime,
-                                           const ninlil_id *id);
+                                          const ninlil_id *id);
 ninlil_archive_entry *ninlil_find_archive_id(ninlil_runtime *runtime,
-                                              const ninlil_id *id);
-ninlil_archive_entry *
-ninlil_find_archive_key(ninlil_runtime *runtime, const ninlil_id *key);
+                                             const ninlil_id *id);
+ninlil_archive_entry *ninlil_find_archive_key(ninlil_runtime *runtime,
+                                              const ninlil_id *key);
 int ninlil_id_in_use(ninlil_runtime *runtime, const ninlil_id *id);
 
 int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
-                         uint16_t length,
-                         const ninlil_journal_ref *reference);
+                         uint16_t length, const ninlil_journal_ref *reference);
 int ninlil_log_outbound(ninlil_runtime *runtime,
                         const ninlil_outbound_entry *entry,
-                        const uint8_t *payload,
-                        ninlil_journal_ref *reference);
+                        const uint8_t *payload, ninlil_journal_ref *reference);
 int ninlil_log_inbound(ninlil_runtime *runtime,
                        const ninlil_inbound_entry *entry,
-                       const uint8_t *payload,
-                       ninlil_journal_ref *reference);
+                       const uint8_t *payload, ninlil_journal_ref *reference);
 int ninlil_log_id(ninlil_runtime *runtime, uint8_t type, const ninlil_id *id);
 int ninlil_log_evidence(ninlil_runtime *runtime, const ninlil_id *id,
                         ninlil_evidence evidence);

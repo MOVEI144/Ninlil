@@ -21,8 +21,7 @@ static int grant_valid(const ninlil_service_grant *grant)
     return grant->service_id >= NINLIL_APPLICATION_SERVICE_MIN &&
            grant->maximum_payload_bytes > 0u &&
            grant->maximum_payload_bytes <= NINLIL_MAX_PAYLOAD &&
-           grant->maximum_live_messages > 0u &&
-           grant->directions != 0u &&
+           grant->maximum_live_messages > 0u && grant->directions != 0u &&
            (grant->directions & (uint8_t)~NINLIL_SERVICE_BOTH) == 0u &&
            grant->traffic_class_mask != 0u &&
            (grant->traffic_class_mask & UINT8_C(0xF0)) == 0u;

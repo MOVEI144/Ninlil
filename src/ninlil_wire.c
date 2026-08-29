@@ -35,6 +35,16 @@ static uint64_t get_be64(const uint8_t *data)
     return value;
 }
 
+static int id_valid(const uint8_t *bytes)
+{
+    uint8_t combined = 0u;
+    size_t index;
+
+    for (index = 0u; index < NINLIL_ID_BYTES; index++)
+        combined |= bytes[index];
+    return combined != 0u;
+}
+
 static int required_evidence_valid(uint8_t evidence)
 {
     return evidence == NINLIL_EVIDENCE_REMOTE_STORED ||
@@ -62,8 +72,7 @@ int ninlil_wire_packet_type(const uint8_t *packet, size_t length, uint8_t *type)
 {
     if (!packet || !type || length < 4u || packet[0] != 'N' ||
         packet[1] != 'L' || packet[2] != NINLIL_WIRE_VERSION ||
-        (packet[3] != NINLIL_WIRE_DATA &&
-         packet[3] != NINLIL_WIRE_RECEIPT))
+        (packet[3] != NINLIL_WIRE_DATA && packet[3] != NINLIL_WIRE_RECEIPT))
         return NINLIL_ERR_INVALID;
     *type = packet[3];
     return NINLIL_OK;
@@ -107,9 +116,16 @@ int ninlil_wire_decode_data(const uint8_t *packet, size_t length,
         type != NINLIL_WIRE_DATA || length < NINLIL_WIRE_DATA_HEADER)
         return NINLIL_ERR_INVALID;
     memset(&candidate, 0, sizeof(candidate));
+    candidate.source = get_be16(packet + 4);
+    candidate.target = get_be16(packet + 6);
+    candidate.service = get_be16(packet + 8);
     candidate.payload_length = get_be16(packet + 38);
     flags = packet[29];
-    if (candidate.payload_length > NINLIL_MAX_PAYLOAD ||
+    if (candidate.source == 0u || candidate.source == UINT16_MAX ||
+        candidate.target == 0u || candidate.target == UINT16_MAX ||
+        candidate.service < NINLIL_APPLICATION_SERVICE_MIN ||
+        !id_valid(packet + 10) ||
+        candidate.payload_length > NINLIL_MAX_PAYLOAD ||
         length != ninlil_wire_data_size(candidate.payload_length) ||
         packet[26] != NINLIL_OWNERSHIP_DURABLE ||
         !required_evidence_valid(packet[27]) ||
@@ -120,9 +136,6 @@ int ninlil_wire_decode_data(const uint8_t *packet, size_t length,
     if (((flags & DATA_DEADLINE_PRESENT) == 0u) !=
         (candidate.absolute_deadline_ms == 0u))
         return NINLIL_ERR_INVALID;
-    candidate.source = get_be16(packet + 4);
-    candidate.target = get_be16(packet + 6);
-    candidate.service = get_be16(packet + 8);
     memcpy(candidate.message_id.bytes, packet + 10, NINLIL_ID_BYTES);
     candidate.ownership = (ninlil_ownership)packet[26];
     candidate.required_evidence = (ninlil_evidence)packet[27];
@@ -161,6 +174,10 @@ int ninlil_wire_decode_receipt(const uint8_t *packet, size_t length,
     memset(&candidate, 0, sizeof(candidate));
     candidate.source = get_be16(packet + 4);
     candidate.target = get_be16(packet + 6);
+    if (candidate.source == 0u || candidate.source == UINT16_MAX ||
+        candidate.target == 0u || candidate.target == UINT16_MAX ||
+        !id_valid(packet + 8))
+        return NINLIL_ERR_INVALID;
     memcpy(candidate.message_id.bytes, packet + 8, NINLIL_ID_BYTES);
     candidate.status = packet[24];
     candidate.evidence = (ninlil_evidence)packet[25];

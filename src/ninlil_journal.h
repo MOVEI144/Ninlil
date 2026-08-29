@@ -12,11 +12,11 @@ typedef struct ninlil_journal_ref {
 } ninlil_journal_ref;
 
 typedef int (*ninlil_journal_on_record)(void *ctx, uint8_t type,
-                                        const uint8_t *payload,
-                                        uint16_t length,
+                                        const uint8_t *payload, uint16_t length,
                                         const ninlil_journal_ref *reference);
 
 int ninlil_journal_open(ninlil_journal **out, const char *location,
+                        uint64_t maximum_bytes,
                         ninlil_journal_on_record on_record, void *ctx);
 int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
                           const uint8_t *payload, uint16_t length,

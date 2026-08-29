@@ -12,6 +12,7 @@
 
 #define APP_SERVICE UINT16_C(0x0100)
 #define BATCH_MESSAGES 20u
+#define TOTAL_MESSAGES 100u
 
 #define CHECK(expression)                                                      \
     do {                                                                       \
@@ -70,14 +71,10 @@ static int submit_message(ninlil_runtime *runtime, const ninlil_id *key,
 {
     ninlil_submission request;
 
-    memset(&request, 0, sizeof(request));
-    request.struct_version = NINLIL_API_VERSION;
+    ninlil_submission_defaults(&request);
     request.idempotency_key = *key;
     request.target = target;
     request.service = APP_SERVICE;
-    request.ownership = NINLIL_OWNERSHIP_DURABLE;
-    request.required_evidence = NINLIL_EVIDENCE_REMOTE_STORED;
-    request.traffic_class = NINLIL_TRAFFIC_NORMAL;
     request.payload = payload;
     request.payload_len = payload_len;
     return ninlil_submit(runtime, &request, message_id);
@@ -197,7 +194,7 @@ static int test_direct_delivery_with_loss_and_duplicates(void)
     return 0;
 }
 
-static int test_bidirectional_batch(void)
+static int test_bidirectional_hundred_messages(void)
 {
     char directory[40];
     char first_path[80];
@@ -209,8 +206,8 @@ static int test_bidirectional_batch(void)
     ninlil_runtime *second = NULL;
     uint32_t first_random = 30u;
     uint32_t second_random = 40u;
-    ninlil_id first_ids[BATCH_MESSAGES];
-    ninlil_id second_ids[BATCH_MESSAGES];
+    ninlil_id first_ids[TOTAL_MESSAGES];
+    ninlil_id second_ids[TOTAL_MESSAGES];
     size_t first_accepted = 0u;
     size_t second_accepted = 0u;
     unsigned int index;
@@ -228,39 +225,52 @@ static int test_bidirectional_batch(void)
     CHECK(open_runtime(&second, second_path, 2u, second_link, &second_random) ==
           NINLIL_OK);
 
-    for (index = 0u; index < BATCH_MESSAGES; index++) {
-        ninlil_id key;
-        uint8_t payload[8];
+    for (index = 0u; index < TOTAL_MESSAGES; index += BATCH_MESSAGES) {
+        unsigned int item;
+        unsigned int cycle_index;
+        size_t expected = index + BATCH_MESSAGES;
 
-        test_fill_id(&key, (uint8_t)(index + 1u));
-        memset(payload, (int)(uint8_t)index, sizeof(payload));
-        CHECK(submit_message(first, &key, 2u, payload, sizeof(payload),
-                             &first_ids[index]) == NINLIL_OK);
-        key.bytes[0] ^= UINT8_C(0xA5);
-        CHECK(submit_message(second, &key, 1u, payload, sizeof(payload),
-                             &second_ids[index]) == NINLIL_OK);
-    }
-    for (index = 0u; index < 1000u; index++) {
-        CHECK(cycle(&pair, first, second) == NINLIL_OK);
-        CHECK(accept_all(first, &first_accepted) == NINLIL_OK);
-        CHECK(accept_all(second, &second_accepted) == NINLIL_OK);
-        if (first_accepted == BATCH_MESSAGES &&
-            second_accepted == BATCH_MESSAGES) {
-            ninlil_info first_info;
-            ninlil_info second_info;
+        for (item = index; item < index + BATCH_MESSAGES; item++) {
+            ninlil_id key;
+            uint8_t payload[8];
 
-            if (ninlil_query(first, &first_ids[BATCH_MESSAGES - 1u],
-                             &first_info) == NINLIL_OK &&
-                ninlil_query(second, &second_ids[BATCH_MESSAGES - 1u],
-                             &second_info) == NINLIL_OK &&
-                first_info.outcome == NINLIL_OUTCOME_SATISFIED &&
-                second_info.outcome == NINLIL_OUTCOME_SATISFIED)
+            test_fill_id(&key, (uint8_t)(item + 1u));
+            memset(payload, (int)(uint8_t)item, sizeof(payload));
+            CHECK(submit_message(first, &key, 2u, payload, sizeof(payload),
+                                 &first_ids[item]) == NINLIL_OK);
+            key.bytes[0] ^= UINT8_C(0xA5);
+            CHECK(submit_message(second, &key, 1u, payload, sizeof(payload),
+                                 &second_ids[item]) == NINLIL_OK);
+        }
+        for (cycle_index = 0u; cycle_index < 1000u; cycle_index++) {
+            int all_satisfied = 1;
+
+            CHECK(cycle(&pair, first, second) == NINLIL_OK);
+            CHECK(accept_all(first, &first_accepted) == NINLIL_OK);
+            CHECK(accept_all(second, &second_accepted) == NINLIL_OK);
+            if (first_accepted != expected || second_accepted != expected)
+                continue;
+            for (item = index; item < index + BATCH_MESSAGES; item++) {
+                ninlil_info first_info;
+                ninlil_info second_info;
+
+                if (ninlil_query(first, &first_ids[item], &first_info) !=
+                        NINLIL_OK ||
+                    ninlil_query(second, &second_ids[item], &second_info) !=
+                        NINLIL_OK ||
+                    first_info.outcome != NINLIL_OUTCOME_SATISFIED ||
+                    second_info.outcome != NINLIL_OUTCOME_SATISFIED) {
+                    all_satisfied = 0;
+                    break;
+                }
+            }
+            if (all_satisfied)
                 break;
         }
+        CHECK(cycle_index < 1000u);
     }
-    CHECK(index < 1000u);
-    CHECK(first_accepted == BATCH_MESSAGES);
-    CHECK(second_accepted == BATCH_MESSAGES);
+    CHECK(first_accepted == TOTAL_MESSAGES);
+    CHECK(second_accepted == TOTAL_MESSAGES);
 
     ninlil_close(first);
     ninlil_close(second);
@@ -294,8 +304,8 @@ static int test_submit_survives_abrupt_exit(void)
         ninlil_runtime *child_runtime = NULL;
         uint32_t child_random = 50u;
         ninlil_id child_message;
-        int rc = open_runtime(&child_runtime, journal_path, 1u, link,
-                              &child_random);
+        int rc =
+            open_runtime(&child_runtime, journal_path, 1u, link, &child_random);
 
         if (rc == NINLIL_OK) {
             rc = submit_message(child_runtime, &key, 2u,
@@ -319,7 +329,7 @@ static int test_submit_survives_abrupt_exit(void)
 
 static int (*const tests[])(void) = {
     test_direct_delivery_with_loss_and_duplicates,
-    test_bidirectional_batch,
+    test_bidirectional_hundred_messages,
     test_submit_survives_abrupt_exit,
 };
 
@@ -331,8 +341,7 @@ int main(void)
     for (index = 0u; index < sizeof(tests) / sizeof(tests[0]); index++) {
         int rc = tests[index]();
 
-        printf("delivery_%02zu %s\n", index + 1u,
-               rc == 0 ? "PASS" : "FAIL");
+        printf("delivery_%02zu %s\n", index + 1u, rc == 0 ? "PASS" : "FAIL");
         if (rc != 0)
             return rc;
     }

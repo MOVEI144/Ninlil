@@ -22,9 +22,10 @@ host_sources=(
   "$root/src/ninlil_custody.c"
   "$root/src/ninlil_group.c"
   "$root/src/ninlil_leaf.c"
-  "$root/src/ninlil_policy.c"},{
+  "$root/src/ninlil_policy.c"
   "$root/src/ninlil_profile.c"
   "$root/src/ninlil_receive.c"
+  "$root/src/ninlil_replay.c"
   "$root/src/ninlil_send.c"
   "$root/src/ninlil_storage.c"
   "$root/src/ninlil_topology.c"

@@ -313,14 +313,10 @@ static int advance_hil_batch(ninlil_runtime *runtime, hil_batch *batch)
         hil_payload(payload, batch->sequence);
         ninlil_submission request;
 
-        memset(&request, 0, sizeof(request));
-        request.struct_version = NINLIL_API_VERSION;
+        ninlil_submission_defaults(&request);
         request.idempotency_key = key;
         request.target = CONFIG_NINLIL_PEER_ID;
         request.service = APP_SERVICE;
-        request.ownership = NINLIL_OWNERSHIP_DURABLE;
-        request.required_evidence = NINLIL_EVIDENCE_REMOTE_STORED;
-        request.traffic_class = NINLIL_TRAFFIC_NORMAL;
         request.payload = payload;
         request.payload_len = sizeof(payload);
         rc = ninlil_submit(runtime, &request, &batch->message_id);
@@ -338,7 +334,7 @@ static void run_delivery(ninlil_sx1262_radio *physical)
     ninlil_link link;
     ninlil_config config;
     ninlil_runtime *runtime = NULL;
-    uint32_t inbound_applied = 0u;
+    uint32_t inbound_accepted = 0u;
     bool fatal = false;
 #if defined(CONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT)
     hil_batch batch = {.sequence = 1u};
@@ -402,10 +398,9 @@ static void run_delivery(ninlil_sx1262_radio *physical)
                 fatal = true;
                 break;
             }
-            inbound_applied++;
-            ESP_LOGI(TAG,
-                     "Application ACCEPTED count=%lu service=%u len=%u",
-                     (unsigned long)inbound_applied,
+            inbound_accepted++;
+            ESP_LOGI(TAG, "Application ACCEPTED count=%lu service=%u len=%u",
+                     (unsigned long)inbound_accepted,
                      (unsigned int)inbound.service,
                      (unsigned int)inbound.payload_len);
         }

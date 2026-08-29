@@ -97,8 +97,8 @@ void test_policy_init(test_policy *policy, uint16_t service,
 {
     memset(policy, 0, sizeof(*policy));
     policy->role = NINLIL_ROLE_POWERED_ENDPOINT;
-    policy->capabilities = NINLIL_CAP_APP_SEND | NINLIL_CAP_APP_RECEIVE |
-                           NINLIL_CAP_POLL_DOWNLINK;
+    policy->capabilities =
+        NINLIL_CAP_APP_SEND | NINLIL_CAP_APP_RECEIVE | NINLIL_CAP_POLL_DOWNLINK;
     policy->membership_epoch = 1u;
     policy->session_membership_epoch = 1u;
     policy->grant_count = 1u;

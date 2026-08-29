@@ -3,14 +3,12 @@
 #include <string.h>
 
 static const ninlil_traffic_class schedule[NINLIL_SCHEDULE_SLOTS] = {
-    NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CRITICAL,
-    NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CRITICAL,
-    NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CRITICAL,
-    NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CRITICAL,
-    NINLIL_TRAFFIC_CONTROL,  NINLIL_TRAFFIC_CONTROL,
-    NINLIL_TRAFFIC_CONTROL,  NINLIL_TRAFFIC_CONTROL,
-    NINLIL_TRAFFIC_NORMAL,   NINLIL_TRAFFIC_NORMAL,
-    NINLIL_TRAFFIC_NORMAL,   NINLIL_TRAFFIC_BULK,
+    NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CRITICAL,
+    NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CRITICAL,
+    NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CRITICAL, NINLIL_TRAFFIC_CONTROL,
+    NINLIL_TRAFFIC_CONTROL,  NINLIL_TRAFFIC_CONTROL,  NINLIL_TRAFFIC_CONTROL,
+    NINLIL_TRAFFIC_NORMAL,   NINLIL_TRAFFIC_NORMAL,   NINLIL_TRAFFIC_NORMAL,
+    NINLIL_TRAFFIC_BULK,
 };
 
 static int retry_ready(const ninlil_runtime *runtime,
@@ -23,7 +21,7 @@ static int retry_ready(const ninlil_runtime *runtime,
 }
 
 static ninlil_outbound_entry *find_class_entry(ninlil_runtime *runtime,
-                                                ninlil_traffic_class class)
+                                               ninlil_traffic_class class)
 {
     uint16_t scanned;
     uint16_t start = runtime->outbound_cursor[(unsigned int)class];
@@ -48,9 +46,8 @@ static ninlil_outbound_entry *select_outbound(ninlil_runtime *runtime)
     uint8_t scanned;
 
     for (scanned = 0u; scanned < NINLIL_SCHEDULE_SLOTS; scanned++) {
-        uint8_t slot =
-            (uint8_t)((runtime->schedule_cursor + scanned) %
-                      NINLIL_SCHEDULE_SLOTS);
+        uint8_t slot = (uint8_t)((runtime->schedule_cursor + scanned) %
+                                 NINLIL_SCHEDULE_SLOTS);
         ninlil_outbound_entry *entry =
             find_class_entry(runtime, schedule[slot]);
 
@@ -83,8 +80,7 @@ int ninlil_expire_outbound(ninlil_runtime *runtime, int *worked)
         if (!passed)
             continue;
         *worked = 1;
-        return ninlil_finish_outbound(runtime, entry,
-                                      NINLIL_OUTCOME_EXPIRED);
+        return ninlil_finish_outbound(runtime, entry, NINLIL_OUTCOME_EXPIRED);
     }
     return NINLIL_OK;
 }
@@ -122,17 +118,15 @@ int ninlil_process_outbound(ninlil_runtime *runtime, int *worked)
     if (!entry)
         return NINLIL_OK;
     *worked = 1;
-    rc = ninlil_read_payload(runtime, &entry->record_ref,
-                             NINLIL_JRN_OUT_HEADER, payload,
-                             entry->payload_len);
+    rc = ninlil_read_payload(runtime, &entry->record_ref, NINLIL_JRN_OUT_HEADER,
+                             payload, entry->payload_len);
     if (rc != NINLIL_OK)
         return rc;
     entry_submission(entry, payload, &submission);
     length = ninlil_wire_encode_data(packet, runtime->config.node_id,
                                      &submission, &entry->message_id, payload);
     if (!entry->attempted) {
-        rc = ninlil_log_id(runtime, NINLIL_JRN_OUT_ATTEMPT,
-                           &entry->message_id);
+        rc = ninlil_log_id(runtime, NINLIL_JRN_OUT_ATTEMPT, &entry->message_id);
         if (rc != NINLIL_OK)
             return rc;
         entry->attempted = 1u;

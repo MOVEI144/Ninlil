@@ -20,6 +20,7 @@
 struct ninlil_journal {
     int fd;
     int poisoned;
+    uint64_t maximum_bytes;
 };
 
 static uint32_t crc32_ieee(const uint8_t *data, size_t length)
@@ -145,6 +146,7 @@ static int header_valid(const uint8_t *header, uint16_t *length)
 }
 
 int ninlil_journal_open(ninlil_journal **out, const char *path,
+                        uint64_t maximum_bytes,
                         ninlil_journal_on_record on_record, void *ctx)
 {
     struct stat status;
@@ -154,7 +156,9 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
     int created = 0;
     int fd;
 
-    if (!out || !path || path[0] == '\0' || !on_record)
+    if (!out || !path || path[0] == '\0' || !on_record ||
+        maximum_bytes < JRN_HEADER + JRN_CRC ||
+        maximum_bytes > (uint64_t)INT64_MAX)
         return NINLIL_ERR_INVALID;
     *out = NULL;
     fd = open(path, O_RDWR | O_CLOEXEC | O_NOFOLLOW);
@@ -177,6 +181,10 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
     if (fstat(fd, &status) != 0 || !S_ISREG(status.st_mode)) {
         (void)close(fd);
         return NINLIL_ERR_IO;
+    }
+    if (status.st_size < 0 || (uint64_t)status.st_size > maximum_bytes) {
+        (void)close(fd);
+        return NINLIL_ERR_CAPACITY;
     }
     if (created && (fsync(fd) != 0 || fsync_parent(path) != NINLIL_OK)) {
         (void)close(fd);
@@ -247,6 +255,7 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
         return NINLIL_ERR_IO;
     }
     journal->fd = fd;
+    journal->maximum_bytes = maximum_bytes;
     *out = journal;
     return NINLIL_OK;
 }
@@ -281,6 +290,10 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
         journal->poisoned = 1;
         return NINLIL_ERR_IO;
     }
+    if (start < 0 || (uint64_t)start > journal->maximum_bytes ||
+        JRN_HEADER + (uint64_t)length + JRN_CRC >
+            journal->maximum_bytes - (uint64_t)start)
+        return NINLIL_ERR_CAPACITY;
     rc = write_full(journal->fd, record, JRN_HEADER + (size_t)length + JRN_CRC);
     if (rc != NINLIL_OK || fdatasync(journal->fd) != 0) {
         (void)ftruncate(journal->fd, start);
@@ -308,7 +321,8 @@ int ninlil_journal_read(ninlil_journal *journal,
         length > (uint16_t)(reference->length - relative_offset))
         return NINLIL_ERR_INVALID;
     end = reference->offset + relative_offset;
-    if (end < reference->offset || end > (uint64_t)INT64_MAX)
+    if (end < reference->offset || end > (uint64_t)INT64_MAX ||
+        length > (uint64_t)INT64_MAX - end)
         return NINLIL_ERR_INVALID;
     return read_full_at(journal->fd, (off_t)end, buffer, length);
 }

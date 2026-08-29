@@ -8,11 +8,6 @@ static void put_be16(uint8_t *data, uint16_t value)
     data[1] = (uint8_t)value;
 }
 
-static uint16_t get_be16(const uint8_t *data)
-{
-    return (uint16_t)(((uint16_t)data[0] << 8) | (uint16_t)data[1]);
-}
-
 static void put_be64(uint8_t *data, uint64_t value)
 {
     size_t index;
@@ -23,23 +18,12 @@ static void put_be64(uint8_t *data, uint64_t value)
     }
 }
 
-static uint64_t get_be64(const uint8_t *data)
-{
-    uint64_t value = 0u;
-    size_t index;
-
-    for (index = 0u; index < 8u; index++)
-        value = (value << 8) | data[index];
-    return value;
-}
-
 int ninlil_id_equal(const ninlil_id *left, const ninlil_id *right)
 {
     return memcmp(left->bytes, right->bytes, NINLIL_ID_BYTES) == 0;
 }
 
-int ninlil_evidence_satisfies(ninlil_evidence required,
-                              ninlil_evidence actual)
+int ninlil_evidence_satisfies(ninlil_evidence required, ninlil_evidence actual)
 {
     if (required == NINLIL_EVIDENCE_REMOTE_STORED) {
         return actual == NINLIL_EVIDENCE_REMOTE_STORED ||
@@ -112,12 +96,16 @@ int ninlil_read_payload(ninlil_runtime *runtime,
                         uint16_t payload_offset, uint8_t *payload,
                         uint16_t payload_len)
 {
-    return ninlil_journal_read(runtime->journal, reference, payload_offset,
-                               payload, payload_len);
+    int rc = ninlil_journal_read(runtime->journal, reference, payload_offset,
+                                 payload, payload_len);
+
+    if (rc != NINLIL_OK)
+        runtime->fatal_error = rc;
+    return rc;
 }
 
 ninlil_outbound_entry *ninlil_find_outbound(ninlil_runtime *runtime,
-                                             const ninlil_id *id)
+                                            const ninlil_id *id)
 {
     uint16_t index;
 
@@ -129,8 +117,8 @@ ninlil_outbound_entry *ninlil_find_outbound(ninlil_runtime *runtime,
     return NULL;
 }
 
-ninlil_outbound_entry *
-ninlil_find_idempotency(ninlil_runtime *runtime, const ninlil_id *key)
+ninlil_outbound_entry *ninlil_find_idempotency(ninlil_runtime *runtime,
+                                               const ninlil_id *key)
 {
     uint16_t index;
 
@@ -143,7 +131,7 @@ ninlil_find_idempotency(ninlil_runtime *runtime, const ninlil_id *key)
 }
 
 ninlil_inbound_entry *ninlil_find_inbound(ninlil_runtime *runtime,
-                                           const ninlil_id *id)
+                                          const ninlil_id *id)
 {
     uint16_t index;
 
@@ -156,7 +144,7 @@ ninlil_inbound_entry *ninlil_find_inbound(ninlil_runtime *runtime,
 }
 
 ninlil_archive_entry *ninlil_find_archive_id(ninlil_runtime *runtime,
-                                              const ninlil_id *id)
+                                             const ninlil_id *id)
 {
     uint16_t index;
 
@@ -168,8 +156,8 @@ ninlil_archive_entry *ninlil_find_archive_id(ninlil_runtime *runtime,
     return NULL;
 }
 
-ninlil_archive_entry *
-ninlil_find_archive_key(ninlil_runtime *runtime, const ninlil_id *key)
+ninlil_archive_entry *ninlil_find_archive_key(ninlil_runtime *runtime,
+                                              const ninlil_id *key)
 {
     uint16_t index;
 
@@ -194,8 +182,9 @@ static ninlil_archive_entry *archive_slot(ninlil_runtime *runtime)
     uint16_t scanned;
 
     for (scanned = 0u; scanned < runtime->archive_capacity; scanned++) {
-        uint16_t index = (uint16_t)((runtime->archive_replace_cursor + scanned) %
-                                    runtime->archive_capacity);
+        uint16_t index =
+            (uint16_t)((runtime->archive_replace_cursor + scanned) %
+                       runtime->archive_capacity);
         if (!runtime->archive[index].used) {
             runtime->archive_replace_cursor =
                 (uint16_t)((index + 1u) % runtime->archive_capacity);
@@ -203,8 +192,9 @@ static ninlil_archive_entry *archive_slot(ninlil_runtime *runtime)
         }
     }
     for (scanned = 0u; scanned < runtime->archive_capacity; scanned++) {
-        uint16_t index = (uint16_t)((runtime->archive_replace_cursor + scanned) %
-                                    runtime->archive_capacity);
+        uint16_t index =
+            (uint16_t)((runtime->archive_replace_cursor + scanned) %
+                       runtime->archive_capacity);
         if (!runtime->archive[index].need_receipt) {
             runtime->archive_replace_cursor =
                 (uint16_t)((index + 1u) % runtime->archive_capacity);
@@ -229,7 +219,6 @@ void ninlil_archive_outbound(ninlil_runtime *runtime,
     archive->idempotency_key = entry->idempotency_key;
     archive->record_ref = entry->record_ref;
     archive->absolute_deadline_ms = entry->absolute_deadline_ms;
-    archive->sequence = ++runtime->archive_sequence;
     archive->peer = entry->target;
     archive->service = entry->service;
     archive->payload_len = entry->payload_len;
@@ -258,7 +247,6 @@ void ninlil_archive_inbound(ninlil_runtime *runtime,
     archive->message_id = entry->message_id;
     archive->record_ref = entry->record_ref;
     archive->absolute_deadline_ms = entry->absolute_deadline_ms;
-    archive->sequence = ++runtime->archive_sequence;
     archive->peer = entry->source;
     archive->service = entry->service;
     archive->payload_len = entry->payload_len;
@@ -282,20 +270,19 @@ int ninlil_outbound_admission(const ninlil_runtime *runtime,
 
     if (runtime->outbound_live >= profile->max_outbound)
         return NINLIL_ERR_CAPACITY;
-    missing_critical = runtime->live_by_class[NINLIL_TRAFFIC_CRITICAL] >=
-                               profile->critical_reserve
-                           ? 0u
-                           : (uint16_t)(profile->critical_reserve -
-                                        runtime->live_by_class
-                                            [NINLIL_TRAFFIC_CRITICAL]);
-    missing_control = runtime->live_by_class[NINLIL_TRAFFIC_CONTROL] >=
-                              profile->control_reserve
-                          ? 0u
-                          : (uint16_t)(profile->control_reserve -
-                                       runtime->live_by_class
-                                           [NINLIL_TRAFFIC_CONTROL]);
-    required_free = traffic_class == NINLIL_TRAFFIC_CRITICAL
-                        ? 0u
+    missing_critical =
+        runtime->live_by_class[NINLIL_TRAFFIC_CRITICAL] >=
+                profile->critical_reserve
+            ? 0u
+            : (uint16_t)(profile->critical_reserve -
+                         runtime->live_by_class[NINLIL_TRAFFIC_CRITICAL]);
+    missing_control =
+        runtime->live_by_class[NINLIL_TRAFFIC_CONTROL] >=
+                profile->control_reserve
+            ? 0u
+            : (uint16_t)(profile->control_reserve -
+                         runtime->live_by_class[NINLIL_TRAFFIC_CONTROL]);
+    required_free = traffic_class == NINLIL_TRAFFIC_CRITICAL ? 0u
                     : traffic_class == NINLIL_TRAFFIC_CONTROL
                         ? missing_critical
                         : (uint32_t)missing_critical + missing_control;
@@ -318,8 +305,7 @@ int ninlil_total_owned_available(const ninlil_runtime *runtime)
 
 int ninlil_log_outbound(ninlil_runtime *runtime,
                         const ninlil_outbound_entry *entry,
-                        const uint8_t *payload,
-                        ninlil_journal_ref *reference)
+                        const uint8_t *payload, ninlil_journal_ref *reference)
 {
     uint8_t record[NINLIL_JRN_OUT_HEADER + NINLIL_MAX_PAYLOAD];
 
@@ -346,8 +332,7 @@ int ninlil_log_outbound(ninlil_runtime *runtime,
 
 int ninlil_log_inbound(ninlil_runtime *runtime,
                        const ninlil_inbound_entry *entry,
-                       const uint8_t *payload,
-                       ninlil_journal_ref *reference)
+                       const uint8_t *payload, ninlil_journal_ref *reference)
 {
     uint8_t record[NINLIL_JRN_IN_HEADER + NINLIL_MAX_PAYLOAD];
 
@@ -402,215 +387,4 @@ int ninlil_log_terminal(ninlil_runtime *runtime, const ninlil_id *id,
     record[17] = (uint8_t)outcome;
     return ninlil_append_record(runtime, NINLIL_JRN_OUT_TERMINAL, record,
                                 sizeof(record), NULL);
-}
-
-static int contract_valid(uint8_t ownership, uint8_t required, uint8_t traffic,
-                          uint8_t flags, uint64_t deadline)
-{
-    return ownership == NINLIL_OWNERSHIP_DURABLE &&
-           (required == NINLIL_EVIDENCE_REMOTE_STORED ||
-            required == NINLIL_EVIDENCE_APPLICATION_ACCEPTED) &&
-           traffic <= NINLIL_TRAFFIC_BULK &&
-           (flags & (uint8_t)~NINLIL_JRN_DEADLINE_PRESENT) == 0u &&
-           (((flags & NINLIL_JRN_DEADLINE_PRESENT) == 0u) == (deadline == 0u));
-}
-
-static ninlil_outbound_entry *free_outbound(ninlil_runtime *runtime)
-{
-    uint16_t index;
-
-    for (index = 0u; index < runtime->outbound_capacity; index++) {
-        if (!runtime->outbound[index].used)
-            return &runtime->outbound[index];
-    }
-    return NULL;
-}
-
-static ninlil_inbound_entry *free_inbound(ninlil_runtime *runtime)
-{
-    uint16_t index;
-
-    for (index = 0u; index < runtime->inbound_capacity; index++) {
-        if (!runtime->inbound[index].used)
-            return &runtime->inbound[index];
-    }
-    return NULL;
-}
-
-static int replay_out_create(ninlil_runtime *runtime, const uint8_t *payload,
-                             uint16_t length,
-                             const ninlil_journal_ref *reference)
-{
-    ninlil_outbound_entry candidate;
-    ninlil_outbound_entry *slot;
-    uint64_t deadline;
-    uint16_t payload_len;
-
-    if (length < NINLIL_JRN_OUT_HEADER || payload[0] != NINLIL_JRN_RECORD_VERSION ||
-        payload[5] != 0u)
-        return NINLIL_ERR_CORRUPT;
-    payload_len = get_be16(payload + 10);
-    deadline = get_be64(payload + 12);
-    if (payload_len > NINLIL_MAX_PAYLOAD ||
-        length != (uint16_t)(NINLIL_JRN_OUT_HEADER + payload_len) ||
-        !contract_valid(payload[1], payload[2], payload[3], payload[4],
-                        deadline))
-        return NINLIL_ERR_CORRUPT;
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.ownership = (ninlil_ownership)payload[1];
-    candidate.required_evidence = (ninlil_evidence)payload[2];
-    candidate.traffic_class = (ninlil_traffic_class)payload[3];
-    candidate.target = get_be16(payload + 6);
-    candidate.service = get_be16(payload + 8);
-    candidate.payload_len = payload_len;
-    candidate.absolute_deadline_ms = deadline;
-    memcpy(candidate.message_id.bytes, payload + 20, NINLIL_ID_BYTES);
-    memcpy(candidate.idempotency_key.bytes, payload + 36, NINLIL_ID_BYTES);
-    if (candidate.service < NINLIL_APPLICATION_SERVICE_MIN ||
-        ninlil_id_in_use(runtime, &candidate.message_id) ||
-        ninlil_find_idempotency(runtime, &candidate.idempotency_key) ||
-        ninlil_find_archive_key(runtime, &candidate.idempotency_key) ||
-        ninlil_outbound_admission(runtime, candidate.traffic_class) !=
-            NINLIL_OK ||
-        !ninlil_total_owned_available(runtime))
-        return NINLIL_ERR_CORRUPT;
-    slot = free_outbound(runtime);
-    if (!slot)
-        return NINLIL_ERR_CAPACITY;
-    candidate.record_ref = *reference;
-    candidate.used = 1u;
-    *slot = candidate;
-    runtime->outbound_live++;
-    runtime->live_by_class[(unsigned int)candidate.traffic_class]++;
-    if (candidate.traffic_class == NINLIL_TRAFFIC_BULK)
-        runtime->bulk_live++;
-    return NINLIL_OK;
-}
-
-static int replay_in_accept(ninlil_runtime *runtime, const uint8_t *payload,
-                            uint16_t length,
-                            const ninlil_journal_ref *reference)
-{
-    ninlil_inbound_entry candidate;
-    ninlil_inbound_entry *slot;
-    uint64_t deadline;
-    uint16_t payload_len;
-
-    if (length < NINLIL_JRN_IN_HEADER || payload[0] != NINLIL_JRN_RECORD_VERSION ||
-        payload[5] != 0u)
-        return NINLIL_ERR_CORRUPT;
-    payload_len = get_be16(payload + 10);
-    deadline = get_be64(payload + 12);
-    if (payload_len > NINLIL_MAX_PAYLOAD ||
-        length != (uint16_t)(NINLIL_JRN_IN_HEADER + payload_len) ||
-        !contract_valid(payload[1], payload[2], payload[3], payload[4],
-                        deadline) ||
-        runtime->inbound_live >= runtime->config.profile.max_inbound ||
-        !ninlil_total_owned_available(runtime))
-        return NINLIL_ERR_CORRUPT;
-    memset(&candidate, 0, sizeof(candidate));
-    candidate.ownership = (ninlil_ownership)payload[1];
-    candidate.required_evidence = (ninlil_evidence)payload[2];
-    candidate.traffic_class = (ninlil_traffic_class)payload[3];
-    candidate.source = get_be16(payload + 6);
-    candidate.service = get_be16(payload + 8);
-    candidate.payload_len = payload_len;
-    candidate.absolute_deadline_ms = deadline;
-    memcpy(candidate.message_id.bytes, payload + 20, NINLIL_ID_BYTES);
-    if (candidate.service < NINLIL_APPLICATION_SERVICE_MIN ||
-        ninlil_id_in_use(runtime, &candidate.message_id))
-        return NINLIL_ERR_CORRUPT;
-    slot = free_inbound(runtime);
-    if (!slot)
-        return NINLIL_ERR_CAPACITY;
-    candidate.record_ref = *reference;
-    candidate.used = 1u;
-    candidate.need_receipt = 1u;
-    *slot = candidate;
-    runtime->inbound_live++;
-    return NINLIL_OK;
-}
-
-static int replay_out_update(ninlil_runtime *runtime, uint8_t type,
-                             const uint8_t *payload, uint16_t length)
-{
-    ninlil_id id;
-    ninlil_outbound_entry *entry;
-
-    if (length < 1u + NINLIL_ID_BYTES ||
-        payload[0] != NINLIL_JRN_RECORD_VERSION)
-        return NINLIL_ERR_CORRUPT;
-    memcpy(id.bytes, payload + 1, NINLIL_ID_BYTES);
-    entry = ninlil_find_outbound(runtime, &id);
-    if (!entry)
-        return NINLIL_ERR_CORRUPT;
-    if (type == NINLIL_JRN_OUT_ATTEMPT) {
-        if (length != 1u + NINLIL_ID_BYTES || entry->attempted)
-            return NINLIL_ERR_CORRUPT;
-        entry->attempted = 1u;
-        return NINLIL_OK;
-    }
-    if (length != 2u + NINLIL_ID_BYTES)
-        return NINLIL_ERR_CORRUPT;
-    if (type == NINLIL_JRN_OUT_EVIDENCE) {
-        ninlil_evidence evidence = (ninlil_evidence)payload[17];
-
-        if ((evidence != NINLIL_EVIDENCE_GATEWAY_CUSTODY &&
-             evidence != NINLIL_EVIDENCE_REMOTE_STORED &&
-             evidence != NINLIL_EVIDENCE_APPLICATION_ACCEPTED) ||
-            evidence == entry->latest_evidence)
-            return NINLIL_ERR_CORRUPT;
-        entry->latest_evidence = evidence;
-        if (ninlil_evidence_satisfies(entry->required_evidence, evidence))
-            ninlil_archive_outbound(runtime, entry,
-                                    NINLIL_OUTCOME_SATISFIED);
-        return NINLIL_OK;
-    }
-    if (type == NINLIL_JRN_OUT_TERMINAL) {
-        ninlil_outcome outcome = (ninlil_outcome)payload[17];
-
-        if (outcome < NINLIL_OUTCOME_EXPIRED ||
-            outcome > NINLIL_OUTCOME_UNKNOWN ||
-            (outcome == NINLIL_OUTCOME_CANCELLED && entry->attempted) ||
-            (outcome == NINLIL_OUTCOME_UNKNOWN && !entry->attempted))
-            return NINLIL_ERR_CORRUPT;
-        ninlil_archive_outbound(runtime, entry, outcome);
-        return NINLIL_OK;
-    }
-    return NINLIL_ERR_CORRUPT;
-}
-
-int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
-                         uint16_t length,
-                         const ninlil_journal_ref *reference)
-{
-    ninlil_runtime *runtime = ctx;
-
-    if (!payload || !reference || reference->length != length)
-        return NINLIL_ERR_CORRUPT;
-    if (type == NINLIL_JRN_OUT_CREATE)
-        return replay_out_create(runtime, payload, length, reference);
-    if (type == NINLIL_JRN_IN_ACCEPT)
-        return replay_in_accept(runtime, payload, length, reference);
-    if (type == NINLIL_JRN_OUT_ATTEMPT ||
-        type == NINLIL_JRN_OUT_EVIDENCE ||
-        type == NINLIL_JRN_OUT_TERMINAL)
-        return replay_out_update(runtime, type, payload, length);
-    if (type == NINLIL_JRN_IN_APPLICATION_ACCEPT) {
-        ninlil_id id;
-        ninlil_inbound_entry *entry;
-
-        if (length != 1u + NINLIL_ID_BYTES ||
-            payload[0] != NINLIL_JRN_RECORD_VERSION)
-            return NINLIL_ERR_CORRUPT;
-        memcpy(id.bytes, payload + 1, NINLIL_ID_BYTES);
-        entry = ninlil_find_inbound(runtime, &id);
-        if (!entry)
-            return NINLIL_ERR_CORRUPT;
-        ninlil_archive_inbound(
-            runtime, entry, NINLIL_EVIDENCE_APPLICATION_ACCEPTED,
-            entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED);
-        return NINLIL_OK;
-    }
-    return NINLIL_ERR_CORRUPT;
 }

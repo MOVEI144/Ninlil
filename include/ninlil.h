@@ -7,8 +7,9 @@
 #define NINLIL_API_VERSION 2u
 #define NINLIL_ID_BYTES 16u
 #define NINLIL_MAX_PAYLOAD 256u
-#define NINLIL_MAX_ENTRIES 4096u
 #define NINLIL_MAX_STEP_WORK 1024u
+#define NINLIL_MAX_RETRY_INTERVAL_STEPS 1024u
+#define NINLIL_JOURNAL_LOCATION_MAX 255u
 #define NINLIL_APPLICATION_SERVICE_MIN UINT16_C(0x0100)
 
 #define NINLIL_OK 0
@@ -39,7 +40,7 @@
 #define NINLIL_SERVICE_RECEIVE 0x02u
 #define NINLIL_SERVICE_BOTH (NINLIL_SERVICE_SEND | NINLIL_SERVICE_RECEIVE)
 
-#define NINLIL_TRAFFIC_MASK(traffic_class)                                    \
+#define NINLIL_TRAFFIC_MASK(traffic_class)                                     \
     ((uint8_t)(UINT8_C(1) << (unsigned int)(traffic_class)))
 
 typedef enum ninlil_ownership {
@@ -213,6 +214,7 @@ int ninlil_policy_update_validate(const ninlil_peer_policy *older,
                                   const ninlil_peer_policy *newer,
                                   uint16_t grant_limit);
 
+void ninlil_submission_defaults(ninlil_submission *submission);
 int ninlil_open(ninlil_runtime **runtime, const ninlil_config *config);
 void ninlil_close(ninlil_runtime *runtime);
 int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
@@ -232,7 +234,6 @@ int ninlil_query(ninlil_runtime *runtime, const ninlil_id *message_id,
 int ninlil_cancel(ninlil_runtime *runtime, const ninlil_id *message_id);
 /* The integration owner may record UNKNOWN only after an attempt marker and
  * only when its recovery protocol can no longer determine required evidence. */
-int ninlil_mark_unknown(ninlil_runtime *runtime,
-                        const ninlil_id *message_id);
+int ninlil_mark_unknown(ninlil_runtime *runtime, const ninlil_id *message_id);
 
 #endif

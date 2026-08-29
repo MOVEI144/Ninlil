@@ -1,7 +1,9 @@
 #include "ninlil_internal.h"
 
+#include <string.h>
+
 static const ninlil_service_grant *find_grant(const ninlil_peer_policy *policy,
-                                               uint16_t service)
+                                              uint16_t service)
 {
     uint16_t index;
 
@@ -27,16 +29,16 @@ int ninlil_authorize(ninlil_runtime *runtime, uint16_t peer, uint16_t service,
         (direction != NINLIL_SERVICE_SEND &&
          direction != NINLIL_SERVICE_RECEIVE))
         return NINLIL_ERR_UNAUTHORIZED;
+    memset(&policy, 0, sizeof(policy));
     rc = runtime->config.policy_lookup(runtime->config.policy_ctx, peer,
                                        &policy);
     if (rc != NINLIL_OK ||
-        ninlil_policy_validate(&policy,
-                               runtime->config.profile.service_grants) !=
-            NINLIL_OK ||
+        ninlil_policy_validate(
+            &policy, runtime->config.profile.service_grants) != NINLIL_OK ||
         policy.session_membership_epoch != policy.membership_epoch)
         return NINLIL_ERR_UNAUTHORIZED;
     capability = direction == NINLIL_SERVICE_SEND ? NINLIL_CAP_APP_SEND
-                                                   : NINLIL_CAP_APP_RECEIVE;
+                                                  : NINLIL_CAP_APP_RECEIVE;
     if ((policy.capabilities & capability) == 0u)
         return NINLIL_ERR_UNAUTHORIZED;
     grant = find_grant(&policy, service);

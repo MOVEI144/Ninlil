@@ -52,6 +52,7 @@ for path in "${paths[@]}"; do
         ! -path "$root/src/ninlil_policy.c" \
         ! -path "$root/src/ninlil_profile.c" \
         ! -path "$root/src/ninlil_receive.c" \
+        ! -path "$root/src/ninlil_replay.c" \
         ! -path "$root/src/ninlil_send.c" \
         ! -path "$root/src/ninlil_storage.c" \
         ! -path "$root/src/ninlil_topology.c" \
