@@ -73,7 +73,8 @@ int ninlil_expire_outbound(ninlil_runtime *runtime, int *worked)
         int passed;
         int rc;
 
-        if (!entry->used || entry->absolute_deadline_ms == 0u)
+        if (!entry->used || entry->attempted ||
+            entry->absolute_deadline_ms == 0u)
             continue;
         rc = ninlil_deadline_passed(runtime, entry->absolute_deadline_ms,
                                     &passed);

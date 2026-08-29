@@ -10,12 +10,7 @@ paths=(
   "$root/ports/flash"
   "$root/ports/esp32s3"
   "$root/embedded/esp32s3"
-  "$root/tests/test_core.c"
   "$root/tests/test_diag_radio.c"
-  "$root/tests/test_flash.c"
-  "$root/tests/test_radio_delivery.c"
-  "$root/tests/test_support.c"
-  "$root/tests/test_support.h"
   "$root/tests/test_sx1262_hal.c"
   "$root/tests/test_sx1262_physical.c"
   "$root/tests/esp_stub"
@@ -41,8 +36,33 @@ for path in "${paths[@]}"; do
         \( -name '*.c' -o -name '*.h' -o -name 'CMakeLists.txt' -o \
            -name '*.sh' -o -name '*.toml' -o -name '*.csv' \) \
         ! -path "$root/third_party/sx126x_driver/src/*" \
+        ! -path "$root/include/ninlil.h" \
+        ! -path "$root/include/ninlil_custody.h" \
+        ! -path "$root/include/ninlil_group.h" \
+        ! -path "$root/include/ninlil_leaf.h" \
+        ! -path "$root/include/ninlil_topology.h" \
         ! -path "$root/include/ninlil_security_state.h" \
+        ! -path "$root/src/ninlil.c" \
+        ! -path "$root/src/ninlil_authorization.c" \
+        ! -path "$root/src/ninlil_custody.c" \
+        ! -path "$root/src/ninlil_group.c" \
+        ! -path "$root/src/ninlil_internal.h" \
+        ! -path "$root/src/ninlil_journal.h" \
+        ! -path "$root/src/ninlil_leaf.c" \
+        ! -path "$root/src/ninlil_policy.c" \
+        ! -path "$root/src/ninlil_profile.c" \
+        ! -path "$root/src/ninlil_receive.c" \
+        ! -path "$root/src/ninlil_send.c" \
+        ! -path "$root/src/ninlil_storage.c" \
+        ! -path "$root/src/ninlil_topology.c" \
+        ! -path "$root/src/ninlil_wire.c" \
+        ! -path "$root/src/ninlil_wire.h" \
+        ! -path "$root/ports/flash/ninlil_flash_journal_file.c" \
+        ! -path "$root/ports/flash/ninlil_flash_store.c" \
+        ! -path "$root/ports/flash/ninlil_flash_store.h" \
         ! -path "$root/ports/flash/ninlil_security_state.c" \
+        ! -path "$root/ports/esp32s3/ninlil_flash_admin.c" \
+        ! -path "$root/ports/esp32s3/ninlil_flash_journal.c" \
         ! -path "$root/ports/esp32s3/ninlil_security_partitions.c" \
         ! -path "$root/ports/esp32s3/ninlil_security_partitions.h" \
         -print0

@@ -42,11 +42,15 @@ endfunction()
 set(NINLIL_M1_DELIVERY_SOURCES
   ${NINLIL_ROOT}/src/ninlil.c
   ${NINLIL_ROOT}/src/ninlil_authorization.c
+  ${NINLIL_ROOT}/src/ninlil_custody.c
+  ${NINLIL_ROOT}/src/ninlil_group.c
+  ${NINLIL_ROOT}/src/ninlil_leaf.c
   ${NINLIL_ROOT}/src/ninlil_policy.c
   ${NINLIL_ROOT}/src/ninlil_profile.c
   ${NINLIL_ROOT}/src/ninlil_receive.c
   ${NINLIL_ROOT}/src/ninlil_send.c
   ${NINLIL_ROOT}/src/ninlil_storage.c
+  ${NINLIL_ROOT}/src/ninlil_topology.c
   ${NINLIL_ROOT}/src/ninlil_wire.c
 )
 
@@ -104,6 +108,15 @@ target_include_directories(test_m1_core PRIVATE ${NINLIL_ROOT}/tests)
 target_link_libraries(test_m1_core PRIVATE ninlil_m1_posix)
 ninlil_m1_strict_target(test_m1_core)
 add_test(NAME m1_core COMMAND test_m1_core)
+
+add_executable(test_p0_operations
+  ${NINLIL_ROOT}/tests/test_operations.c
+  ${NINLIL_ROOT}/tests/test_support.c
+)
+target_include_directories(test_p0_operations PRIVATE ${NINLIL_ROOT}/tests)
+target_link_libraries(test_p0_operations PRIVATE ninlil_m1_posix)
+ninlil_m1_strict_target(test_p0_operations)
+add_test(NAME p0_operations COMMAND test_p0_operations)
 
 add_executable(test_m1_diag_radio ${NINLIL_ROOT}/tests/test_diag_radio.c)
 target_link_libraries(test_m1_diag_radio PRIVATE ninlil_m1_radio_model)

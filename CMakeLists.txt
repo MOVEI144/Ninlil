@@ -40,11 +40,15 @@ endfunction()
 set(NINLIL_DELIVERY_SOURCES
   src/ninlil.c
   src/ninlil_authorization.c
+  src/ninlil_custody.c
+  src/ninlil_group.c
+  src/ninlil_leaf.c
   src/ninlil_policy.c
   src/ninlil_profile.c
   src/ninlil_receive.c
   src/ninlil_send.c
   src/ninlil_storage.c
+  src/ninlil_topology.c
   src/ninlil_wire.c
 )
 
@@ -108,6 +112,15 @@ target_include_directories(test_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(test_core PRIVATE ninlil_posix)
 ninlil_strict_target(test_core)
 add_test(NAME m1_core COMMAND test_core)
+
+add_executable(test_operations
+  tests/test_operations.c
+  tests/test_support.c
+)
+target_include_directories(test_operations PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+target_link_libraries(test_operations PRIVATE ninlil_posix)
+ninlil_strict_target(test_operations)
+add_test(NAME p0_operations COMMAND test_operations)
 
 add_executable(test_diag_radio tests/test_diag_radio.c)
 target_link_libraries(test_diag_radio PRIVATE ninlil_radio_model)

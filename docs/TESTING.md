@@ -17,6 +17,7 @@
 - A flaky test is a defect, not an accepted state.
 - Coverage percentage is not an acceptance criterion by itself.
 - Every milestone distinguishes host/model gates from physical gates.
+- P0 host tests cover store-before-receipt, restart handoff, duplicate and lost receipts, reserves and starvation, deadline uncertainty, custody replay, Leaf windows, multi-Gateway dedupe, route epochs, group waves, and authorization-before-inbox.
 - Test evidence records exact commit and tool versions.
 
 The default host gate is `./scripts/ci.sh`. The standard ESP32 target is built separately with ESP-IDF v6.0.2.

@@ -75,6 +75,7 @@ CC="$gcc_bin" CLANG="$clang_bin" "$root/scripts/check_esp_syntax.sh"
 "$root/scripts/static_analysis.sh" "$gcc_bin" "$clang_bin"
 "$root/scripts/loc_m1_software.sh"
 "$root/scripts/loc_m3_security.sh"
+"$root/scripts/loc_p0.sh"
 "$root/scripts/loc.sh"
 
 if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then

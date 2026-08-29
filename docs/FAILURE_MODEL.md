@@ -19,3 +19,6 @@ Ninlil assumes the following can happen at any boundary:
 - Cryptographic counter rollback or possible nonce reuse requires a fresh session.
 - Committed corruption is a hard error.
 - Resource exhaustion returns an explicit capacity error and preserves already-owned durable data.
+- A missing receipt leaves the operation active; after a possible remote effect it may become `UNKNOWN` only through an explicit recovery decision.
+- An unauthorized message may produce only a generic bounded rejection and never mutates the authoritative inbox.
+- An ambiguous Host custody or route commit poisons the in-memory view; recovery replays authoritative storage rather than guessing.

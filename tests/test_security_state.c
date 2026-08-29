@@ -694,6 +694,10 @@ static int test_membership_rejects_rollback_and_authority_change(void)
     changed.membership_epoch = 6u;
     changed.authority_fingerprint[0] ^= UINT8_C(0x01);
     CHECK(ninlil_membership_activate(&store, &changed) == NINLIL_ERR_CONFLICT);
+    changed = active;
+    changed.membership_epoch = 6u;
+    changed.capabilities = UINT32_C(0x80000000);
+    CHECK(ninlil_membership_activate(&store, &changed) == NINLIL_ERR_INVALID);
     return 0;
 }
 

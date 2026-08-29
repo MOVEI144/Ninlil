@@ -12,8 +12,7 @@ static int config_valid(const ninlil_config *config)
            config->node_id < UINT16_MAX && config->link.send &&
            config->link.recv && config->random.fill &&
            config->max_work_per_step <= NINLIL_MAX_STEP_WORK &&
-           ninlil_role_profile_validate(&config->profile) == NINLIL_OK &&
-           config->profile.role != NINLIL_ROLE_POWERED_RELAY_CANDIDATE;
+           ninlil_role_profile_validate(&config->profile) == NINLIL_OK;
 }
 
 static size_t runtime_ram_bytes(const ninlil_runtime *runtime)
@@ -34,10 +33,9 @@ int ninlil_open(ninlil_runtime **out, const ninlil_config *config)
         return NINLIL_ERR_INVALID;
     *out = NULL;
     if (!config_valid(config))
-        return config && config->profile.role ==
-                             NINLIL_ROLE_POWERED_RELAY_CANDIDATE
-                   ? NINLIL_ERR_STATE
-                   : NINLIL_ERR_INVALID;
+        return NINLIL_ERR_INVALID;
+    if (config->profile.role == NINLIL_ROLE_POWERED_RELAY_CANDIDATE)
+        return NINLIL_ERR_STATE;
     if (config->link.max_packet_size != 0u &&
         config->link.max_packet_size < NINLIL_WIRE_RECEIPT_SIZE)
         return NINLIL_ERR_INVALID;
@@ -364,6 +362,8 @@ int ninlil_application_accept(ninlil_runtime *runtime,
                    ? NINLIL_OK
                    : NINLIL_ERR_NOT_FOUND;
     }
+    if (!entry->handed)
+        return NINLIL_ERR_STATE;
     rc = ninlil_log_id(runtime, NINLIL_JRN_IN_APPLICATION_ACCEPT, message_id);
     if (rc != NINLIL_OK)
         return rc;

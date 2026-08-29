@@ -42,6 +42,12 @@ No lower stage implies a higher stage.
 
 The host language is not part of the wire contract. A product may use Go, Rust, C++, or another language without moving its business rules into Ninlil.
 
+## P0 operational boundaries
+
+Portable Runtime payload bodies remain in authoritative storage while bounded RAM indexes retain journal references. Host custody, Gateway custody, final-target storage, and Application acceptance are separate committed facts. The Host retains outbound payload ownership through intermediate Gateway custody.
+
+Battery wake windows belong to the radio adapter. Multi-Gateway dedupe, active-parent leases, and reliable group target expansion belong to the Host boundary, not the portable radio header. Service authorization is checked before inbox mutation and defaults to deny.
+
 ## Persistence
 
 Persistent formats are protocols. Changes require versioning, corruption tests, torn-write tests, restart tests, and an explicit compatibility decision.

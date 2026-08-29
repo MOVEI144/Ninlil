@@ -160,7 +160,10 @@ static int test_remote_store_is_default_success_and_restart_handoff(void)
     uint32_t second_random = 2u;
     ninlil_id key;
     ninlil_id message_id;
+    ninlil_id result_key;
+    ninlil_id result_id;
     ninlil_submission request;
+    ninlil_submission result;
     ninlil_inbound inbound;
     ninlil_info info;
 
@@ -189,6 +192,16 @@ static int test_remote_store_is_default_success_and_restart_handoff(void)
                  NINLIL_ID_BYTES) == 0);
     CHECK(ninlil_application_accept(second, &message_id) == NINLIL_OK);
     CHECK(ninlil_receive(second, &inbound) == NINLIL_ERR_EMPTY);
+
+    test_fill_id(&result_key, UINT8_C(0x12));
+    result = submission(result_key, 1u, NINLIL_EVIDENCE_REMOTE_STORED,
+                        NINLIL_TRAFFIC_NORMAL, message_id.bytes,
+                        NINLIL_ID_BYTES);
+    CHECK(ninlil_submit(second, &result, &result_id) == NINLIL_OK);
+    CHECK(pump(first, second, 4u) == NINLIL_OK);
+    CHECK(ninlil_receive(first, &inbound) == NINLIL_OK);
+    CHECK(memcmp(inbound.payload, message_id.bytes, NINLIL_ID_BYTES) == 0);
+    CHECK(ninlil_application_accept(first, &result_id) == NINLIL_OK);
 
     ninlil_close(first);
     first = NULL;
@@ -469,6 +482,64 @@ static int test_deadline_cancel_and_unknown_restart(void)
     return 0;
 }
 
+static int test_service_direction_payload_class_and_quota(void)
+{
+    char directory[40];
+    char path[80];
+    capture_link capture;
+    ninlil_link link;
+    ninlil_role_profile profile;
+    test_policy policy;
+    ninlil_runtime *runtime = NULL;
+    uint32_t random_state = 10u;
+    ninlil_id key;
+    ninlil_id message_id;
+    ninlil_submission request;
+    uint8_t payload[4] = {1u, 2u, 3u, 4u};
+
+    CHECK(test_make_directory(directory, sizeof(directory)) == 0);
+    CHECK(test_make_path(path, sizeof(path), directory, "authorization.j") ==
+          0);
+    memset(&capture, 0, sizeof(capture));
+    memset(&link, 0, sizeof(link));
+    link.send = capture_send;
+    link.recv = empty_recv;
+    link.ctx = &capture;
+    link.max_packet_size = 320u;
+    CHECK(ninlil_role_profile_standard(NINLIL_ROLE_POWERED_ENDPOINT,
+                                       &profile) == NINLIL_OK);
+    test_policy_init(&policy, APP_SERVICE, 1u);
+    CHECK(open_runtime(&runtime, path, 1u, link, &random_state, &policy,
+                       &profile, NULL) == NINLIL_OK);
+    test_fill_id(&key, UINT8_C(0x79));
+    request = submission(key, 2u, NINLIL_EVIDENCE_REMOTE_STORED,
+                         NINLIL_TRAFFIC_CRITICAL, payload, sizeof(payload));
+    policy.grants[0].directions = NINLIL_SERVICE_SEND;
+    CHECK(ninlil_submit(runtime, &request, &message_id) ==
+          NINLIL_ERR_UNAUTHORIZED);
+    policy.grants[0].directions = NINLIL_SERVICE_BOTH;
+    policy.grants[0].maximum_payload_bytes = 2u;
+    CHECK(ninlil_submit(runtime, &request, &message_id) ==
+          NINLIL_ERR_UNAUTHORIZED);
+    policy.grants[0].maximum_payload_bytes = 32u;
+    policy.grants[0].traffic_class_mask =
+        NINLIL_TRAFFIC_MASK(NINLIL_TRAFFIC_NORMAL);
+    CHECK(ninlil_submit(runtime, &request, &message_id) ==
+          NINLIL_ERR_UNAUTHORIZED);
+    request.traffic_class = NINLIL_TRAFFIC_NORMAL;
+    CHECK(ninlil_submit(runtime, &request, &message_id) == NINLIL_OK);
+    test_fill_id(&request.idempotency_key, UINT8_C(0x7A));
+    CHECK(ninlil_submit(runtime, &request, &message_id) ==
+          NINLIL_ERR_UNAUTHORIZED);
+    policy.session_membership_epoch = 0u;
+    test_fill_id(&request.idempotency_key, UINT8_C(0x7B));
+    CHECK(ninlil_submit(runtime, &request, &message_id) ==
+          NINLIL_ERR_UNAUTHORIZED);
+    ninlil_close(runtime);
+    test_remove_directory(directory, path, NULL);
+    return 0;
+}
+
 static int test_mtu_and_incompatible_journal_rejected(void)
 {
     char directory[40];
@@ -524,6 +595,7 @@ static int (*const tests[])(void) = {
     test_malformed_contract_and_unauthorized_before_inbox,
     test_reserve_and_starvation_bounds,
     test_deadline_cancel_and_unknown_restart,
+    test_service_direction_payload_class_and_quota,
     test_mtu_and_incompatible_journal_rejected,
 };
 

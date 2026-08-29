@@ -350,7 +350,8 @@ static slot_state read_membership_slot(const ninlil_security_io *io,
         decoded->record.node_id == UINT16_MAX ||
         !fingerprint_valid(decoded->record.authority_fingerprint) ||
         decoded->record.membership_epoch == 0u ||
-        decoded->record.binding_epoch == 0u)
+        decoded->record.binding_epoch == 0u ||
+        (decoded->record.capabilities & ~NINLIL_CAP_KNOWN_MASK) != 0u)
         return SLOT_CORRUPT;
     return SLOT_VALID;
 }
@@ -685,7 +686,8 @@ static int membership_record_valid(const ninlil_membership_record *record)
     return record && record->state == NINLIL_MEMBERSHIP_ACTIVE &&
            fingerprint_valid(record->authority_fingerprint) &&
            record->node_id > 0u && record->node_id < UINT16_MAX &&
-           record->membership_epoch > 0u && record->binding_epoch > 0u;
+           record->membership_epoch > 0u && record->binding_epoch > 0u &&
+           (record->capabilities & ~NINLIL_CAP_KNOWN_MASK) == 0u;
 }
 
 static int membership_same(const ninlil_membership_record *left,

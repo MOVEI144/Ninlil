@@ -99,7 +99,7 @@ static int handle_duplicate(ninlil_runtime *runtime,
     if (authorize_data(runtime, view, live) != NINLIL_OK) {
         (void)queue_rejection(runtime, &view->message_id, view->source,
                               NINLIL_RECEIPT_PERMANENT_REJECTION);
-        return NINLIL_ERR_UNAUTHORIZED;
+        return NINLIL_OK;
     }
     if (inbound) {
         if (!inbound_contract_matches(runtime, inbound, view))
@@ -140,14 +140,14 @@ static int handle_data(ninlil_runtime *runtime, const uint8_t *packet,
     if (expired) {
         (void)queue_rejection(runtime, &view.message_id, view.source,
                               NINLIL_RECEIPT_EXPIRED);
-        return NINLIL_ERR_EXPIRED;
+        return NINLIL_OK;
     }
     if (authorize_data(runtime, &view,
                        ninlil_live_service(runtime, view.source, view.service,
                                            NINLIL_SERVICE_SEND)) != NINLIL_OK) {
         (void)queue_rejection(runtime, &view.message_id, view.source,
                               NINLIL_RECEIPT_PERMANENT_REJECTION);
-        return NINLIL_ERR_UNAUTHORIZED;
+        return NINLIL_OK;
     }
     if (runtime->inbound_live >= runtime->config.profile.max_inbound ||
         !ninlil_total_owned_available(runtime))

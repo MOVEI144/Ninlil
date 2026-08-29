@@ -19,11 +19,15 @@ common=(
 host_sources=(
   "$root/src/ninlil.c"
   "$root/src/ninlil_authorization.c"
-  "$root/src/ninlil_policy.c"
+  "$root/src/ninlil_custody.c"
+  "$root/src/ninlil_group.c"
+  "$root/src/ninlil_leaf.c"
+  "$root/src/ninlil_policy.c"},{
   "$root/src/ninlil_profile.c"
   "$root/src/ninlil_receive.c"
   "$root/src/ninlil_send.c"
   "$root/src/ninlil_storage.c"
+  "$root/src/ninlil_topology.c"
   "$root/src/ninlil_wire.c"
   "$root/src/ninlil_diag.c"
   "$root/src/ninlil_radio.c"

@@ -102,7 +102,7 @@ int ninlil_append_record(ninlil_runtime *runtime, uint8_t type,
         return runtime->fatal_error;
     rc = ninlil_journal_append(runtime->journal, type, payload, length,
                                reference);
-    if (rc != NINLIL_OK)
+    if (rc != NINLIL_OK && rc != NINLIL_ERR_CAPACITY)
         runtime->fatal_error = rc;
     return rc;
 }
