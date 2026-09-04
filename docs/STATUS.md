@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-08-23
+Updated: 2026-09-04
 
 ## Canonical repository
 
@@ -32,5 +32,11 @@ The official baseline does **not** yet contain a completed secure-link layer, ED
 - Two-board RF: not accepted.
 - Hard-power flash interruption: not accepted.
 - Production security: not accepted.
+
+The physical M1 procedure is now defined in
+[`M1_HIL_ACCEPTANCE.md`](M1_HIL_ACCEPTANCE.md), with a separate
+[`M1_HIL_EVIDENCE_TEMPLATE.md`](M1_HIL_EVIDENCE_TEMPLATE.md). Defining the
+procedure does not complete any physical gate; Issue #7 remains the canonical
+acceptance tracker.
 
 The next decision is based on repository commits and CI evidence, not on generated reports alone.

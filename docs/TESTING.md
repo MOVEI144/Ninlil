@@ -24,3 +24,7 @@
 - Test evidence records exact commit and tool versions.
 
 The default host gate is `./scripts/ci.sh`. The standard ESP32 target is built separately with ESP-IDF v6.0.2.
+
+Physical RF, USB/restart, and delivery-journal power campaigns follow
+[`M1_HIL_ACCEPTANCE.md`](M1_HIL_ACCEPTANCE.md) and record results with
+[`M1_HIL_EVIDENCE_TEMPLATE.md`](M1_HIL_EVIDENCE_TEMPLATE.md).
