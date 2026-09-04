@@ -21,6 +21,8 @@ The design authority is:
 
 ## M1 — Direct radio physical acceptance
 
+Canonical procedure: [`M1_HIL_ACCEPTANCE.md`](M1_HIL_ACCEPTANCE.md).
+
 - exact ESP-IDF v6.0.2 build;
 - two XIAO ESP32-S3 + Wio-SX1262 boards;
 - RF-path polarity and radio profile confirmation;

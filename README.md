@@ -29,6 +29,11 @@ Ninlil does not own product policy, cloud APIs, dashboards, building or equipmen
 
 The authoritative responsibility boundary and delivery semantics are defined in [`docs/FOUNDATIONS.md`](docs/FOUNDATIONS.md). The implemented P0 API, format versions, and non-claims are summarized in [`docs/P0_IMPLEMENTATION.md`](docs/P0_IMPLEMENTATION.md).
 
+Physical ESP32-S3/SX1262 work follows
+[`docs/M1_HIL_ACCEPTANCE.md`](docs/M1_HIL_ACCEPTANCE.md). Until its required
+phases have reviewed evidence, firmware builds and bench observations remain
+candidate evidence only.
+
 ## Build and test
 
 Host CI requires CMake, Ninja, GCC, Clang, and clang-format.
@@ -61,7 +66,8 @@ Read in this order:
 8. [`docs/CODING_STYLE.md`](docs/CODING_STYLE.md)
 9. [`docs/FAILURE_MODEL.md`](docs/FAILURE_MODEL.md)
 10. [`docs/TESTING.md`](docs/TESTING.md)
-11. [`docs/ROADMAP.md`](docs/ROADMAP.md)
+11. [`docs/M1_HIL_ACCEPTANCE.md`](docs/M1_HIL_ACCEPTANCE.md)
+12. [`docs/ROADMAP.md`](docs/ROADMAP.md)
 
 ## License
 

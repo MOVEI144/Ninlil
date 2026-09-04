@@ -392,6 +392,46 @@ static int test_reserve_and_starvation_bounds(void)
     test_remove_directory(directory, path, NULL);
 
     CHECK(test_make_directory(directory, sizeof(directory)) == 0);
+    CHECK(test_make_path(path, sizeof(path), directory, "control-reserve.j") ==
+          0);
+    memset(&capture, 0, sizeof(capture));
+    CHECK(open_runtime(&runtime, path, 1u, link, &random_state, &policy,
+                       &profile, NULL) == NINLIL_OK);
+    for (index = 0u; index < 7u; index++) {
+        ninlil_id key;
+        ninlil_submission request;
+        uint8_t payload = (uint8_t)index;
+
+        test_fill_id(&key, (uint8_t)(UINT8_C(0x50) + index));
+        request = submission(key, 2u, NINLIL_EVIDENCE_REMOTE_STORED,
+                             NINLIL_TRAFFIC_CRITICAL, &payload, 1u);
+        CHECK(ninlil_submit(runtime, &request, &ids[index]) == NINLIL_OK);
+    }
+    {
+        ninlil_id key;
+        ninlil_submission request;
+        uint8_t payload = UINT8_C(0x5F);
+
+        test_fill_id(&key, UINT8_C(0x5F));
+        request = submission(key, 2u, NINLIL_EVIDENCE_REMOTE_STORED,
+                             NINLIL_TRAFFIC_CRITICAL, &payload, 1u);
+        CHECK(ninlil_submit(runtime, &request, &ids[7]) == NINLIL_ERR_CAPACITY);
+        ninlil_close(runtime);
+        runtime = NULL;
+        CHECK(open_runtime(&runtime, path, 1u, link, &random_state, &policy,
+                           &profile, NULL) == NINLIL_OK);
+        CHECK(ninlil_submit(runtime, &request, &ids[7]) == NINLIL_ERR_CAPACITY);
+        request.traffic_class = NINLIL_TRAFFIC_CONTROL;
+        CHECK(ninlil_submit(runtime, &request, &ids[7]) == NINLIL_OK);
+    }
+    ninlil_close(runtime);
+    runtime = NULL;
+    CHECK(open_runtime(&runtime, path, 1u, link, &random_state, &policy,
+                       &profile, NULL) == NINLIL_OK);
+    ninlil_close(runtime);
+    test_remove_directory(directory, path, NULL);
+
+    CHECK(test_make_directory(directory, sizeof(directory)) == 0);
     CHECK(test_make_path(path, sizeof(path), directory, "starve.j") == 0);
     memset(&capture, 0, sizeof(capture));
     CHECK(ninlil_role_profile_standard(NINLIL_ROLE_POWERED_ENDPOINT,
@@ -602,7 +642,7 @@ static int test_mtu_and_incompatible_journal_rejected(void)
 
     file = fopen(path, "wb");
     CHECK(file != NULL);
-    CHECK(fwrite("NJL1\x01\x01\x00\x00\xff\xff", 1u, 10u, file) == 10u);
+    CHECK(fwrite("NJL3\x03\x01\x00\x00\xff\xff", 1u, 10u, file) == 10u);
     CHECK(fclose(file) == 0);
     CHECK(open_runtime(&runtime, path, 1u, link, &random_state, &policy,
                        &profile, NULL) == NINLIL_ERR_CORRUPT);

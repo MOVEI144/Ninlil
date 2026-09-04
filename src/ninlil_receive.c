@@ -57,37 +57,60 @@ static int archive_contract_matches(ninlil_runtime *runtime,
                     : NINLIL_OK;
 }
 
-static int queue_rejection(ninlil_runtime *runtime, const ninlil_id *id,
-                           uint16_t target, uint8_t status)
+static int rejection_contract_matches(ninlil_runtime *runtime,
+                                      const ninlil_rejection_entry *entry,
+                                      const ninlil_wire_data_view *view,
+                                      int *matches)
 {
-    uint16_t capacity = runtime->rejection_capacity;
-    uint16_t index;
-    ninlil_rejection_entry *entry = NULL;
+    *matches = entry->durable &&
+               (entry->status == NINLIL_RECEIPT_PERMANENT_REJECTION ||
+                entry->status == NINLIL_RECEIPT_EXPIRED) &&
+               entry->target == view->source &&
+               entry->service == view->service &&
+               entry->payload_len == view->payload_length &&
+               entry->ownership == view->ownership &&
+               entry->required_evidence == view->required_evidence &&
+               entry->traffic_class == view->traffic_class &&
+               entry->absolute_deadline_ms == view->absolute_deadline_ms;
+    return *matches ? payload_matches(runtime, &entry->record_ref,
+                                      NINLIL_JRN_IN_HEADER, view->payload,
+                                      view->payload_length, matches)
+                    : NINLIL_OK;
+}
 
-    if (capacity == 0u || !runtime->rejections)
-        return NINLIL_ERR_STATE;
-    for (index = 0u; index < capacity; index++) {
-        if (runtime->rejections[index].used &&
-            ninlil_id_equal(&runtime->rejections[index].message_id, id)) {
-            entry = &runtime->rejections[index];
-            break;
-        }
-        if (!entry && !runtime->rejections[index].used)
-            entry = &runtime->rejections[index];
-    }
-    if (!entry) {
-        entry = &runtime->rejections[runtime->rejection_cursor];
-        runtime->rejection_cursor =
-            (uint16_t)((runtime->rejection_cursor + 1u) % capacity);
-    }
-    if (entry->used &&
-        (!ninlil_id_equal(&entry->message_id, id) || entry->target != target))
-        memset(entry, 0, sizeof(*entry));
-    entry->used = 1u;
-    entry->message_id = *id;
-    entry->target = target;
-    entry->status = status;
-    entry->pending = 1u;
+static int commit_terminal_rejection(ninlil_runtime *runtime,
+                                     const ninlil_wire_data_view *view,
+                                     uint8_t status)
+{
+    ninlil_rejection_entry candidate;
+    ninlil_journal_ref reference;
+    uint16_t slot;
+    int rc;
+
+    if (status != NINLIL_RECEIPT_PERMANENT_REJECTION &&
+        status != NINLIL_RECEIPT_EXPIRED)
+        return NINLIL_ERR_INVALID;
+    rc = ninlil_rejection_admission(runtime, &slot);
+    if (rc != NINLIL_OK)
+        return rc;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.message_id = view->message_id;
+    candidate.absolute_deadline_ms = view->absolute_deadline_ms;
+    candidate.target = view->source;
+    candidate.service = view->service;
+    candidate.payload_len = view->payload_length;
+    candidate.ownership = view->ownership;
+    candidate.required_evidence = view->required_evidence;
+    candidate.traffic_class = view->traffic_class;
+    candidate.status = status;
+    rc = ninlil_log_rejection(runtime, &candidate, view->payload, &reference);
+    if (rc != NINLIL_OK)
+        return rc;
+    candidate.record_ref = reference;
+    candidate.pending = 1u;
+    candidate.durable = 1u;
+    candidate.used = 1u;
+    runtime->rejections[slot] = candidate;
     return NINLIL_OK;
 }
 
@@ -114,6 +137,18 @@ static int handle_duplicate(ninlil_runtime *runtime,
             return rc;
         if (!matches)
             return NINLIL_ERR_CONFLICT;
+        if (inbound->required_evidence ==
+                NINLIL_EVIDENCE_APPLICATION_ACCEPTED &&
+            inbound->absolute_deadline_ms != 0u) {
+            int passed;
+
+            rc = ninlil_deadline_passed(runtime, inbound->absolute_deadline_ms,
+                                        &passed);
+            if (rc != NINLIL_OK)
+                return rc;
+            if (passed)
+                return ninlil_expire_inbound(runtime, inbound);
+        }
         inbound->need_receipt = 1u;
         inbound->receipt_handoff_commit_pending = 0u;
         return NINLIL_OK;
@@ -135,8 +170,10 @@ static int handle_data(ninlil_runtime *runtime, const uint8_t *packet,
     ninlil_inbound_entry candidate;
     ninlil_inbound_entry *inbound;
     ninlil_archive_entry *archive;
+    ninlil_rejection_entry *rejection;
     ninlil_journal_ref reference;
     int expired;
+    int matches;
     int rc;
     uint16_t index;
 
@@ -147,20 +184,30 @@ static int handle_data(ninlil_runtime *runtime, const uint8_t *packet,
     archive = ninlil_find_archive_id(runtime, &view.message_id);
     if (inbound || archive)
         return handle_duplicate(runtime, &view, inbound, archive);
+    rejection = ninlil_find_rejection(runtime, &view.message_id);
+    if (rejection) {
+        rc = rejection_contract_matches(runtime, rejection, &view, &matches);
+        if (rc != NINLIL_OK)
+            return rc;
+        if (!matches)
+            return NINLIL_ERR_CONFLICT;
+        rejection->pending = 1u;
+        return NINLIL_OK;
+    }
     if (ninlil_find_outbound(runtime, &view.message_id))
         return NINLIL_ERR_CONFLICT;
     rc = ninlil_deadline_passed(runtime, view.absolute_deadline_ms, &expired);
     if (rc != NINLIL_OK)
         return rc;
     if (expired)
-        return queue_rejection(runtime, &view.message_id, view.source,
-                               NINLIL_RECEIPT_EXPIRED);
+        return commit_terminal_rejection(runtime, &view,
+                                         NINLIL_RECEIPT_EXPIRED);
     rc = authorize_data(runtime, &view,
                         ninlil_live_service(runtime, view.source, view.service,
                                             NINLIL_SERVICE_SEND));
     if (rc == NINLIL_ERR_UNAUTHORIZED)
-        return queue_rejection(runtime, &view.message_id, view.source,
-                               NINLIL_RECEIPT_PERMANENT_REJECTION);
+        return commit_terminal_rejection(runtime, &view,
+                                         NINLIL_RECEIPT_PERMANENT_REJECTION);
     if (rc != NINLIL_OK)
         return rc;
     if (runtime->inbound_live >= runtime->config.profile.max_inbound ||
@@ -224,7 +271,8 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
     if (view.status != NINLIL_RECEIPT_EVIDENCE) {
         int passed;
 
-        if (entry->latest_evidence >= NINLIL_EVIDENCE_REMOTE_STORED)
+        if (ninlil_evidence_satisfies(entry->required_evidence,
+                                      entry->latest_evidence))
             return NINLIL_OK;
         if (view.status == NINLIL_RECEIPT_EXPIRED &&
             (entry->absolute_deadline_ms == 0u ||
@@ -306,6 +354,32 @@ static int commit_receipt_handoff(ninlil_runtime *runtime,
     }
     *commit_pending = 0u;
     *need_receipt = 0u;
+    return NINLIL_OK;
+}
+
+static int expire_application_inbound(ninlil_runtime *runtime, int *worked)
+{
+    uint16_t index;
+
+    *worked = 0;
+    for (index = 0u; index < runtime->inbound_capacity; index++) {
+        ninlil_inbound_entry *entry = &runtime->inbound[index];
+        int passed;
+        int rc;
+
+        if (!entry->used ||
+            entry->required_evidence != NINLIL_EVIDENCE_APPLICATION_ACCEPTED ||
+            entry->absolute_deadline_ms == 0u)
+            continue;
+        rc = ninlil_deadline_passed(runtime, entry->absolute_deadline_ms,
+                                    &passed);
+        if (rc != NINLIL_OK || !passed)
+            continue;
+        rc = ninlil_expire_inbound(runtime, entry);
+        if (rc == NINLIL_OK)
+            *worked = 1;
+        return rc;
+    }
     return NINLIL_OK;
 }
 
@@ -393,6 +467,10 @@ static int send_rejection(ninlil_runtime *runtime, int *worked)
 
         if (!entry->used || !entry->pending)
             continue;
+        if (!entry->durable ||
+            (entry->status != NINLIL_RECEIPT_PERMANENT_REJECTION &&
+             entry->status != NINLIL_RECEIPT_EXPIRED))
+            return NINLIL_ERR_FAULT;
         runtime->rejection_cursor =
             (uint16_t)((index + 1u) % runtime->rejection_capacity);
         *worked = 1;
@@ -408,31 +486,38 @@ static int send_rejection(ninlil_runtime *runtime, int *worked)
 
 int ninlil_process_receipt_send(ninlil_runtime *runtime, int *worked)
 {
+    int expiry_worked;
+    int blocked;
     uint8_t scanned;
 
-    *worked = 0;
+    blocked = expire_application_inbound(runtime, &expiry_worked);
+    if (blocked != NINLIL_OK && blocked != NINLIL_ERR_CAPACITY)
+        return blocked;
+    *worked = expiry_worked;
     for (scanned = 0u; scanned < NINLIL_RECEIPT_CLASSES; scanned++) {
         uint8_t receipt_class =
             (uint8_t)((runtime->receipt_class_cursor + scanned) %
                       NINLIL_RECEIPT_CLASSES);
+        int class_worked = 0;
         int rc;
 
         if (receipt_class == NINLIL_RECEIPT_CLASS_INBOUND)
-            rc = send_inbound_receipt(runtime, worked);
+            rc = send_inbound_receipt(runtime, &class_worked);
         else if (receipt_class == NINLIL_RECEIPT_CLASS_ARCHIVE)
-            rc = send_archive_receipt(runtime, worked);
+            rc = send_archive_receipt(runtime, &class_worked);
         else if (receipt_class == NINLIL_RECEIPT_CLASS_REJECTION)
-            rc = send_rejection(runtime, worked);
+            rc = send_rejection(runtime, &class_worked);
         else
             return NINLIL_ERR_FAULT;
         /* A blocked class must not monopolize later receipt opportunities. */
-        if (*worked) {
+        if (class_worked) {
+            *worked = 1;
             runtime->receipt_class_cursor =
                 (uint8_t)((receipt_class + 1u) % NINLIL_RECEIPT_CLASSES);
-            return rc;
+            return rc == NINLIL_OK ? blocked : rc;
         }
         if (rc != NINLIL_ERR_EMPTY)
             return rc;
     }
-    return NINLIL_OK;
+    return blocked;
 }

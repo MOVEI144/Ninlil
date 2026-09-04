@@ -11,11 +11,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define JRN_VERSION 2u
+#define JRN_VERSION 4u
 #define JRN_HEADER 10u
 #define JRN_CRC 4u
 #define JRN_MAX_PAYLOAD 320u
-#define JRN_MAX_TYPE 7u
+#define JRN_MAX_TYPE 9u
 
 struct ninlil_journal {
     int fd;
@@ -133,7 +133,7 @@ static int header_valid(const uint8_t *header, uint16_t *length)
     uint16_t complement;
 
     if (header[0] != 'N' || header[1] != 'J' || header[2] != 'L' ||
-        header[3] != '2' || header[4] != JRN_VERSION || header[5] < 1u ||
+        header[3] != '4' || header[4] != JRN_VERSION || header[5] < 1u ||
         header[5] > JRN_MAX_TYPE)
         return 0;
     stored_length = get_be16(header + 6);
@@ -231,6 +231,7 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
 
             reference.offset = (uint64_t)(position + (off_t)JRN_HEADER);
             reference.length = length;
+            reference.type = header[5];
             rc = on_record(ctx, header[5], body, length, &reference);
             if (rc != NINLIL_OK) {
                 (void)close(fd);
@@ -276,7 +277,7 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
     record[0] = 'N';
     record[1] = 'J';
     record[2] = 'L';
-    record[3] = '2';
+    record[3] = '4';
     record[4] = JRN_VERSION;
     record[5] = type;
     put_be16(record + 6, length);
@@ -305,6 +306,7 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
     if (reference) {
         reference->offset = (uint64_t)(start + (off_t)JRN_HEADER);
         reference->length = length;
+        reference->type = type;
     }
     return NINLIL_OK;
 }
@@ -331,7 +333,7 @@ int ninlil_journal_read(ninlil_journal *journal,
     rc = read_full_at(journal->fd, (off_t)record_offset, record, JRN_HEADER);
     if (rc != NINLIL_OK)
         return rc;
-    if (!header_valid(record, &stored_length) ||
+    if (!header_valid(record, &stored_length) || record[5] != reference->type ||
         stored_length != reference->length)
         return NINLIL_ERR_CORRUPT;
     total_length = JRN_HEADER + (size_t)stored_length + JRN_CRC;
@@ -341,7 +343,7 @@ int ninlil_journal_read(ninlil_journal *journal,
     if (rc != NINLIL_OK)
         return rc;
     if (!header_valid(record, &verified_length) ||
-        verified_length != stored_length ||
+        record[5] != reference->type || verified_length != stored_length ||
         get_be32(record + JRN_HEADER + stored_length) !=
             crc32_ieee(record, JRN_HEADER + (size_t)stored_length))
         return NINLIL_ERR_CORRUPT;

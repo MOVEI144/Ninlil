@@ -141,8 +141,6 @@ static int submission_valid(const ninlil_submission *submission)
             submission->required_evidence ==
                 NINLIL_EVIDENCE_APPLICATION_ACCEPTED) &&
            ninlil_traffic_class_valid(submission->traffic_class) &&
-           (submission->absolute_deadline_ms == 0u ||
-            submission->required_evidence == NINLIL_EVIDENCE_REMOTE_STORED) &&
            submission->payload_len <= NINLIL_MAX_PAYLOAD &&
            (submission->payload_len == 0u || submission->payload);
 }
@@ -363,6 +361,8 @@ int ninlil_step(ninlil_runtime *runtime)
 
 int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
 {
+    int blocked = NINLIL_ERR_EMPTY;
+    int expired_one = 0;
     uint16_t index;
 
     if (!runtime || !out)
@@ -375,6 +375,30 @@ int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
 
         if (!entry->used || entry->handed)
             continue;
+        if (entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED &&
+            entry->absolute_deadline_ms != 0u) {
+            int passed;
+
+            rc = ninlil_deadline_passed(runtime, entry->absolute_deadline_ms,
+                                        &passed);
+
+            if (rc != NINLIL_OK) {
+                if (blocked == NINLIL_ERR_EMPTY)
+                    blocked = rc;
+                continue;
+            }
+            if (passed) {
+                if (expired_one)
+                    continue;
+                rc = ninlil_expire_inbound(runtime, entry);
+                if (rc != NINLIL_OK && rc != NINLIL_ERR_CAPACITY)
+                    return rc;
+                blocked =
+                    rc == NINLIL_OK ? NINLIL_ERR_EXPIRED : NINLIL_ERR_CAPACITY;
+                expired_one = rc == NINLIL_OK;
+                continue;
+            }
+        }
         memset(out, 0, sizeof(*out));
         out->message_id = entry->message_id;
         out->source = entry->source;
@@ -392,7 +416,7 @@ int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
         entry->handed = 1u;
         return NINLIL_OK;
     }
-    return NINLIL_ERR_EMPTY;
+    return blocked;
 }
 
 int ninlil_application_accept(ninlil_runtime *runtime,
@@ -409,10 +433,29 @@ int ninlil_application_accept(ninlil_runtime *runtime,
         return runtime->fatal_error;
     entry = ninlil_find_inbound(runtime, message_id);
     if (!entry) {
+        ninlil_rejection_entry *rejection =
+            ninlil_find_rejection(runtime, message_id);
+
+        if (rejection && rejection->status == NINLIL_RECEIPT_EXPIRED &&
+            rejection->latest_evidence == NINLIL_EVIDENCE_REMOTE_STORED)
+            return NINLIL_ERR_EXPIRED;
         archive = ninlil_find_archive_id(runtime, message_id);
         return archive && archive->kind == NINLIL_ARCHIVE_INBOUND
                    ? NINLIL_OK
                    : NINLIL_ERR_NOT_FOUND;
+    }
+    if (entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED &&
+        entry->absolute_deadline_ms != 0u) {
+        int passed;
+
+        rc = ninlil_deadline_passed(runtime, entry->absolute_deadline_ms,
+                                    &passed);
+        if (rc != NINLIL_OK)
+            return rc;
+        if (passed) {
+            rc = ninlil_expire_inbound(runtime, entry);
+            return rc == NINLIL_OK ? NINLIL_ERR_EXPIRED : rc;
+        }
     }
     if (!entry->handed)
         return NINLIL_ERR_STATE;
@@ -464,10 +507,29 @@ static void info_from_archive(const ninlil_archive_entry *entry,
     out->remote_boundary_may_have_been_reached = entry->attempted;
 }
 
+static void info_from_rejection(const ninlil_rejection_entry *entry,
+                                ninlil_info *out)
+{
+    memset(out, 0, sizeof(*out));
+    out->message_id = entry->message_id;
+    out->peer = entry->target;
+    out->service = entry->service;
+    out->payload_len = entry->payload_len;
+    out->ownership = entry->ownership;
+    out->required_evidence = entry->required_evidence;
+    out->latest_evidence = entry->latest_evidence;
+    out->traffic_class = entry->traffic_class;
+    out->outcome = entry->status == NINLIL_RECEIPT_EXPIRED
+                       ? NINLIL_OUTCOME_EXPIRED
+                       : NINLIL_OUTCOME_FAILED;
+    out->absolute_deadline_ms = entry->absolute_deadline_ms;
+}
+
 int ninlil_query(ninlil_runtime *runtime, const ninlil_id *message_id,
                  ninlil_info *out)
 {
     ninlil_outbound_entry *outbound;
+    ninlil_rejection_entry *rejection;
     ninlil_inbound_entry *inbound;
     ninlil_archive_entry *archive;
 
@@ -483,6 +545,12 @@ int ninlil_query(ninlil_runtime *runtime, const ninlil_id *message_id,
     archive = ninlil_find_archive_id(runtime, message_id);
     if (archive) {
         info_from_archive(archive, out);
+        return NINLIL_OK;
+    }
+    rejection = ninlil_find_rejection(runtime, message_id);
+    if (rejection &&
+        rejection->latest_evidence == NINLIL_EVIDENCE_REMOTE_STORED) {
+        info_from_rejection(rejection, out);
         return NINLIL_OK;
     }
     inbound = ninlil_find_inbound(runtime, message_id);

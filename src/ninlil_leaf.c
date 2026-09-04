@@ -48,6 +48,17 @@ int ninlil_leaf_window_profile_validate(
                                                 : NINLIL_ERR_INVALID;
 }
 
+static int window_endpoint_valid(uint64_t tx_complete_ms, uint32_t delay_ms,
+                                 uint32_t duration_ms)
+{
+    uint64_t start_ms;
+
+    if (tx_complete_ms > UINT64_MAX - delay_ms)
+        return 0;
+    start_ms = tx_complete_ms + delay_ms;
+    return start_ms <= UINT64_MAX - duration_ms;
+}
+
 int ninlil_leaf_opportunity_begin(ninlil_leaf_opportunity *opportunity,
                                   const ninlil_leaf_window_profile *profile,
                                   uint64_t tx_complete_ms)
@@ -55,9 +66,11 @@ int ninlil_leaf_opportunity_begin(ninlil_leaf_opportunity *opportunity,
     if (!opportunity ||
         ninlil_leaf_window_profile_validate(profile) != NINLIL_OK)
         return NINLIL_ERR_INVALID;
-    if (tx_complete_ms > UINT64_MAX - profile->rx1_delay_ms ||
+    if (!window_endpoint_valid(tx_complete_ms, profile->rx1_delay_ms,
+                               profile->rx1_duration_ms) ||
         (profile->rx2_enabled &&
-         tx_complete_ms > UINT64_MAX - profile->rx2_delay_ms))
+         !window_endpoint_valid(tx_complete_ms, profile->rx2_delay_ms,
+                                profile->rx2_duration_ms)))
         return NINLIL_ERR_INVALID;
     memset(opportunity, 0, sizeof(*opportunity));
     opportunity->profile = *profile;

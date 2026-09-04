@@ -41,8 +41,8 @@ int ninlil_flash_store_append_ref(ninlil_flash_store *store, uint8_t type,
                                   size_t *payload_offset);
 int ninlil_flash_store_read(const ninlil_flash_store *store,
                             size_t payload_offset, uint16_t record_length,
-                            uint16_t relative_offset, uint8_t *buffer,
-                            uint16_t length);
+                            uint8_t record_type, uint16_t relative_offset,
+                            uint8_t *buffer, uint16_t length);
 int ninlil_flash_store_format(const ninlil_flash_io *io);
 size_t ninlil_flash_store_append_offset(const ninlil_flash_store *store);
 

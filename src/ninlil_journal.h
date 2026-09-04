@@ -9,6 +9,7 @@ typedef struct ninlil_journal ninlil_journal;
 typedef struct ninlil_journal_ref {
     uint64_t offset;
     uint16_t length;
+    uint8_t type;
 } ninlil_journal_ref;
 
 typedef int (*ninlil_journal_on_record)(void *ctx, uint8_t type,

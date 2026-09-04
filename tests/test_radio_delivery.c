@@ -361,6 +361,7 @@ static int test_flash_runtime_stops_on_payload_corruption(void)
     char directory[40];
     char first_path[80];
     char second_path[80];
+    char idempotency_path[80];
     radio_pair pair;
     ninlil_link first_link;
     ninlil_link second_link;
@@ -379,6 +380,8 @@ static int test_flash_runtime_stops_on_payload_corruption(void)
                          "out.flash") == 0);
     CHECK(test_make_path(second_path, sizeof(second_path), directory,
                          "in.flash") == 0);
+    CHECK(test_make_path(idempotency_path, sizeof(idempotency_path), directory,
+                         "idempotency.flash") == 0);
     memset(&pair, 0, sizeof(pair));
     CHECK(initialize_radio(&pair.first, &first_link) == NINLIL_OK);
     CHECK(open_runtime(&first, first_path, 1u, first_link, &first_random) ==
@@ -396,6 +399,27 @@ static int test_flash_runtime_stops_on_payload_corruption(void)
           NINLIL_ERR_CORRUPT);
     CHECK(first == NULL);
     CHECK(remove(first_path) == 0);
+
+    memset(&pair, 0, sizeof(pair));
+    CHECK(initialize_radio(&pair.first, &first_link) == NINLIL_OK);
+    CHECK(open_runtime(&first, idempotency_path, 1u, first_link,
+                       &first_random) == NINLIL_OK);
+    test_fill_id(&key, UINT8_C(0x62));
+    CHECK(submit_message(first, &key, 2u, &payload, 1u, &message_id) ==
+          NINLIL_OK);
+    CHECK(flip_file_byte(idempotency_path,
+                         FLASH_PAYLOAD_OFFSET + OUTBOUND_PAYLOAD_OFFSET) == 0);
+    CHECK(submit_message(first, &key, 2u, &payload, 1u, &message_id) ==
+          NINLIL_ERR_CORRUPT);
+    CHECK(pair.first.tx_pending == 0u);
+    CHECK(ninlil_step(first) == NINLIL_ERR_CORRUPT);
+    CHECK(pair.first.tx_pending == 0u);
+    ninlil_close(first);
+    first = NULL;
+    CHECK(open_runtime(&first, idempotency_path, 1u, first_link,
+                       &first_random) == NINLIL_ERR_CORRUPT);
+    CHECK(first == NULL);
+    CHECK(remove(idempotency_path) == 0);
 
     memset(&pair, 0, sizeof(pair));
     CHECK(initialize_radio(&pair.first, &first_link) == NINLIL_OK);

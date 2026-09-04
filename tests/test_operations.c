@@ -298,6 +298,33 @@ static int test_sleeping_leaf_opportunities(void)
     CHECK(ninlil_leaf_opportunity_begin(&opportunity, &profile, 5000u) ==
           NINLIL_OK);
     CHECK(ninlil_leaf_stage_downlink(&opportunity, &second) == NINLIL_OK);
+
+    CHECK(ninlil_leaf_window_profile_lab(&profile) == NINLIL_OK);
+    profile.rx2_delay_ms = 0u;
+    profile.rx2_duration_ms = 0u;
+    profile.rx2_enabled = 0u;
+    CHECK(ninlil_leaf_opportunity_begin(&opportunity, &profile,
+                                        UINT64_MAX - UINT64_C(1000)) ==
+          NINLIL_OK);
+    CHECK(ninlil_leaf_opportunity_next(&opportunity, &start, &duration) ==
+          NINLIL_OK);
+    CHECK(start == UINT64_MAX - UINT64_C(800) && duration == 800u);
+    CHECK(ninlil_leaf_opportunity_begin(&opportunity, &profile,
+                                        UINT64_MAX - UINT64_C(999)) ==
+          NINLIL_ERR_INVALID);
+
+    CHECK(ninlil_leaf_window_profile_lab(&profile) == NINLIL_OK);
+    CHECK(ninlil_leaf_opportunity_begin(&opportunity, &profile,
+                                        UINT64_MAX - UINT64_C(3400)) ==
+          NINLIL_OK);
+    CHECK(ninlil_leaf_opportunity_next(&opportunity, &start, &duration) ==
+          NINLIL_OK);
+    CHECK(ninlil_leaf_opportunity_next(&opportunity, &start, &duration) ==
+          NINLIL_OK);
+    CHECK(start == UINT64_MAX - UINT64_C(1200) && duration == 1200u);
+    CHECK(ninlil_leaf_opportunity_begin(&opportunity, &profile,
+                                        UINT64_MAX - UINT64_C(3399)) ==
+          NINLIL_ERR_INVALID);
     return 0;
 }
 
