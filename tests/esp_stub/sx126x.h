@@ -19,6 +19,16 @@ typedef int sx126x_status_t;
 #define SX126X_IRQ_CRC_ERROR (1u << 6)
 #define SX126X_IRQ_TIMEOUT (1u << 9)
 #define SX126X_IRQ_ALL 0xFFFFu
+#define SX126X_CHIP_MODE_RX 5
+#define SX126X_CMD_STATUS_DATA_AVAILABLE 2
+#define SX126X_CMD_STATUS_CMD_TX_DONE 6
+typedef struct sx126x_chip_status_s {
+    int cmd_status;
+    int chip_mode;
+} sx126x_chip_status_t;
+sx126x_status_t sx126x_get_status(const void *context,
+                                  sx126x_chip_status_t *status);
+sx126x_status_t sx126x_get_rssi_inst(const void *context, int16_t *rssi);
 typedef uint16_t sx126x_irq_mask_t;
 typedef int sx126x_lora_sf_t;
 typedef int sx126x_lora_bw_t;

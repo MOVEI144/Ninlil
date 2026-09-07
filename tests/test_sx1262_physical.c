@@ -4,6 +4,8 @@
 
 #include "driver/gpio.h"
 #include "esp_err.h"
+#include "esp_rom_sys.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "sx126x.h"
@@ -53,6 +55,47 @@ static uint16_t fake_cal_low_mhz;
 static uint16_t fake_cal_high_mhz;
 static uint32_t fake_last_tx_timeout_ms;
 static int fake_levels[64];
+static int64_t fake_time_us;
+static bool fake_clock_stalled;
+static bool fake_bad_chip_status;
+static int16_t fake_rssi;
+static unsigned int fake_rssi_calls;
+static unsigned int fake_busy_sample;
+static unsigned int fake_rssi_error_sample;
+static uint32_t fake_airtime_ms;
+static sx126x_lora_bw_t fake_bandwidth;
+
+int64_t esp_timer_get_time(void)
+{
+    return fake_time_us;
+}
+
+void esp_rom_delay_us(uint32_t us)
+{
+    if (!fake_clock_stalled)
+        fake_time_us += us;
+}
+
+sx126x_status_t sx126x_get_status(const void *context,
+                                  sx126x_chip_status_t *status)
+{
+    (void)context;
+    status->chip_mode = fake_bad_chip_status ? 7 : SX126X_CHIP_MODE_RX;
+    status->cmd_status = SX126X_CMD_STATUS_DATA_AVAILABLE;
+    return SX126X_STATUS_OK;
+}
+
+sx126x_status_t sx126x_get_rssi_inst(const void *context, int16_t *rssi)
+{
+    (void)context;
+    fake_rssi_calls++;
+    fake_notifications = 1u;
+    if (fake_bandwidth != SX126X_LORA_BW_250 ||
+        fake_rssi_calls == fake_rssi_error_sample)
+        return ESP_FAIL;
+    *rssi = fake_rssi_calls == fake_busy_sample ? -80 : fake_rssi;
+    return SX126X_STATUS_OK;
+}
 
 static void reset_fakes(void)
 {
@@ -85,6 +128,15 @@ static void reset_fakes(void)
     fake_cal_high_mhz = 0u;
     fake_last_tx_timeout_ms = 0u;
     memset(fake_levels, 0, sizeof(fake_levels));
+    fake_time_us = 0;
+    fake_clock_stalled = false;
+    fake_bad_chip_status = false;
+    fake_rssi = -100;
+    fake_rssi_calls = 0u;
+    fake_busy_sample = 0u;
+    fake_rssi_error_sample = 0u;
+    fake_airtime_ms = 100u;
+    fake_bandwidth = SX126X_LORA_BW_125;
 }
 
 static ninlil_rf_profile make_profile(bool tx_enabled)
@@ -312,7 +364,7 @@ sx126x_set_lora_mod_params(const void *context,
                            const sx126x_mod_params_lora_t *params)
 {
     (void)context;
-    (void)params;
+    fake_bandwidth = params->bw;
     return SX126X_STATUS_OK;
 }
 
@@ -375,6 +427,8 @@ sx126x_status_t sx126x_set_rx_with_timeout_in_rtc_step(const void *context,
 sx126x_status_t sx126x_set_tx(const void *context, uint32_t timeout_ms)
 {
     (void)context;
+    if (fake_notifications != 0u)
+        return ESP_FAIL;
     fake_set_tx_calls++;
     fake_last_tx_timeout_ms = timeout_ms;
     fake_irq_status = fake_tx_completion_irq;
@@ -454,7 +508,7 @@ sx126x_get_lora_time_on_air_in_ms(const sx126x_pkt_params_lora_t *packet,
 {
     (void)packet;
     (void)modulation;
-    return 100u;
+    return fake_airtime_ms;
 }
 
 static int init_radio(ninlil_sx1262_radio *radio, bool tx_enabled)
@@ -639,11 +693,106 @@ static int test_recovery_and_fail_closed_profiles(void)
     return 0;
 }
 
+static int test_jp_channel_and_pause(void)
+{
+    ninlil_sx1262_radio radio;
+    ninlil_rf_profile profile = make_profile(true);
+    uint8_t data = 1u;
+    int64_t pause_until;
+
+    reset_fakes();
+    profile.region = "JP";
+    profile.frequency_hz = UINT32_C(921400000);
+    CHECK(ninlil_sx1262_radio_init(&radio, &profile, true) == NINLIL_OK);
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_BUSY);
+    CHECK(fake_set_tx_calls == 0u && fake_rssi_calls == 0u);
+    fake_time_us = radio.tx_not_before_us;
+    fake_rssi = -80;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_BUSY);
+    CHECK(fake_set_tx_calls == 0u && radio.channel_busy == 1u);
+    CHECK(radio.rx_active && fake_bandwidth == SX126X_LORA_BW_125);
+
+    fake_rssi = -81;
+    fake_rssi_calls = 0u;
+    fake_busy_sample = 26u;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_BUSY);
+    CHECK(fake_set_tx_calls == 0u && radio.channel_busy == 2u);
+    fake_busy_sample = 0u;
+    fake_rssi_calls = 0u;
+    fake_tx_notifies = true;
+    fake_tx_completion_irq = SX126X_IRQ_TX_DONE;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_OK);
+    CHECK(fake_rssi_calls == 26u && fake_set_tx_calls == 1u);
+    CHECK(fake_bandwidth == SX126X_LORA_BW_125);
+    pause_until = radio.tx_not_before_us;
+    CHECK(pause_until - fake_time_us == INT64_C(50000));
+    fake_time_us = pause_until - 1;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_BUSY);
+    CHECK(fake_set_tx_calls == 1u);
+    CHECK(ninlil_sx1262_radio_recover(&radio) == NINLIL_OK);
+    CHECK(radio.tx_not_before_us == pause_until);
+    fake_time_us = pause_until;
+    fake_tx_notifies = false;
+    fake_tx_completion_irq = SX126X_IRQ_NONE;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_TIMEOUT);
+    CHECK(radio.tx_not_before_us - fake_time_us == INT64_C(650000));
+    CHECK(ninlil_sx1262_radio_recover(&radio) == NINLIL_OK);
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_BUSY);
+    ninlil_sx1262_radio_deinit(&radio);
+    return 0;
+}
+
+static int test_jp_fail_closed(void)
+{
+    ninlil_sx1262_radio radio;
+    ninlil_rf_profile profile = make_profile(true);
+    uint8_t data = 1u;
+
+    reset_fakes();
+    profile.region = "JP";
+    profile.frequency_hz = UINT32_C(921400000);
+    CHECK(ninlil_sx1262_radio_init(&radio, &profile, true) == NINLIL_OK);
+    fake_time_us = radio.tx_not_before_us;
+    fake_airtime_ms = 401u;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_TOO_LARGE);
+    CHECK(fake_rssi_calls == 0u);
+    fake_airtime_ms = 100u;
+    fake_bad_chip_status = true;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
+    CHECK(fake_rssi_calls == 0u);
+    fake_bad_chip_status = false;
+    fake_rssi_error_sample = 5u;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
+    CHECK(radio.rx_active && fake_bandwidth == SX126X_LORA_BW_125);
+    fake_rssi_error_sample = 0u;
+    fake_rssi_calls = 0u;
+    fake_clock_stalled = true;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
+    CHECK(fake_rssi_calls == 100u && fake_set_tx_calls == 0u);
+    CHECK(radio.rx_active && fake_bandwidth == SX126X_LORA_BW_125);
+    ninlil_sx1262_radio_deinit(&radio);
+
+    profile.frequency_hz = UINT32_C(920000000);
+    CHECK(ninlil_rf_profile_validate(&profile) == NINLIL_ERR_INVALID);
+    profile.frequency_hz = UINT32_C(922400000);
+    CHECK(ninlil_rf_profile_validate(&profile) == NINLIL_ERR_INVALID);
+    profile.frequency_hz = UINT32_C(921500000);
+    CHECK(ninlil_rf_profile_validate(&profile) == NINLIL_ERR_INVALID);
+    profile.frequency_hz = UINT32_C(921400000);
+    profile.tx_power_dbm = 11;
+    CHECK(ninlil_rf_profile_validate(&profile) == NINLIL_ERR_INVALID);
+    profile.tx_power_dbm = 10;
+    profile.bandwidth_hz = UINT32_C(250000);
+    CHECK(ninlil_rf_profile_validate(&profile) == NINLIL_ERR_INVALID);
+    profile.bandwidth_hz = UINT32_C(125000);
+    CHECK(ninlil_rf_profile_validate(&profile) == NINLIL_OK);
+    return 0;
+}
+
 static int (*const tests[])(void) = {
-    test_init_profile_and_owner,
-    test_tx_completion_timeout_and_rx_race,
-    test_receive_polling_irq_and_errors,
-    test_recovery_and_fail_closed_profiles,
+    test_init_profile_and_owner,         test_tx_completion_timeout_and_rx_race,
+    test_receive_polling_irq_and_errors, test_recovery_and_fail_closed_profiles,
+    test_jp_channel_and_pause,           test_jp_fail_closed,
 };
 
 int main(void)

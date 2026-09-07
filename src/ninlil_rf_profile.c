@@ -1,5 +1,7 @@
 #include "ninlil_rf_profile.h"
 
+#include <string.h>
+
 int ninlil_rf_profile_validate(const ninlil_rf_profile *profile)
 {
     if (!profile)
@@ -17,6 +19,15 @@ int ninlil_rf_profile_validate(const ninlil_rf_profile *profile)
     if (!profile->rf_gate_polarity_confirmed || !profile->region ||
         profile->region[0] == '\0' || profile->tx_power_dbm < -9 ||
         profile->tx_power_dbm > 22)
+        return NINLIL_ERR_INVALID;
+    // This initial JP profile covers one 200 kHz unit channel with 5 ms CCA.
+    if (strcmp(profile->region, "JP") == 0 &&
+        (profile->frequency_hz < UINT32_C(920600000) ||
+         profile->frequency_hz > UINT32_C(922200000) ||
+         (profile->frequency_hz - UINT32_C(920600000)) % UINT32_C(200000) !=
+             0u ||
+         profile->bandwidth_hz != UINT32_C(125000) ||
+         profile->tx_power_dbm > 10))
         return NINLIL_ERR_INVALID;
     return NINLIL_OK;
 }

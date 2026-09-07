@@ -24,6 +24,8 @@ typedef struct ninlil_sx1262_radio {
     uint32_t header_errors;
     uint32_t timeouts;
     uint32_t io_errors;
+    int64_t tx_not_before_us;
+    uint32_t channel_busy;
     bool configured;
     bool rx_active;
     bool isr_installed;

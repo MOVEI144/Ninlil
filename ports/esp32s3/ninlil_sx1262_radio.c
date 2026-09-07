@@ -5,6 +5,8 @@
 #include "driver/gpio.h"
 #include "esp_attr.h"
 #include "esp_err.h"
+#include "esp_rom_sys.h"
+#include "esp_timer.h"
 #include "sx126x.h"
 #include "sx126x_regs.h"
 
@@ -15,6 +17,14 @@
 #define RADIO_TX_LIMIT_MS 5000u
 #define NINLIL_LORA_PRIVATE_SYNC_WORD_MSB 0x14u
 #define NINLIL_LORA_PRIVATE_SYNC_WORD_LSB 0x24u
+#define JP_CCA_US INT64_C(5000)
+#define JP_TX_PAUSE_US INT64_C(50000)
+#define JP_MAX_AIRTIME_MS 400u
+
+static bool uses_jp_cca(const ninlil_sx1262_radio *radio)
+{
+    return radio->profile.region && strcmp(radio->profile.region, "JP") == 0;
+}
 
 static void IRAM_ATTR dio1_isr(void *context)
 {
@@ -265,6 +275,71 @@ static int resume_rx(ninlil_sx1262_radio *radio, int operation_result)
     return rx_result == NINLIL_OK ? operation_result : rx_result;
 }
 
+static int check_jp_channel(ninlil_sx1262_radio *radio,
+                            const sx126x_mod_params_lora_t *modulation)
+{
+    sx126x_mod_params_lora_t sensing = *modulation;
+    sx126x_chip_status_t status;
+    unsigned int sample;
+    int64_t start;
+    int result = NINLIL_ERR_IO;
+
+    // Sense wider than the entire 200 kHz unit channel, not just LoRa 125 kHz.
+    sensing.bw = SX126X_LORA_BW_250;
+    sensing.ldro = modulation->sf >= 12 ? 1u : 0u;
+    radio->rx_active = false;
+    if (sx126x_set_standby(&radio->hal, SX126X_STANDBY_CFG_RC) !=
+            SX126X_STATUS_OK ||
+        sx126x_set_lora_mod_params(&radio->hal, &sensing) != SX126X_STATUS_OK ||
+        set_rx_gate(radio, true) != NINLIL_OK ||
+        sx126x_set_rx_with_timeout_in_rtc_step(
+            &radio->hal, SX126X_RX_CONTINUOUS) != SX126X_STATUS_OK)
+        goto restore;
+    esp_rom_delay_us(1000u);
+    if (sx126x_get_status(&radio->hal, &status) != SX126X_STATUS_OK ||
+        status.chip_mode != SX126X_CHIP_MODE_RX ||
+        (status.cmd_status != SX126X_CMD_STATUS_DATA_AVAILABLE &&
+         status.cmd_status != SX126X_CMD_STATUS_CMD_TX_DONE))
+        goto restore;
+    start = esp_timer_get_time();
+    if (start < 0)
+        goto restore;
+    // A stalled/backward clock or repeated busy channel cannot hold this call.
+    for (sample = 0u; sample < 100u; sample++) {
+        int16_t rssi = 0;
+        int64_t now;
+
+        if (sx126x_get_rssi_inst(&radio->hal, &rssi) != SX126X_STATUS_OK)
+            break;
+        if (rssi < -127)
+            break;
+        if (rssi >= -80) {
+            radio->channel_busy++;
+            result = NINLIL_ERR_BUSY;
+            break;
+        }
+        now = esp_timer_get_time();
+        if (now < start)
+            break;
+        if (now - start >= JP_CCA_US) {
+            result = NINLIL_OK;
+            break;
+        }
+        esp_rom_delay_us(200u);
+    }
+restore:
+    if (sx126x_set_standby(&radio->hal, SX126X_STANDBY_CFG_RC) !=
+            SX126X_STATUS_OK ||
+        sx126x_set_lora_mod_params(&radio->hal, modulation) !=
+            SX126X_STATUS_OK) {
+        radio->configured = false;
+        return NINLIL_ERR_IO;
+    }
+    if (result != NINLIL_OK)
+        return resume_rx(radio, result);
+    return NINLIL_OK;
+}
+
 int ninlil_sx1262_radio_init(ninlil_sx1262_radio *radio,
                              const ninlil_rf_profile *profile,
                              bool rx_gate_active_high)
@@ -283,6 +358,13 @@ int ninlil_sx1262_radio_init(ninlil_sx1262_radio *radio,
     radio->profile = *profile;
     radio->owner_task = xTaskGetCurrentTaskHandle();
     radio->rx_gate_active_high = rx_gate_active_high;
+    if (uses_jp_cca(radio)) {
+        int64_t now = esp_timer_get_time();
+
+        if (now < 0 || now > INT64_MAX - JP_TX_PAUSE_US)
+            return NINLIL_ERR_IO;
+        radio->tx_not_before_us = now + JP_TX_PAUSE_US;
+    }
     if (!radio->owner_task || ninlil_sx1262_hal_init(&radio->hal) != 0)
         return NINLIL_ERR_IO;
     rc = configure_gpio(radio);
@@ -346,6 +428,16 @@ int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio, const uint8_t *data,
     timeout_ms = time_on_air_ms + RADIO_TX_GUARD_MS;
     if (timeout_ms > RADIO_TX_LIMIT_MS)
         return NINLIL_ERR_TOO_LARGE;
+    if (uses_jp_cca(radio)) {
+        int64_t now = esp_timer_get_time();
+
+        if (now < 0 || now > INT64_MAX - INT64_C(1000000))
+            return NINLIL_ERR_IO;
+        if (time_on_air_ms > JP_MAX_AIRTIME_MS)
+            return NINLIL_ERR_TOO_LARGE;
+        if (now < radio->tx_not_before_us)
+            return NINLIL_ERR_BUSY;
+    }
 
     radio->rx_active = false;
     if (status_ok(sx126x_set_standby(&radio->hal, SX126X_STANDBY_CFG_RC)) !=
@@ -362,7 +454,10 @@ int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio, const uint8_t *data,
         radio->rx_active = true;
         return NINLIL_ERR_BUSY;
     }
-    while (ulTaskNotifyTake(pdTRUE, 0u) != 0u) {
+    if (uses_jp_cca(radio)) {
+        rc = check_jp_channel(radio, &modulation);
+        if (rc != NINLIL_OK)
+            return rc;
     }
     if (set_rx_gate(radio, false) != NINLIL_OK) {
         radio->io_errors++;
@@ -373,8 +468,23 @@ int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio, const uint8_t *data,
         status_ok(sx126x_write_buffer(&radio->hal, 0u, data,
                                       (uint8_t)length)) != NINLIL_OK ||
         status_ok(sx126x_clear_irq_status(&radio->hal, SX126X_IRQ_ALL)) !=
-            NINLIL_OK ||
-        status_ok(sx126x_set_tx(&radio->hal, timeout_ms)) != NINLIL_OK) {
+            NINLIL_OK) {
+        radio->io_errors++;
+        return resume_rx(radio, NINLIL_ERR_IO);
+    }
+    if (uses_jp_cca(radio)) {
+        int64_t now = esp_timer_get_time();
+
+        if (now < 0 || now > INT64_MAX - INT64_C(1000000))
+            return resume_rx(radio, NINLIL_ERR_IO);
+        // Reserve the whole possible TX interval before its external effect.
+        radio->tx_not_before_us =
+            now + (int64_t)timeout_ms * 1000 + JP_TX_PAUSE_US;
+    }
+    // CCA may have raised a receive notification. Clear it in standby after
+    // clearing IRQ flags, so it cannot masquerade as completion of this TX.
+    (void)ulTaskNotifyTake(pdTRUE, 0u);
+    if (status_ok(sx126x_set_tx(&radio->hal, timeout_ms)) != NINLIL_OK) {
         radio->io_errors++;
         return resume_rx(radio, NINLIL_ERR_IO);
     }
@@ -395,6 +505,13 @@ int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio, const uint8_t *data,
             radio->io_errors++;
             rc = NINLIL_ERR_IO;
         }
+    }
+    if (uses_jp_cca(radio) && rc == NINLIL_OK) {
+        int64_t now = esp_timer_get_time();
+
+        if (now < 0 || now > INT64_MAX - JP_TX_PAUSE_US)
+            return resume_rx(radio, NINLIL_ERR_IO);
+        radio->tx_not_before_us = now + JP_TX_PAUSE_US;
     }
     return resume_rx(radio, rc);
 }

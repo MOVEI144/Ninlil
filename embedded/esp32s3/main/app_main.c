@@ -22,6 +22,7 @@
 #define STACK_MIN_FREE_PERCENT 25u
 #define DIAG_PING_PERIOD_MS 100u
 #define DIAG_PING_DEADLINE_MS 1000u
+#define DIAG_START_DELAY_MS 3000u
 
 static const char *const TAG = "ninlil_m1";
 
@@ -426,6 +427,7 @@ static int diagnostic_send(ninlil_sx1262_radio *radio, uint8_t type,
     ninlil_diag_frame frame;
     uint8_t packet[NINLIL_DIAG_MAX];
     size_t length;
+    int rc;
 
     memset(&frame, 0, sizeof(frame));
     frame.type = type;
@@ -435,7 +437,12 @@ static int diagnostic_send(ninlil_sx1262_radio *radio, uint8_t type,
     length = ninlil_diag_encode(packet, &frame);
     if (length == 0u)
         return NINLIL_ERR_INVALID;
-    return ninlil_sx1262_radio_send(radio, packet, (uint16_t)length);
+    rc = ninlil_sx1262_radio_send(radio, packet, (uint16_t)length);
+    if (rc != NINLIL_ERR_BUSY)
+        ESP_LOGI(TAG, "DIAG_TX type=%u seq=%lu source=%u target=%u rc=%d",
+                 (unsigned int)type, (unsigned long)sequence,
+                 (unsigned int)frame.source, (unsigned int)target, rc);
+    return rc;
 }
 
 static void run_diagnostic(ninlil_sx1262_radio *radio)
@@ -446,13 +453,21 @@ static void run_diagnostic(ninlil_sx1262_radio *radio)
     uint32_t received = 0u;
     uint32_t timed_out = 0u;
     uint32_t waiting_sequence = 0u;
-    TickType_t next_send = xTaskGetTickCount();
+    TickType_t next_send =
+        xTaskGetTickCount() + pdMS_TO_TICKS(DIAG_START_DELAY_MS);
     TickType_t deadline = 0u;
     bool waiting = false;
+    uint64_t campaign_deadline =
+        now_ms() + DIAG_START_DELAY_MS +
+        (uint64_t)CONFIG_NINLIL_DIAGNOSTIC_PING_COUNT * UINT64_C(2000);
+    uint64_t progress_at = now_ms() + UINT64_C(5000);
 #endif
 
     if (initialize_radio_state(&recovery_state) != NINLIL_OK)
         return;
+    ESP_LOGI(TAG, "NINLIL_HIL_DIAG_READY node=%u peer=%u",
+             (unsigned int)CONFIG_NINLIL_NODE_ID,
+             (unsigned int)CONFIG_NINLIL_PEER_ID);
     for (;;) {
         uint8_t packet[NINLIL_DIAG_MAX];
         uint16_t length = 0u;
@@ -468,11 +483,14 @@ static void run_diagnostic(ninlil_sx1262_radio *radio)
             ninlil_diag_frame frame;
 
             if (ninlil_diag_decode(packet, length, &frame) == NINLIL_OK &&
-                frame.target == CONFIG_NINLIL_NODE_ID) {
-                ESP_LOGI(TAG, "DIAG type=%u seq=%lu RSSI=%d SNR=%d",
-                         (unsigned int)frame.type,
-                         (unsigned long)frame.sequence, (int)info.rssi_dbm,
-                         (int)info.snr_db);
+                frame.target == CONFIG_NINLIL_NODE_ID &&
+                frame.source == CONFIG_NINLIL_PEER_ID) {
+                ESP_LOGI(
+                    TAG,
+                    "DIAG type=%u seq=%lu source=%u target=%u RSSI=%d SNR=%d",
+                    (unsigned int)frame.type, (unsigned long)frame.sequence,
+                    (unsigned int)frame.source, (unsigned int)frame.target,
+                    (int)info.rssi_dbm, (int)info.snr_db);
                 if (frame.type == NINLIL_DIAG_PING &&
                     NINLIL_CONFIG_RF_TX_ENABLED) {
                     rc = diagnostic_send(radio, NINLIL_DIAG_PONG,
@@ -498,6 +516,23 @@ static void run_diagnostic(ninlil_sx1262_radio *radio)
         }
 #if defined(CONFIG_NINLIL_DIAGNOSTIC_INITIATOR)
         now = xTaskGetTickCount();
+        if (now_ms() >= progress_at) {
+            ESP_LOGI(TAG,
+                     "DIAG_PROGRESS node=%u sent=%lu received=%lu timeout=%lu "
+                     "cca_busy=%lu",
+                     (unsigned int)CONFIG_NINLIL_NODE_ID, (unsigned long)sent,
+                     (unsigned long)received, (unsigned long)timed_out,
+                     (unsigned long)radio->channel_busy);
+            progress_at = now_ms() + UINT64_C(5000);
+        }
+        if (now_ms() >= campaign_deadline) {
+            ESP_LOGE(TAG,
+                     "NINLIL_HIL_DIAG result=FAIL reason=campaign-deadline "
+                     "sent=%lu received=%lu timeout=%lu",
+                     (unsigned long)sent, (unsigned long)received,
+                     (unsigned long)timed_out);
+            return;
+        }
         if (waiting && tick_reached(now, deadline)) {
             timed_out++;
             waiting = false;
