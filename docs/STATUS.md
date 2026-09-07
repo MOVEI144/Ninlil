@@ -133,3 +133,34 @@ pending-work recovery across USB supply removal, not a cut during active
 execution or Flash programming, and does not close the entire canonical USB
 phase. The user has no controlled power-cut fixture, so precise Flash power
 interruption remains unrun. Firmware source remains the verified `80ab9ac`.
+
+## Two-board fault tests and full local verification (2026-09-07, 20:36 JST)
+
+[Fault campaign evidence](M1_FAULT_CAMPAIGN_2026-09-07.md) and its
+[structured results](M1_FAULT_RESULTS_2026-09-07.json) record 64/64 local CTests,
+static/syntax/format/reproducibility checks and 10,000 seeded fuzz runs.
+Default-off test firmware 3254ae3 passes 100 messages each way with software
+DATA/receipt loss and duplication, malformed/wrong-target frames, an actual
+masked-interrupt TX timeout, and receiver restart after durable consumption
+before its receipt. Both journals and every message ID were reconciled.
+Completed reboot preserves byte-identical journals and does not resend.
+
+A real-Flash committed-byte corruption test on prior 80ab9ac firmware fails
+Runtime open before delivery, restores the original journal and replays the
+original 100 IDs without retransmission. Both boards are back on verified
+TX-disabled source 8e8a6ea after 100 init cycles each. Setup failures are
+preserved, including refusal to flash before final local PASS. No hosted CI
+or GitHub mutation occurred.
+
+These are scoped bench passes. Electrical Flash power-cut timing, physical
+CRC/BUSY faults, full host-machine restart, RF payload/field/environment
+sweeps and full M1 acceptance remain open. Software-injected RX faults are
+not claimed as physical RF interference. The absent power fixture does not
+block ordinary implementation or the tests completed here.
+
+A follow-up monitor-process restart also passes 100 messages: A remains running
+with a committed pending ID while one Python monitor exits and another opens
+the USB console without resetting A. The same ID reaches remote storage and
+all journals reconcile. The pre/post log interval is explicitly unobserved for
+TX-only log lines; full Windows restart is not claimed. Final TX-disabled
+restoration was reverified on both boards at 20:44 JST.
