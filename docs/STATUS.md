@@ -27,9 +27,9 @@ The official baseline does **not** yet contain a completed secure-link layer, ED
 
 ## Acceptance state
 
-- Host/model tests: candidate evidence exists; run the full applicable matrix locally.
-- ESP-IDF configure/link: required local target-build gate under the current no-hosted-CI decision.
-- Two-board RF: not accepted.
+- Host/model tests: all 15 tests pass in four local compiler/sanitizer configurations on the final RF diagnostic source; hosted CI not run.
+- ESP-IDF configure/link: local v6.0.2 builds pass for all four RF diagnostic roles.
+- Two-board RF: diagnostic exchange passes 1,000/1,000 in each direction; durable delivery and overall M1 acceptance remain pending.
 - Hard-power flash interruption: not accepted.
 - Production security: not accepted.
 
@@ -70,3 +70,24 @@ and also completes 100 initialization cycles. Each selected raw boot log retains
 disabled and frequency unset. Both recorded USB identities and concurrent COM3 /
 COM5 port access are confirmed at 17:30 JST. Two-board RF, hard-power recovery and overall M1
 acceptance remain unrun/unaccepted.
+
+## M1 diagnostic RF (2026-09-07, later update)
+
+The [two-board RF record](M1_RF_CAMPAIGN_2026-09-07.md) supersedes the earlier
+RF-unrun status for diagnostic exchange only. Both certified-module markings
+were confirmed by the user, GPIO38 polarity was checked against Seeed's example,
+and the selected JP lab profile used 921.4 MHz, -9 dBm, SF7/BW125 with bounded
+channel sensing and transmit pauses. Status/RSSI interpretation errors were
+observed on hardware, corrected against the pinned driver, and retested.
+
+On source `834c62f6b58257f3d116e27937c8803731623805`, each direction completed
+1,000 matching PING/PONG exchanges with zero missing/duplicate sequences,
+timeouts, or unexpected resets. Both complete serial logs, image identities,
+and [structured results](M1_RF_RESULTS_2026-09-07.json) are recorded.
+At completion both boards were verified back on TX-disabled initialization
+images, so power cycling does not restart the diagnostic transmissions.
+
+This is remote-receive evidence, not remote durable storage. Durable delivery,
+restart/reconnect recovery, fault injection, controlled power interruption,
+formal antenna combination verification, and overall M1 acceptance remain open.
+Issue #7 was inspected. Neither the Issue nor GitHub Project was modified.
