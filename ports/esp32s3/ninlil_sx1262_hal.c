@@ -1,8 +1,6 @@
 #include "ninlil_sx1262_hal.h"
 #include "ninlil_board_seeed_b2b.h"
 
-#include "freertos/FreeRTOS.h"
-
 #include "esp_rom_sys.h"
 #include "esp_timer.h"
 #include "sx126x_hal.h"
@@ -49,6 +47,9 @@ static esp_err_t transmit(spi_device_handle_t spi, const void *tx, void *rx,
     transaction.length = length * 8u;
     transaction.tx_buffer = tx;
     transaction.rx_buffer = rx;
+    // The radio task exclusively owns this bus/device with no queued work.
+    // NSS stays asserted across command/data calls below. ESP-IDF v6.0.2
+    // rejects finite waits for the unnecessary explicit bus acquisition.
     return spi_device_polling_transmit(spi, &transaction);
 }
 
@@ -162,16 +163,10 @@ sx126x_hal_status_t sx126x_hal_wakeup(const void *opaque)
 
     if (!context || !context->spi)
         return hal_error();
-    if (spi_device_acquire_bus(context->spi,
-                               pdMS_TO_TICKS(RESET_BUSY_TIMEOUT_MS)) != ESP_OK)
+    if (select_radio(context) != 0)
         return hal_error();
-    if (select_radio(context) != 0) {
-        spi_device_release_bus(context->spi);
-        return hal_error();
-    }
     rc = transmit(context->spi, command, NULL, sizeof(command));
     deselect_result = deselect_radio(context);
-    spi_device_release_bus(context->spi);
     if (rc != ESP_OK || deselect_result != 0)
         return hal_error();
     return wait_busy(context, RESET_BUSY_TIMEOUT_MS) == 0 ? SX126X_HAL_STATUS_OK
@@ -190,18 +185,12 @@ sx126x_hal_status_t sx126x_hal_write(const void *opaque, const uint8_t *command,
         (data_length > 0u && !data) ||
         wait_busy(context, context->busy_timeout_ms) != 0)
         return hal_error();
-    if (spi_device_acquire_bus(
-            context->spi, pdMS_TO_TICKS(context->busy_timeout_ms)) != ESP_OK)
+    if (select_radio(context) != 0)
         return hal_error();
-    if (select_radio(context) != 0) {
-        spi_device_release_bus(context->spi);
-        return hal_error();
-    }
     rc = transmit(context->spi, command, NULL, command_length);
     if (rc == ESP_OK)
         rc = transmit(context->spi, data, NULL, data_length);
     deselect_result = deselect_radio(context);
-    spi_device_release_bus(context->spi);
     if (rc != ESP_OK || deselect_result != 0 ||
         wait_busy(context, context->busy_timeout_ms) != 0)
         return hal_error();
@@ -220,18 +209,12 @@ sx126x_hal_status_t sx126x_hal_read(const void *opaque, const uint8_t *command,
         (data_length > 0u && !data) ||
         wait_busy(context, context->busy_timeout_ms) != 0)
         return hal_error();
-    if (spi_device_acquire_bus(
-            context->spi, pdMS_TO_TICKS(context->busy_timeout_ms)) != ESP_OK)
+    if (select_radio(context) != 0)
         return hal_error();
-    if (select_radio(context) != 0) {
-        spi_device_release_bus(context->spi);
-        return hal_error();
-    }
     rc = transmit(context->spi, command, NULL, command_length);
     if (rc == ESP_OK)
         rc = transmit(context->spi, NULL, data, data_length);
     deselect_result = deselect_radio(context);
-    spi_device_release_bus(context->spi);
     if (rc != ESP_OK || deselect_result != 0 ||
         wait_busy(context, context->busy_timeout_ms) != 0)
         return hal_error();
