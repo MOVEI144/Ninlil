@@ -55,3 +55,11 @@ the actual ESP-IDF link, physical RF and power-cut campaigns were not run for
 this host-only slice.
 
 Use repository source and recorded local evidence for the next decision.
+
+## M1 preflight (2026-09-07)
+
+The [local M1 preflight record](M1_PREFLIGHT_2026-09-07.md) records successful
+ESP-IDF v6.0.2 default and TX-disabled Board A initialization builds. One USB
+device is visible on COM4; ROM chip identification did not respond and requires
+manual bootloader entry. No backup, erase, flash, RF or physical initialization
+campaign has been completed by this preflight.
