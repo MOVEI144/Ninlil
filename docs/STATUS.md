@@ -27,9 +27,9 @@ The official baseline does **not** yet contain a completed secure-link layer, ED
 
 ## Acceptance state
 
-- Host/model tests: all 15 tests pass in four local compiler/sanitizer configurations on the final RF diagnostic source; hosted CI not run.
-- ESP-IDF configure/link: local v6.0.2 builds pass for all four RF diagnostic roles.
-- Two-board RF: diagnostic exchange passes 1,000/1,000 in each direction; durable delivery and overall M1 acceptance remain pending.
+- Host/model tests: all 16 tests pass in four local compiler/sanitizer configurations on the durable HIL source; hosted CI not run.
+- ESP-IDF configure/link: local v6.0.2 builds pass for diagnostic roles and six durable/recovery variants.
+- Two-board RF: diagnostic exchange passes 1,000/1,000 and durable delivery passes 100/100 in each direction. Completed-state replay and sender-pending reset recovery pass; overall M1 acceptance remains pending.
 - Hard-power flash interruption: not accepted.
 - Production security: not accepted.
 
@@ -91,3 +91,27 @@ This is remote-receive evidence, not remote durable storage. Durable delivery,
 restart/reconnect recovery, fault injection, controlled power interruption,
 formal antenna combination verification, and overall M1 acceptance remain open.
 Issue #7 was inspected. Neither the Issue nor GitHub Project was modified.
+
+## M1 durable delivery and reset recovery (2026-09-07, 19:20 JST)
+
+The [durable campaign](M1_DURABLE_CAMPAIGN_2026-09-07.md) supersedes the earlier
+durable-unrun status. Source `80ab9acd444b577fc687bf6dbcddbf7e13ec2fa3` adds
+campaign-bound HIL payloads/keys, per-message evidence logs, a read-only Flash
+inspection tool, and a 100-message Flash-file restart test. Runtime and journal
+formats are unchanged.
+
+Both directions pass 100 distinct remote-stored deliveries. Raw device Flash
+snapshots agree with both sides' logs and the sender's SATISFIED outcomes.
+Restarting both boards preserves all 100 IDs and byte-identical journals, with
+zero retransmission or consumer re-offer. A separate run resets A after a
+committed attempt while B cannot respond; the pending ID survives and delivery
+resumes through 100 stored messages. The initial pending-capture script confused
+initialization PASS with delivery PASS; its preserved log and post-reset Flash
+snapshot were reconciled before accepting the recovery result.
+
+[Structured evidence](M1_DURABLE_RESULTS_2026-09-07.json) records image and log
+hashes, each Flash snapshot, replay comparisons, and final device state. Both
+boards are verified back on TX-disabled initialization images, retaining the
+delivery journal. Physical USB disconnect/reconnect, receiver receipt-loss reset,
+physical fault injection, and controlled hard-power cuts remain unrun.
+Issue #7 and overall M1 acceptance remain open; no hosted CI or GitHub mutation.
