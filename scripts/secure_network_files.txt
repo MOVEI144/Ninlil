@@ -86,3 +86,10 @@ third_party/adapted/cbor/backend_cbor_plaintext_4_decode.c
 third_party/adapted/cbor/backend_cbor_plaintext_4_encode.c
 third_party/adapted/cbor/backend_cbor_sig_structure_decode.c
 third_party/adapted/cbor/backend_cbor_sig_structure_encode.c
+embedded/esp32s3/main/secure_bench.c
+embedded/esp32s3/main/secure_bench.h
+embedded/esp32s3/main/secure_bench_crypto.c
+tools/secure_bench/hardware.py
+tools/secure_bench/campaign.py
+tools/secure_bench/restart.py
+tools/secure_bench/build.sh

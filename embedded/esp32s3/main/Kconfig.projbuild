@@ -9,6 +9,8 @@ config NINLIL_M1_MODE_DIAGNOSTIC
 
 config NINLIL_M1_MODE_DELIVERY
     bool "M1.2/M1.3 durable direct delivery"
+config NINLIL_M1_MODE_SECURE_BENCH
+    bool "USB-controlled secure two-board laboratory bench (not product firmware)"
 endchoice
 
 config NINLIL_NODE_ID

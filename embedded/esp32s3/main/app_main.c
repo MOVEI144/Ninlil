@@ -4,6 +4,9 @@
 #include "ninlil_radio.h"
 #include "ninlil_rf_profile.h"
 #include "ninlil_sx1262_radio.h"
+#if defined(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
+#include "secure_bench.h"
+#endif
 
 #include "esp_log.h"
 #include "esp_random.h"
@@ -52,10 +55,13 @@ static const char *const TAG = "ninlil_m1";
 
 void app_main(void);
 
+#if !defined(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
 static uint64_t now_ms(void)
 {
     return (uint64_t)(esp_timer_get_time() / 1000);
 }
+
+#endif
 
 #if defined(CONFIG_NINLIL_M1_MODE_DIAGNOSTIC) &&                               \
     defined(CONFIG_NINLIL_DIAGNOSTIC_INITIATOR)
@@ -106,6 +112,7 @@ static ninlil_rf_profile configured_profile(void)
     return profile;
 }
 
+#if !defined(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
 static int initialize_radio_state(ninlil_radio_link *state)
 {
     ninlil_radio_link_init(state);
@@ -141,6 +148,8 @@ static int recover_physical(ninlil_sx1262_radio *physical,
     }
     return NINLIL_ERR_FAULT;
 }
+
+#endif
 
 #if defined(CONFIG_NINLIL_M1_MODE_DELIVERY)
 static const ninlil_hil_campaign delivery_campaign = {
@@ -756,6 +765,8 @@ void app_main(void)
     }
 #if defined(CONFIG_NINLIL_M1_MODE_DIAGNOSTIC)
     run_diagnostic(&radio);
+#elif defined(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
+    ninlil_secure_bench(&radio);
 #else
     run_delivery(&radio);
 #endif

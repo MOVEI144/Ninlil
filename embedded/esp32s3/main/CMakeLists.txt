@@ -1,5 +1,9 @@
+set(main_sources "app_main.c" "hil_delivery.c")
+if(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
+    list(APPEND main_sources "secure_bench.c" "secure_bench_crypto.c")
+endif()
 idf_component_register(
-    SRCS "app_main.c" "hil_delivery.c"
+    SRCS ${main_sources}
     INCLUDE_DIRS "."
     REQUIRES
         ninlil_network
@@ -8,6 +12,7 @@ idf_component_register(
         esp_hw_support
         esp_timer
         esp_driver_gpio
+        esp_driver_usb_serial_jtag
         esp_system
         freertos
         log
