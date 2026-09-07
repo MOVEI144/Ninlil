@@ -48,6 +48,15 @@ config NINLIL_DELIVERY_MESSAGE_COUNT
     default 100
     depends on NINLIL_M1_MODE_DELIVERY
 
+config NINLIL_DELIVERY_FAULT_CAMPAIGN
+    bool "Inject bounded bench faults (test firmware only)"
+    default n
+    depends on NINLIL_M1_MODE_DELIVERY
+    help
+        Drop/duplicate received frames, reject malformed and wrong-target DATA,
+        mask one TX completion interrupt and restart after consuming sequence 6
+        before its receipt is sent. Never enable for normal operation.
+
 config NINLIL_DELIVERY_CAMPAIGN_ID
     int "Durable HIL campaign identity (retain across recovery boots)"
     range 1 2147483647

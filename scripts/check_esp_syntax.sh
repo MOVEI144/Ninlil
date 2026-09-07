@@ -71,6 +71,12 @@ for compiler in "${CC:-gcc}" "${CLANG:-clang}"; do
     -DCONFIG_NINLIL_M1_MODE_DELIVERY=1 \
     -DCONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT=1 \
     -DCONFIG_NINLIL_RF_TX_ENABLE=1 "$app"
+
+  "$compiler" "${common[@]}" "${active_config[@]}" \
+    -DCONFIG_NINLIL_M1_MODE_DELIVERY=1 \
+    -DCONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN=1 \
+    -DCONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT=1 \
+    -DCONFIG_NINLIL_RF_TX_ENABLE=1 "$app"
 done
 
 real_driver="$root/third_party/sx126x_driver/src"

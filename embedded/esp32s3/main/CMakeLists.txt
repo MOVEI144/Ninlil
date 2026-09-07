@@ -6,6 +6,8 @@ idf_component_register(
         ninlil_radio
         esp_hw_support
         esp_timer
+        esp_driver_gpio
+        esp_system
         freertos
         log
 )

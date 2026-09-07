@@ -11,6 +11,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+#include "driver/gpio.h"
+#include "esp_system.h"
+#endif
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -185,6 +190,41 @@ static int delivery_policy_lookup(void *context, uint16_t peer,
     return NINLIL_OK;
 }
 
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+static bool rx_fault_used[5];
+static unsigned int receipt_fault_count;
+static bool dio_fault_used;
+static bool hold_receipt;
+static ninlil_id held_id;
+
+// Exact fixed-size HIL DATA only; never interpret an arbitrary radio frame.
+static uint32_t fault_sequence(const uint8_t *packet, size_t length)
+{
+    uint32_t campaign;
+
+    if (length != 52u || memcmp(packet, "NL\002\001", 4u) != 0)
+        return 0u;
+    campaign = ((uint32_t)packet[40] << 24) | ((uint32_t)packet[41] << 16) |
+               ((uint32_t)packet[42] << 8) | (uint32_t)packet[43];
+    if (campaign != delivery_campaign.campaign || packet[48] != 0u ||
+        packet[49] != 0u || packet[50] != 0u)
+        return 0u;
+    return packet[51];
+}
+
+static void fault_log(const char *kind, const uint8_t *id_bytes,
+                      uint32_t sequence)
+{
+    ninlil_id id;
+    char text[33];
+
+    memcpy(id.bytes, id_bytes, sizeof(id.bytes));
+    format_id(&id, text);
+    ESP_LOGI(TAG, "HIL_FAULT kind=%s seq=%lu id=%s", kind,
+             (unsigned long)sequence, text);
+}
+#endif
+
 static int pump_radio_rx(ninlil_sx1262_radio *physical, ninlil_radio_link *link)
 {
     unsigned int work;
@@ -204,6 +244,51 @@ static int pump_radio_rx(ninlil_sx1262_radio *physical, ninlil_radio_link *link)
             return rc;
         ESP_LOGD(TAG, "RX len=%u RSSI=%d SNR=%d", (unsigned int)length,
                  (int)info.rssi_dbm, (int)info.snr_db);
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+        {
+            uint32_t sequence = fault_sequence(packet, length);
+            bool duplicate = false;
+
+            if (sequence >= 1u && sequence <= 4u && !rx_fault_used[sequence]) {
+                rx_fault_used[sequence] = true;
+                if (sequence == 1u) {
+                    fault_log("drop-data-after-rx", packet + 10, sequence);
+                    continue;
+                }
+                if (sequence == 2u) {
+                    fault_log("duplicate-data-after-rx", packet + 10, sequence);
+                    duplicate = true;
+                } else if (sequence == 3u) {
+                    fault_log("reserved-flags-after-rx", packet + 10, sequence);
+                    packet[29] |= UINT8_C(0x80);
+                } else {
+                    fault_log("wrong-target-after-rx", packet + 10, sequence);
+                    packet[6] = 0u;
+                    packet[7] = 99u;
+                }
+            } else if (length == 26u && memcmp(packet, "NL\002\002", 4u) == 0 &&
+                       receipt_fault_count < 2u) {
+                receipt_fault_count++;
+                if (receipt_fault_count == 1u) {
+                    fault_log("drop-receipt-after-rx", packet + 8, 0u);
+                    continue;
+                }
+                fault_log("duplicate-receipt-after-rx", packet + 8, 0u);
+                duplicate = true;
+            }
+            // The injected restart clears this boot-local marker. A replayed
+            // sequence 6 must be allowed to send its durable duplicate receipt.
+            if (sequence == 6u && rx_fault_used[4]) {
+                memcpy(held_id.bytes, packet + 10, sizeof(held_id.bytes));
+                hold_receipt = true;
+            }
+            if (duplicate) {
+                rc = ninlil_radio_push_rx(link, packet, length);
+                if (rc != NINLIL_OK)
+                    return rc;
+            }
+        }
+#endif
         rc = ninlil_radio_push_rx(link, packet, length);
         if (rc != NINLIL_OK)
             return rc;
@@ -222,7 +307,30 @@ static int pump_radio_tx(ninlil_sx1262_radio *physical, ninlil_radio_link *link)
     rc = ninlil_radio_begin_tx(link, &packet, &length);
     if (rc != NINLIL_OK)
         return rc;
-    rc = ninlil_sx1262_radio_send(physical, packet, (uint16_t)length);
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+    if (hold_receipt && length == 26u &&
+        memcmp(packet, "NL\002\002", 4u) == 0 &&
+        memcmp(packet + 8, held_id.bytes, sizeof(held_id.bytes)) == 0) {
+        fault_log("hold-receipt-until-restart", packet + 8, 6u);
+        return ninlil_radio_tx_defer(link);
+    }
+    if (!dio_fault_used && fault_sequence(packet, length) == 5u) {
+        if (gpio_intr_disable((gpio_num_t)39) != ESP_OK)
+            return NINLIL_ERR_IO;
+        rc = ninlil_sx1262_radio_send(physical, packet, (uint16_t)length);
+        if (gpio_intr_enable((gpio_num_t)39) != ESP_OK)
+            return NINLIL_ERR_IO;
+        if (rc == NINLIL_ERR_BUSY)
+            return ninlil_radio_tx_defer(link);
+        dio_fault_used = true;
+        fault_log("masked-dio1-tx", packet + 10, 5u);
+        ESP_LOGI(TAG, "HIL_FAULT_TX_RESULT rc=%d expected=%d", rc,
+                 NINLIL_ERR_TIMEOUT);
+        if (rc != NINLIL_ERR_TIMEOUT)
+            return NINLIL_ERR_FAULT;
+    } else
+#endif
+        rc = ninlil_sx1262_radio_send(physical, packet, (uint16_t)length);
     if (rc == NINLIL_OK) {
         ESP_LOGI(TAG, "HIL_LINK_SENT bytes=%u", (unsigned int)length);
         return ninlil_radio_tx_done(link);
@@ -398,6 +506,13 @@ static void run_delivery(ninlil_sx1262_radio *physical)
                      (unsigned long)delivery_campaign.campaign,
                      (unsigned long)sequence, id,
                      (unsigned long)inbound_accepted);
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+            if (sequence == 6u && hold_receipt) {
+                fault_log("receiver-restart-before-receipt",
+                          inbound.message_id.bytes, sequence);
+                esp_restart();
+            }
+#endif
         }
 #if defined(CONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT)
         if (!fatal && NINLIL_CONFIG_RF_TX_ENABLED) {
