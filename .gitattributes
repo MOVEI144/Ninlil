@@ -1,3 +1,12 @@
 *.sh text eol=lf
 tests/sim/manifests/*.txt text eol=lf
 third_party/UPSTREAM.toml text eol=lf
+third_party/adapted/* text eol=lf
+third_party/adapted/cbor/* text eol=lf
+scripts/secure_network_files.txt text eol=lf
+# Unified vendor patches preserve context prefixes and original whitespace.
+third_party/adapted/*.patch -whitespace
+third_party/adapted/cbor/*.patch -whitespace
+# Preserve these two upstream-generated trailing blank lines for the exact ledger.
+third_party/adapted/cbor/backend_cbor_connection_identifier_decode.c whitespace=-blank-at-eof
+third_party/adapted/cbor/backend_cbor_connection_identifier_encode.c whitespace=-blank-at-eof

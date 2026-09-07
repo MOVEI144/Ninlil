@@ -1,0 +1,64 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_id_cred_x_decode.c
++++ third_party/adapted/cbor/backend_cbor_id_cred_x_decode.c
+@@ -23,6 +23,32 @@
+ static bool decode_repeated_id_cred_x_x5t(zcbor_state_t *state, struct id_cred_x_x5t *result);
+ static bool decode_id_cred_x(zcbor_state_t *state, struct id_cred_x *result);
+ 
++
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_decode_id_cred_x(zcbor_state_t *state, void *data)
++{
++    return decode_id_cred_x(state, data);
++}
++
++static bool ninlil_decoder_decode_repeated_id_cred_x_kid(zcbor_state_t *state, void *data)
++{
++    return decode_repeated_id_cred_x_kid(state, data);
++}
++
++static bool ninlil_decoder_decode_repeated_id_cred_x_x5chain(zcbor_state_t *state, void *data)
++{
++    return decode_repeated_id_cred_x_x5chain(state, data);
++}
++
++static bool ninlil_decoder_decode_repeated_id_cred_x_x5t(zcbor_state_t *state, void *data)
++{
++    return decode_repeated_id_cred_x_x5t(state, data);
++}
++
++static bool ninlil_decoder_zcbor_bstr_decode(zcbor_state_t *state, void *data)
++{
++    return zcbor_bstr_decode(state, data);
++}
+ 
+ static bool decode_repeated_id_cred_x_kid(
+ 		zcbor_state_t *state, struct id_cred_x_kid_r *result)
+@@ -51,7 +77,7 @@
+ 	bool int_res;
+ 
+ 	bool tmp_result = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_bstr_decode(state, (&(*result).COSE_X509_bstr)))) && (((*result).COSE_X509_choice = COSE_X509_bstr_c), true))
+-	|| (zcbor_union_elem_code(state) && (((zcbor_list_start_decode(state) && ((zcbor_multi_decode(2, 3, &(*result).COSE_X509_certs_l_certs_count, (zcbor_decoder_t *)zcbor_bstr_decode, state, (&(*result).COSE_X509_certs_l_certs), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))) && (((*result).COSE_X509_choice = COSE_X509_certs_l_c), true)))), zcbor_union_end_code(state), int_res))));
++	|| (zcbor_union_elem_code(state) && (((zcbor_list_start_decode(state) && ((zcbor_multi_decode(2, 3, &(*result).COSE_X509_certs_l_certs_count, ninlil_decoder_zcbor_bstr_decode, state, (&(*result).COSE_X509_certs_l_certs), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))) && (((*result).COSE_X509_choice = COSE_X509_certs_l_c), true)))), zcbor_union_end_code(state), int_res))));
+ 
+ 	if (!tmp_result) {
+ 		zcbor_trace_file(state);
+@@ -124,9 +150,9 @@
+ {
+ 	zcbor_log("%s\r\n", __func__);
+ 
+-	bool tmp_result = (((zcbor_map_start_decode(state) && ((zcbor_present_decode(&((*result).id_cred_x_kid_present), (zcbor_decoder_t *)decode_repeated_id_cred_x_kid, state, (&(*result).id_cred_x_kid))
+-	&& zcbor_present_decode(&((*result).id_cred_x_x5chain_present), (zcbor_decoder_t *)decode_repeated_id_cred_x_x5chain, state, (&(*result).id_cred_x_x5chain))
+-	&& zcbor_present_decode(&((*result).id_cred_x_x5t_present), (zcbor_decoder_t *)decode_repeated_id_cred_x_x5t, state, (&(*result).id_cred_x_x5t))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
++	bool tmp_result = (((zcbor_map_start_decode(state) && ((zcbor_present_decode(&((*result).id_cred_x_kid_present), ninlil_decoder_decode_repeated_id_cred_x_kid, state, (&(*result).id_cred_x_kid))
++	&& zcbor_present_decode(&((*result).id_cred_x_x5chain_present), ninlil_decoder_decode_repeated_id_cred_x_x5chain, state, (&(*result).id_cred_x_x5chain))
++	&& zcbor_present_decode(&((*result).id_cred_x_x5t_present), ninlil_decoder_decode_repeated_id_cred_x_x5t, state, (&(*result).id_cred_x_x5t))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+ 
+ 	if (!tmp_result) {
+ 		zcbor_trace_file(state);
+@@ -148,5 +174,5 @@
+ 	zcbor_state_t states[5];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)result, payload_len_out, states,
+-		(zcbor_decoder_t *)decode_id_cred_x, sizeof(states) / sizeof(zcbor_state_t), 1);
++		ninlil_decoder_decode_id_cred_x, sizeof(states) / sizeof(zcbor_state_t), 1);
+ }

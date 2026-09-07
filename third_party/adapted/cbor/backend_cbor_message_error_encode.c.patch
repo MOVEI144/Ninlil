@@ -1,0 +1,34 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_message_error_encode.c
++++ third_party/adapted/cbor/backend_cbor_message_error_encode.c
+@@ -21,12 +21,23 @@
+ static bool encode_message_error(zcbor_state_t *state, const struct message_error *input);
+ 
+ 
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_encode_message_error(zcbor_state_t *state, void *data)
++{
++    return encode_message_error(state, data);
++}
++
++static bool ninlil_encoder_zcbor_int32_encode(zcbor_state_t *state, const void *data)
++{
++    return zcbor_int32_encode(state, data);
++}
++
+ static bool encode_suites(
+ 		zcbor_state_t *state, const struct suites_r *input)
+ {
+ 	zcbor_log("%s\r\n", __func__);
+ 
+-	bool tmp_result = (((((*input).suites_choice == suites_int_l_c) ? ((zcbor_list_start_encode(state, 3) && ((zcbor_multi_encode_minmax(2, 3, &(*input).suites_int_l_int_count, (zcbor_encoder_t *)zcbor_int32_encode, state, (&(*input).suites_int_l_int), sizeof(int32_t))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 3)))
++	bool tmp_result = (((((*input).suites_choice == suites_int_l_c) ? ((zcbor_list_start_encode(state, 3) && ((zcbor_multi_encode_minmax(2, 3, &(*input).suites_int_l_int_count, ninlil_encoder_zcbor_int32_encode, state, (&(*input).suites_int_l_int), sizeof(int32_t))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 3)))
+ 	: (((*input).suites_choice == suites_int_c) ? ((zcbor_int32_encode(state, (&(*input).suites_int))))
+ 	: false))));
+ 
+@@ -88,5 +99,5 @@
+ 	zcbor_state_t states[5];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)input, payload_len_out, states,
+-		(zcbor_decoder_t *)encode_message_error, sizeof(states) / sizeof(zcbor_state_t), 2);
++		ninlil_decoder_encode_message_error, sizeof(states) / sizeof(zcbor_state_t), 2);
+ }

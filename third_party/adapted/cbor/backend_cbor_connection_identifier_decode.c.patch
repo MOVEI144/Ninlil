@@ -1,0 +1,23 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_connection_identifier_decode.c
++++ third_party/adapted/cbor/backend_cbor_connection_identifier_decode.c
+@@ -29,6 +29,12 @@
+ static bool decode_connection_identifier(zcbor_state_t *state, struct connection_identifier_r *result);
+ 
+ 
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_decode_connection_identifier(zcbor_state_t *state, void *data)
++{
++    return decode_connection_identifier(state, data);
++}
++
+ static bool decode_connection_identifier(
+ 		zcbor_state_t *state, struct connection_identifier_r *result)
+ {
+@@ -54,6 +60,6 @@
+ 	zcbor_state_t states[3];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)result, payload_len_out, states,
+-		(zcbor_decoder_t *)decode_connection_identifier, sizeof(states) / sizeof(zcbor_state_t), 1);
++		ninlil_decoder_decode_connection_identifier, sizeof(states) / sizeof(zcbor_state_t), 1);
+ }
+ 

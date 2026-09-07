@@ -1,0 +1,49 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_message_1_decode.c
++++ third_party/adapted/cbor/backend_cbor_message_1_decode.c
+@@ -22,13 +22,29 @@
+ static bool decode_message_1(zcbor_state_t *state, struct message_1 *result);
+ 
+ 
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_decode_ead_x(zcbor_state_t *state, void *data)
++{
++    return decode_ead_x(state, data);
++}
++
++static bool ninlil_decoder_decode_message_1(zcbor_state_t *state, void *data)
++{
++    return decode_message_1(state, data);
++}
++
++static bool ninlil_decoder_zcbor_int32_decode(zcbor_state_t *state, void *data)
++{
++    return zcbor_int32_decode(state, data);
++}
++
+ static bool decode_suites(
+ 		zcbor_state_t *state, struct suites_r *result)
+ {
+ 	zcbor_log("%s\r\n", __func__);
+ 	bool int_res;
+ 
+-	bool tmp_result = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_list_start_decode(state) && ((zcbor_multi_decode(2, 3, &(*result).suites_int_l_int_count, (zcbor_decoder_t *)zcbor_int32_decode, state, (&(*result).suites_int_l_int), sizeof(int32_t))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))) && (((*result).suites_choice = suites_int_l_c), true))
++	bool tmp_result = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_list_start_decode(state) && ((zcbor_multi_decode(2, 3, &(*result).suites_int_l_int_count, ninlil_decoder_zcbor_int32_decode, state, (&(*result).suites_int_l_int), sizeof(int32_t))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))) && (((*result).suites_choice = suites_int_l_c), true))
+ 	|| (zcbor_union_elem_code(state) && (((zcbor_int32_decode(state, (&(*result).suites_int)))) && (((*result).suites_choice = suites_int_c), true)))), zcbor_union_end_code(state), int_res))));
+ 
+ 	if (!tmp_result) {
+@@ -64,7 +80,7 @@
+ {
+ 	zcbor_log("%s\r\n", __func__);
+ 
+-	bool tmp_result = (zcbor_multi_decode(1, 3, &(*result).EAD_1_count, (zcbor_decoder_t *)decode_ead_x, state, (&(*result).EAD_1), sizeof(struct ead_x)));
++	bool tmp_result = (zcbor_multi_decode(1, 3, &(*result).EAD_1_count, ninlil_decoder_decode_ead_x, state, (&(*result).EAD_1), sizeof(struct ead_x)));
+ 
+ 	if (!tmp_result) {
+ 		zcbor_trace_file(state);
+@@ -111,5 +127,5 @@
+ 	zcbor_state_t states[4];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)result, payload_len_out, states,
+-		(zcbor_decoder_t *)decode_message_1, sizeof(states) / sizeof(zcbor_state_t), 10);
++		ninlil_decoder_decode_message_1, sizeof(states) / sizeof(zcbor_state_t), 10);
+ }

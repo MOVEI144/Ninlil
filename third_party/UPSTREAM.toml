@@ -7,3 +7,28 @@ license = "BSD-3-Clause-Clear"
 usage = "SX1261/SX1262 command driver; LoRa subset only"
 excluded = ["LR-FHSS", "BPSK"]
 fetch_script = "scripts/fetch_sx126x_driver.sh"
+
+[[dependency]]
+name = "libedhoc"
+repository = "https://github.com/kamil-kielbasa/libedhoc.git"
+version = "v1.13.0"
+commit = "2b245e4a8aedb675ded18d085801e20a980e8e5c"
+license = "MIT"
+usage = "RFC 9528 method 0 / suite 2; custom bounded allocator; no logging"
+fetch_script = "scripts/fetch_edhoc.sh"
+patch_ledger = "third_party/adapted/PROVENANCE.json"
+
+[[dependency]]
+name = "zcbor"
+repository = "https://github.com/NordicSemiconductor/zcbor.git"
+commit = "d3093b5684f62268c7f27f8a5079f166772619de"
+license = "Apache-2.0"
+usage = "Pinned libedhoc CBOR backend, zero-length-copy compatibility patch"
+
+[[dependency]]
+name = "mbedtls-host-reference"
+repository = "https://github.com/Mbed-TLS/mbedtls.git"
+commit = "edb8fec9882084344a314368ac7fd957a187519c"
+version = "vendored snapshot reporting 3.5.1"
+license = "Apache-2.0 OR GPL-2.0-or-later"
+usage = "Host reference tests only; ESP-IDF target uses its own PSA/TF-PSA-Crypto"

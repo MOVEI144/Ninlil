@@ -1,0 +1,23 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_connection_identifier_encode.c
++++ third_party/adapted/cbor/backend_cbor_connection_identifier_encode.c
+@@ -29,6 +29,12 @@
+ static bool encode_connection_identifier(zcbor_state_t *state, const struct connection_identifier_r *input);
+ 
+ 
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_encode_connection_identifier(zcbor_state_t *state, void *data)
++{
++    return encode_connection_identifier(state, data);
++}
++
+ static bool encode_connection_identifier(
+ 		zcbor_state_t *state, const struct connection_identifier_r *input)
+ {
+@@ -54,6 +60,6 @@
+ 	zcbor_state_t states[3];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)input, payload_len_out, states,
+-		(zcbor_decoder_t *)encode_connection_identifier, sizeof(states) / sizeof(zcbor_state_t), 1);
++		ninlil_decoder_encode_connection_identifier, sizeof(states) / sizeof(zcbor_state_t), 1);
+ }
+ 

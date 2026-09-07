@@ -1,0 +1,79 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_plaintext_3_decode.c
++++ third_party/adapted/cbor/backend_cbor_plaintext_3_decode.c
+@@ -27,6 +27,37 @@
+ static bool decode_plaintext_3(zcbor_state_t *state, struct plaintext_3 *result);
+ 
+ 
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_decode_ead_y(zcbor_state_t *state, void *data)
++{
++    return decode_ead_y(state, data);
++}
++
++static bool ninlil_decoder_decode_plaintext_3(zcbor_state_t *state, void *data)
++{
++    return decode_plaintext_3(state, data);
++}
++
++static bool ninlil_decoder_decode_repeated_map_kid(zcbor_state_t *state, void *data)
++{
++    return decode_repeated_map_kid(state, data);
++}
++
++static bool ninlil_decoder_decode_repeated_map_x5chain(zcbor_state_t *state, void *data)
++{
++    return decode_repeated_map_x5chain(state, data);
++}
++
++static bool ninlil_decoder_decode_repeated_map_x5t(zcbor_state_t *state, void *data)
++{
++    return decode_repeated_map_x5t(state, data);
++}
++
++static bool ninlil_decoder_zcbor_bstr_decode(zcbor_state_t *state, void *data)
++{
++    return zcbor_bstr_decode(state, data);
++}
++
+ static bool decode_repeated_map_kid(
+ 		zcbor_state_t *state, struct map_kid_r *result)
+ {
+@@ -54,7 +85,7 @@
+ 	bool int_res;
+ 
+ 	bool tmp_result = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_bstr_decode(state, (&(*result).COSE_X509_bstr)))) && (((*result).COSE_X509_choice = COSE_X509_bstr_c), true))
+-	|| (zcbor_union_elem_code(state) && (((zcbor_list_start_decode(state) && ((zcbor_multi_decode(2, 3, &(*result).COSE_X509_certs_l_certs_count, (zcbor_decoder_t *)zcbor_bstr_decode, state, (&(*result).COSE_X509_certs_l_certs), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))) && (((*result).COSE_X509_choice = COSE_X509_certs_l_c), true)))), zcbor_union_end_code(state), int_res))));
++	|| (zcbor_union_elem_code(state) && (((zcbor_list_start_decode(state) && ((zcbor_multi_decode(2, 3, &(*result).COSE_X509_certs_l_certs_count, ninlil_decoder_zcbor_bstr_decode, state, (&(*result).COSE_X509_certs_l_certs), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))) && (((*result).COSE_X509_choice = COSE_X509_certs_l_c), true)))), zcbor_union_end_code(state), int_res))));
+ 
+ 	if (!tmp_result) {
+ 		zcbor_trace_file(state);
+@@ -127,9 +158,9 @@
+ {
+ 	zcbor_log("%s\r\n", __func__);
+ 
+-	bool tmp_result = (((zcbor_map_start_decode(state) && ((zcbor_present_decode(&((*result).map_kid_present), (zcbor_decoder_t *)decode_repeated_map_kid, state, (&(*result).map_kid))
+-	&& zcbor_present_decode(&((*result).map_x5chain_present), (zcbor_decoder_t *)decode_repeated_map_x5chain, state, (&(*result).map_x5chain))
+-	&& zcbor_present_decode(&((*result).map_x5t_present), (zcbor_decoder_t *)decode_repeated_map_x5t, state, (&(*result).map_x5t))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
++	bool tmp_result = (((zcbor_map_start_decode(state) && ((zcbor_present_decode(&((*result).map_kid_present), ninlil_decoder_decode_repeated_map_kid, state, (&(*result).map_kid))
++	&& zcbor_present_decode(&((*result).map_x5chain_present), ninlil_decoder_decode_repeated_map_x5chain, state, (&(*result).map_x5chain))
++	&& zcbor_present_decode(&((*result).map_x5t_present), ninlil_decoder_decode_repeated_map_x5t, state, (&(*result).map_x5t))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_map_end_decode(state))));
+ 
+ 	if (!tmp_result) {
+ 		zcbor_trace_file(state);
+@@ -164,7 +195,7 @@
+ {
+ 	zcbor_log("%s\r\n", __func__);
+ 
+-	bool tmp_result = (zcbor_multi_decode(1, 3, &(*result).EAD_3_count, (zcbor_decoder_t *)decode_ead_y, state, (&(*result).EAD_3), sizeof(struct ead_y)));
++	bool tmp_result = (zcbor_multi_decode(1, 3, &(*result).EAD_3_count, ninlil_decoder_decode_ead_y, state, (&(*result).EAD_3), sizeof(struct ead_y)));
+ 
+ 	if (!tmp_result) {
+ 		zcbor_trace_file(state);
+@@ -208,5 +239,5 @@
+ 	zcbor_state_t states[6];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)result, payload_len_out, states,
+-		(zcbor_decoder_t *)decode_plaintext_3, sizeof(states) / sizeof(zcbor_state_t), 8);
+-}
++		ninlil_decoder_decode_plaintext_3, sizeof(states) / sizeof(zcbor_state_t), 8);
++}

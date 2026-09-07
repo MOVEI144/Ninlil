@@ -15,3 +15,5 @@ embedded/esp32s3/hil_local.h
 /.baseline-build/
 /.qa-*/
 /.verify-*/
+/third_party/libedhoc/
+/third_party/sx126x_driver/
