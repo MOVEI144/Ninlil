@@ -21,6 +21,7 @@ typedef int sx126x_status_t;
 #define SX126X_IRQ_ALL 0xFFFFu
 #define SX126X_CHIP_MODE_RX 5
 #define SX126X_CMD_STATUS_DATA_AVAILABLE 2
+#define SX126X_CMD_STATUS_RFU 1
 #define SX126X_CMD_STATUS_CMD_TX_DONE 6
 typedef struct sx126x_chip_status_s {
     int cmd_status;

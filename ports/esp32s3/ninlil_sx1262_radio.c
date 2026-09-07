@@ -306,9 +306,13 @@ static int check_jp_channel(ninlil_sx1262_radio *radio,
     radio->cca_chip_mode = (uint8_t)status.chip_mode;
     radio->cca_cmd_status = (uint8_t)status.cmd_status;
     if (status.chip_mode != SX126X_CHIP_MODE_RX ||
-        (status.cmd_status != SX126X_CMD_STATUS_DATA_AVAILABLE &&
+        (status.cmd_status != SX126X_CMD_STATUS_RFU &&
+         status.cmd_status != SX126X_CMD_STATUS_DATA_AVAILABLE &&
          status.cmd_status != SX126X_CMD_STATUS_CMD_TX_DONE))
         goto restore;
+    // RFU=1 is observed in RX on this silicon and is not command-success
+    // evidence. CCA still requires RX mode and independent RSSI readings;
+    // TX completion later requires its own TX_DONE IRQ.
     start = esp_timer_get_time();
     if (start < 0)
         goto restore;

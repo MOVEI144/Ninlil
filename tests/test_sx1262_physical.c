@@ -58,6 +58,7 @@ static int fake_levels[64];
 static int64_t fake_time_us;
 static bool fake_clock_stalled;
 static bool fake_bad_chip_status;
+static int fake_cmd_status;
 static int16_t fake_rssi;
 static unsigned int fake_rssi_calls;
 static unsigned int fake_busy_sample;
@@ -81,7 +82,7 @@ sx126x_status_t sx126x_get_status(const void *context,
 {
     (void)context;
     status->chip_mode = fake_bad_chip_status ? 7 : SX126X_CHIP_MODE_RX;
-    status->cmd_status = SX126X_CMD_STATUS_DATA_AVAILABLE;
+    status->cmd_status = fake_cmd_status;
     return SX126X_STATUS_OK;
 }
 
@@ -131,6 +132,7 @@ static void reset_fakes(void)
     fake_time_us = 0;
     fake_clock_stalled = false;
     fake_bad_chip_status = false;
+    fake_cmd_status = SX126X_CMD_STATUS_RFU;
     fake_rssi = -100;
     fake_rssi_calls = 0u;
     fake_busy_sample = 0u;
@@ -761,6 +763,19 @@ static int test_jp_fail_closed(void)
     CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
     CHECK(fake_rssi_calls == 0u);
     fake_bad_chip_status = false;
+    {
+        static const int invalid_statuses[] = {0, 3, 4, 5, 7};
+        size_t index;
+
+        for (index = 0u;
+             index < sizeof(invalid_statuses) / sizeof(invalid_statuses[0]);
+             index++) {
+            fake_cmd_status = invalid_statuses[index];
+            CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
+            CHECK(fake_rssi_calls == 0u && fake_set_tx_calls == 0u);
+        }
+        fake_cmd_status = SX126X_CMD_STATUS_RFU;
+    }
     fake_rssi_error_sample = 5u;
     CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
     CHECK(radio.rx_active && fake_bandwidth == SX126X_LORA_BW_125);
