@@ -1,0 +1,94 @@
+{
+  "date_jst": "2026-09-08",
+  "source_revision": "dfde82404b7a0d444e9457de06183d2354162c6e",
+  "result": "PASS",
+  "started_utc": "2026-09-07T16:58:03.830001+00:00",
+  "finished_utc": "2026-09-07T16:59:28.265921+00:00",
+  "checks": [
+    "three real EDHOC pairs with independent end-to-end and hop contexts",
+    "10 encrypted opaque packets each direction through physical Relay; maximum 232-byte hop frame",
+    "tamper/wrong source/stale epoch/premature and wrong ACK rejected; duplicate custody and withheld TX retained",
+    "actual Relay MCU reset: opaque custody and drain restored; fresh hops resume unchanged end-to-end ciphertext",
+    "8-slot physical Flash custody saturation backpressures without loss; drain survives reopen and removal is ready only when empty"
+  ],
+  "matched_rf_frames": 155,
+  "unique_counter_envelopes": 167,
+  "source_owned_and_host_observed_packets": 31,
+  "rebooted_relay_packet_unchanged": true,
+  "new_device_backups_created": false,
+  "local_ctest_passes": 108,
+  "adapted_vendor_tests": 711,
+  "fuzz_runs": 20000,
+  "hosted_ci_run": false,
+  "boards": {
+    "a": {
+      "serial": "E0:72:A1:F7:FF:0C",
+      "protected_ranges_device_md5": [
+        {
+          "offset": 36864,
+          "size": 28672,
+          "md5": "4fc15162ee25093ad4ba8ae9142aebac"
+        },
+        {
+          "offset": 2097152,
+          "size": 147456,
+          "md5": "42498e239ff63ad9361f6f0dde0b6e76"
+        }
+      ],
+      "preserved_before_after_match": true,
+      "tested_app_sha256": "ecd1871496b081e8090fdf8a85e28b5d54ba8aa90209551e737d47d423f96c23",
+      "final_tx_disabled": true,
+      "final_initialization_cycles": 100
+    },
+    "b": {
+      "serial": "E0:72:A1:D8:3E:74",
+      "protected_ranges_device_md5": [
+        {
+          "offset": 36864,
+          "size": 28672,
+          "md5": "4fc15162ee25093ad4ba8ae9142aebac"
+        },
+        {
+          "offset": 2097152,
+          "size": 147456,
+          "md5": "8a44cdf0a784f61da298e1fd533ff747"
+        }
+      ],
+      "preserved_before_after_match": true,
+      "tested_app_sha256": "025755d1603c97888ec5deff4e72e58d9916f69d982017f53d7b9a9188e5e732",
+      "final_tx_disabled": true,
+      "final_initialization_cycles": 100
+    },
+    "c": {
+      "serial": "E0:72:A1:D7:77:28",
+      "protected_ranges_device_md5": [
+        {
+          "offset": 36864,
+          "size": 28672,
+          "md5": "540d29534148d81aafe55dbddc03d071"
+        },
+        {
+          "offset": 1638400,
+          "size": 4194304,
+          "md5": "af39418e935844b094b22f41e47c89b9"
+        }
+      ],
+      "preserved_before_after_match": true,
+      "tested_app_sha256": "928b6919379e2e2e6c5a3bb90db1e23252ed23ee3407ecf31ec8dcfc373c3ec2",
+      "final_tx_disabled": true,
+      "final_initialization_cycles": 100
+    }
+  },
+  "not_established": [
+    "autonomous on-device network pump/control dispatch",
+    "MCU Core/application delivery receipts",
+    "automatic route selection/failover and Coordinator dependency removal",
+    "production enrollment/persisted private credentials",
+    "timed Flash-write power cut and field range/interference"
+  ],
+  "artifact_manifest": {
+    "path": ".verify-m1-evidence/relay-20260908-artifact-manifest.json",
+    "files": 73,
+    "sha256": "72ca4b96081352314bcb83c53bae64ffa49d62e4e772f79d601d058dce68f7cb"
+  }
+}

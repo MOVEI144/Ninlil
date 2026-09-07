@@ -40,10 +40,18 @@ tamper/replay/rekey rejection, and fragmented-control failures. Independent
 capture reconciliation matched 556 physical RF frames. Both original full Flash
 images were restored and 100 TX-disabled initialization cycles passed per board.
 
-This is USB-owned library/RF integration evidence, not autonomous product pump
-or Core application delivery evidence. Secure multi-hop RF, product integration,
-controlled power interruption, field behavior and production security remain
-unaccepted. Earlier plaintext tests remain separate dated evidence.
+A subsequent [three-board Relay campaign](THREE_BOARD_RELAY_HIL_2026-09-08.md)
+passed fixed-path encrypted forwarding, actual Flash custody and Relay reset
+recovery, duplicate/loss/invalid-ACK handling, 8-slot capacity backpressure and
+local drain readiness. Independent analysis matched 155 RF frames and 31
+source-owned/host-observed test packets. No new backups were made as requested;
+protected data checksums matched on all boards and all finish TX-disabled.
+
+These are USB-owned library/RF integration results, not autonomous product pump
+or MCU Core/application receipt evidence. Automatic route failover, Coordinator
+dependency removal, product integration, controlled power interruption, field
+behavior and production security remain unaccepted. Earlier plaintext tests
+remain separate dated evidence.
 
 ## Acceptance state of the earlier durable HIL baseline
 
