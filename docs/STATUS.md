@@ -31,6 +31,7 @@ The official baseline does **not** yet contain a completed secure-link layer, ED
 - ESP-IDF configure/link: local v6.0.2 builds pass for diagnostic roles and six durable/recovery variants.
 - Two-board RF: diagnostic exchange passes 1,000/1,000 and durable delivery passes 100/100 in each direction. Completed-state replay and sender-pending reset recovery pass; overall M1 acceptance remains pending.
 - Hard-power flash interruption: not accepted.
+- USB-only supply removal/reconnect: pending data automatically recovers through 100 remote-stored messages; active-execution cut timing and early physical boot/reset-reason evidence remain unverified.
 - Production security: not accepted.
 
 The physical M1 procedure is now defined in
@@ -115,3 +116,20 @@ boards are verified back on TX-disabled initialization images, retaining the
 delivery journal. Physical USB disconnect/reconnect, receiver receipt-loss reset,
 physical fault injection, and controlled hard-power cuts remain unrun.
 Issue #7 and overall M1 acceptance remain open; no hosted CI or GitHub mutation.
+
+## USB supply removal and automatic recovery (2026-09-07, 19:59 JST)
+
+The user confirmed USB-only power and physically disconnected/reconnected both
+boards. The [USB record](M1_USB_POWER_2026-09-07.md) and
+[structured evidence](M1_USB_POWER_RESULTS_2026-09-07.json) show unchanged USB
+identities, recovery of the pending message ID, and 100 matching remote-stored
+messages verified in both Flash journals. After reconnect, no host reset was
+needed for delivery to resume. Both boards are back on TX-disabled images.
+
+The initial monitor timed out and reset A into its loader before physical
+unplug. The follow-up captured both boards absent and their automatic return;
+early physical boot/reset-reason logs were not captured. This proves retained
+pending-work recovery across USB supply removal, not a cut during active
+execution or Flash programming, and does not close the entire canonical USB
+phase. The user has no controlled power-cut fixture, so precise Flash power
+interruption remains unrun. Firmware source remains the verified `80ab9ac`.
