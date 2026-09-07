@@ -325,7 +325,9 @@ static int check_jp_channel(ninlil_sx1262_radio *radio,
         if (sx126x_get_rssi_inst(&radio->hal, &rssi) != SX126X_STATUS_OK)
             break;
         radio->cca_rssi_dbm = rssi;
-        if (rssi < -127)
+        // Semtech rounds raw 255 down to -128 dBm (-raw >> 1).
+        // This is the representable noise floor, not an I/O error sentinel.
+        if (rssi < -128 || rssi > 0)
             break;
         if (rssi >= -80) {
             radio->channel_busy++;

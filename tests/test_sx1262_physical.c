@@ -721,6 +721,7 @@ static int test_jp_channel_and_pause(void)
     CHECK(fake_set_tx_calls == 0u && radio.channel_busy == 2u);
     fake_busy_sample = 0u;
     fake_rssi_calls = 0u;
+    fake_rssi = -128;
     fake_tx_notifies = true;
     fake_tx_completion_irq = SX126X_IRQ_TX_DONE;
     CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_OK);
@@ -776,6 +777,14 @@ static int test_jp_fail_closed(void)
         }
         fake_cmd_status = SX126X_CMD_STATUS_RFU;
     }
+    fake_rssi = -129;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
+    CHECK(fake_set_tx_calls == 0u);
+    fake_rssi = 1;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
+    CHECK(fake_set_tx_calls == 0u);
+    fake_rssi = -100;
+    fake_rssi_calls = 0u;
     fake_rssi_error_sample = 5u;
     CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
     CHECK(radio.rx_active && fake_bandwidth == SX126X_LORA_BW_125);
