@@ -31,8 +31,24 @@ try:
         board.call('O', expected=-14)
     a.call('L', expected=-12)
     c.passed('actual MCU reset retained committed Join/revoke records but no session or permission')
+    message = bytes(i % 256 for i in range(300))
+    def nf(index):
+        return b'NF\x01\x03' + bytes([index, 2]) + (300).to_bytes(2, 'big') + bytes([1])*8 + message[index*224:(index+1)*224]
+    b.call('F')
+    b.call('G', c.air(a, b, nf(0)), expected=-7)
+    changed = bytearray(nf(0))
+    changed[-1] ^= 1
+    b.call('G', c.air(a, b, bytes(changed)), expected=-5)
+    b.call('G', c.air(a, b, nf(1)), expected=-1)
+    b.call('F')
+    b.call('G', c.air(a, b, nf(0)), expected=-7)
+    c.time.sleep(5.2)  # Deliberately cross the defined 5 s reassembly deadline.
+    b.call('G', c.air(a, b, nf(1)), expected=-10)
+    c.fragment(a, b, message, 3, [1, 0])
+    c.passed('physical fragmented-control conflict, poison, timeout, and clean recovery')
+
     fingerprint = c.handshake(a, b, keys)
-    assert fingerprint.hex() != prior['tests'][2]['fingerprint']
+    assert fingerprint.hex() != next(t['fingerprint'] for t in prior['tests'] if 'fingerprint' in t)
     rc, _ = b.call('U', c.air(a, b, stale), expected=None)
     assert rc != 0
     a.call('L', expected=-12)  # EDHOC alone is not re-enrollment.

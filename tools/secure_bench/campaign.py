@@ -86,7 +86,7 @@ def air(sender, receiver, frame):
 
 def fragment(sender, receiver, message, kind, order=None):
     receiver.call('F')
-    token = secrets.token_bytes(8)
+    token = (secrets.randbelow(2**64 - 1) + 1).to_bytes(8, 'big')
     count = (len(message) + 223) // 224
     order = list(range(count)) if order is None else order
     output = b''

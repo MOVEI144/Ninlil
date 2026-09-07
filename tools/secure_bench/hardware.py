@@ -45,7 +45,7 @@ def backup(board):
 def flash(board):
     original = backup(board)
     assert original[0x224000:0x284000] == b'\xff' * 0x60000
-    folder = EVIDENCE / f'secure-20260908-{board}-r3'
+    folder = EVIDENCE / f'secure-20260908-{board}-r4'
     manifest = json.loads((folder / 'hashes.json').read_text())
     for name, digest in manifest.items():
         assert Path(name).name == name
@@ -64,7 +64,16 @@ def flash(board):
                      'CONFIG_NINLIL_RF_GATE_RX_ACTIVE_HIGH=y',
                      'CONFIG_NINLIL_RF_GATE_POLARITY_CONFIRMED=y']:
         assert required in config, required
-    assert 'Ninlil project CI PASS' in (EVIDENCE / 'secure-20260908-local.log').read_text()
+    local = (EVIDENCE / 'secure-20260908-local.log').read_text()
+    assert local.count('100% tests passed, 0 tests failed out of 27') == 4
+    for gate in ('Ninlil ESP32-S3 strict syntax PASS', 'Ninlil static analysis PASS',
+                 'libedhoc/submodule pins and committed compatibility patch ledger PASS'):
+        assert gate in local
+    # Vendor sources are unchanged and hash-checked. Reuse their completed
+    # verification while the full local repeat continues alongside HIL.
+    vendor = (EVIDENCE / '456-adapted-vendor-final.log').read_text()
+    assert '711 Tests 0 Failures 0 Ignored' in vendor
+    assert 'SECURE_BENCH_TARGET_ANALYZER_PASS' in (EVIDENCE / 'secure-20260908-target-analyze.log').read_text()
     images = [(0, (folder / 'bootloader.bin').read_bytes()),
               (0x8000, (folder / 'partitions.bin').read_bytes()),
               (0x10000, (folder / 'app.bin').read_bytes())]
@@ -106,8 +115,37 @@ def restore(board):
         esp._port.close()
 
 
+def update(board):
+    backup(board)
+    old = EVIDENCE / f'secure-20260908-{board}-r3'
+    new = EVIDENCE / f'secure-20260908-{board}-r4'
+    for folder in (old, new):
+        for name, digest in json.loads((folder / 'hashes.json').read_text()).items():
+            assert Path(name).name == name
+            assert hashlib.sha256((folder / name).read_bytes()).hexdigest() == digest
+    assert (old / 'sdkconfig.h').read_bytes() == (new / 'sdkconfig.h').read_bytes()
+    assert (old / 'partitions.bin').read_bytes() == (new / 'partitions.bin').read_bytes()
+    esp = connect(board)
+    try:
+        app = (old / 'app.bin').read_bytes()
+        assert esp.flash_md5sum(0x10000, len(app)).lower() == hashlib.md5(app).hexdigest()
+        data = b''.join(esp.read_flash(off, 0x8000) for off in range(0x224000, 0x284000, 0x8000))
+        assert esp.flash_md5sum(0x224000, 0x60000).lower() == hashlib.md5(data).hexdigest()
+        with (EVIDENCE / f'secure-20260908-run1-{board}-control-sessions.bin').open('xb') as output:
+            output.write(data)
+        # Only replace the known bench app; preserve every journal/counter byte.
+        images = [(0x10000, (new / 'app.bin').read_bytes())]
+        esp = esptool.run_stub(esp)
+        attach_flash(esp)
+        write_flash(esp, images, flash_freq='80m', flash_mode='dio', flash_size='8MB', no_progress=True)
+        verify_flash(esp, images, flash_freq='80m', flash_mode='dio', flash_size='8MB')
+        print('SECURE_UPDATE_VERIFIED', board, hashlib.sha256(images[0][1]).hexdigest(), flush=True)
+    finally:
+        esp._port.close()
+
+
 if __name__ == '__main__':
     action, board = sys.argv[1:]
     assert board in IDENTITIES
-    assert action in ('flash', 'restore')
-    (flash if action == 'flash' else restore)(board)
+    assert action in ('flash', 'restore', 'update')
+    {'flash': flash, 'restore': restore, 'update': update}[action](board)

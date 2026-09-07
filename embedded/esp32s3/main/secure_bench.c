@@ -131,7 +131,8 @@ static int open_session(size_t *written)
     memcpy(counter_config.session_fingerprint, material.fingerprint, 16u);
     counter_config.direction = CONFIG_NINLIL_NODE_ID == 1 ? 0u : 1u;
     counter_config.reservation_size = 32u;
-    counter_config.max_counter_exclusive = UINT64_C(1) << 40;
+    /* 32-counter reservations must also fit the store's 32-bit generation. */
+    counter_config.max_counter_exclusive = UINT64_C(1000000);
     /* Fresh authenticated material only; this explicit bench operation reuses
      * slot 0. The operator backs up all Flash before enabling this image. */
     if (rc == NINLIL_OK)

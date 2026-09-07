@@ -46,3 +46,17 @@ executes the campaign, leaving both MCUs in download mode. Use `hardware.py
 restore a` and `restore b` after capture; it preserves control/counter readback
 and verifies the complete original Flash digest after restoration. Do not
 replace existing evidence labels or silently erase a nonempty journal.
+
+`restart.py <new-label> <completed-campaign-label>` performs actual MCU resets,
+checks persisted Join/revoke records without restoring authorization, tests
+fragment conflict/expiry, and repeats fresh crypto over RF. This is software
+reset, not power loss; ephemeral credentials require fresh USB pinning.
+`analyze.py <labels...>` independently pairs all successful physical TX/RX
+captures and checks monotonic, nonreused session counters in emitted envelopes.
+The main campaign requires 504 matched RF frames; the restart campaign adds 52.
+
+The `update` hardware action is a pinned r3-to-r4 app-only correction for the
+initial lab counter configuration. It saves the current control/session area
+and verifies it against the MCU before writing. It never clears stored records.
+The fixed bench reserves 32 counters per block with a 1,000,000-counter limit,
+which fits the store's 32-bit generation bound. Production checks are unchanged.
