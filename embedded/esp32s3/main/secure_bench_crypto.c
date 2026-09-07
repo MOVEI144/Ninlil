@@ -6,6 +6,7 @@
 static uint8_t private_key[32], public_key[65], remote_key[65];
 static uint8_t remote_identity[32];
 static int generated, verified;
+static uint16_t remote_node;
 
 int ninlil_bench_identity(uint8_t output[65])
 {
@@ -62,7 +63,7 @@ static int verify(void *ctx, struct edhoc_auth_creds *cred, const uint8_t **key,
     (void)ctx;
     if (cred->label != EDHOC_COSE_HEADER_KID ||
         cred->key_id.encode_type != EDHOC_ENCODE_TYPE_INTEGER ||
-        cred->key_id.key_id_int != CONFIG_NINLIL_PEER_ID)
+        cred->key_id.key_id_int != remote_node)
         return EDHOC_ERROR_CREDENTIALS_FAILURE;
     cred->key_id.cred = remote_key;
     cred->key_id.cred_len = sizeof(remote_key);
@@ -83,11 +84,12 @@ static int identity(void *ctx, uint8_t output[32])
 }
 
 int ninlil_bench_handshake(ninlil_edhoc *h, const uint8_t peer[65],
-                           uint64_t now_ms)
+                           uint16_t node, uint64_t now_ms)
 {
     ninlil_edhoc_config c = {0};
     size_t length;
-    if (!generated || peer[0] != 4u)
+    if (!generated || peer[0] != 4u || node < 1u || node > 3u ||
+        node == CONFIG_NINLIL_NODE_ID)
         return NINLIL_ERR_STATE;
     memcpy(remote_key, peer, sizeof(remote_key));
     if (psa_hash_compute(PSA_ALG_SHA_256, peer, 65u, remote_identity, 32u,
@@ -95,11 +97,12 @@ int ninlil_bench_handshake(ninlil_edhoc *h, const uint8_t peer[65],
         length != 32u)
         return NINLIL_ERR_IO;
     verified = 0;
+    remote_node = node;
     c.credentials.fetch = fetch;
     c.credentials.verify = verify;
     c.peer_identity = identity;
     memcpy(c.expected_peer, remote_identity, 32u);
-    c.initiator = CONFIG_NINLIL_NODE_ID == 1 ? 1u : 0u;
+    c.initiator = CONFIG_NINLIL_NODE_ID < node ? 1u : 0u;
     c.connection_id = (int8_t)CONFIG_NINLIL_NODE_ID;
     return ninlil_edhoc_open(h, &c, now_ms);
 }

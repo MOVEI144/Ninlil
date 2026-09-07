@@ -2,19 +2,24 @@
 # Run inside the pinned ESP-IDF v6.0.2 environment; no flashing or downloads.
 set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
-node=${1:?node 1 or 2}
+node=${1:?node 1, 2 or 3}
 output=${2:?new absolute artifact directory}
-[[ "$node" == 1 || "$node" == 2 ]]
+[[ "$node" == 1 || "$node" == 2 || "$node" == 3 ]]
+peer=1
+table=partitions.csv
+[[ "$node" != 1 ]] || peer=2
+[[ "$node" != 3 ]] || table=partitions-preserve-ninlil-st.csv
 [[ "$output" == /* && ! -e "$output" ]]
 [[ $(idf.py --version) == *v6.0.2* ]]
-build="/tmp/ninlil-secure-bench-$node"
+build=${NINLIL_BENCH_BUILD_ROOT:-"/tmp/ninlil-secure-bench-$node"}
 mkdir -p "$output"
-cat "$root/embedded/esp32s3/sdkconfig.defaults" > "$output/sdkconfig"
+grep -v CONFIG_PARTITION_TABLE_CUSTOM_FILENAME "$root/embedded/esp32s3/sdkconfig.defaults" > "$output/sdkconfig"
 cat >> "$output/sdkconfig" <<CONFIG
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="$table"
 CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
 CONFIG_NINLIL_M1_MODE_SECURE_BENCH=y
 CONFIG_NINLIL_NODE_ID=$node
-CONFIG_NINLIL_PEER_ID=$((3-node))
+CONFIG_NINLIL_PEER_ID=$peer
 CONFIG_NINLIL_RADIO_INIT_CYCLES=1
 CONFIG_NINLIL_RF_TX_ENABLE=y
 CONFIG_NINLIL_RF_GATE_POLARITY_CONFIRMED=y
@@ -30,7 +35,7 @@ CONFIG
 # Explicit reconfigure is required: copied sdkconfig timestamps may be older
 # than generated headers. Never infer the compiled node from sdkconfig alone.
 idf.py -C "$root/embedded/esp32s3" -B "$build" \
-  -D SDKCONFIG="$output/sdkconfig" -D PROJECT_VER=secure-bench-20260908 \
+  -D SDKCONFIG="$output/sdkconfig" -D PROJECT_VER="${NINLIL_BENCH_VERSION:-secure-bench-20260908}" \
   reconfigure build
 grep -Fx "#define CONFIG_NINLIL_NODE_ID $node" "$build/config/sdkconfig.h"
 cp "$build/config/sdkconfig.h" "$output/"

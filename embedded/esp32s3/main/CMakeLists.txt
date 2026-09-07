@@ -1,6 +1,6 @@
 set(main_sources "app_main.c" "hil_delivery.c")
 if(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
-    list(APPEND main_sources "secure_bench.c" "secure_bench_crypto.c")
+    list(APPEND main_sources "secure_bench.c" "secure_bench_crypto.c" "bench_sessions.c" "bench_relay.c")
 endif()
 idf_component_register(
     SRCS ${main_sources}

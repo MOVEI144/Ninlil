@@ -1,4 +1,5 @@
 #include "secure_bench.h"
+#include "bench_relay.h"
 #include "driver/usb_serial_jtag.h"
 #include "esp_system.h"
 #include "esp_timer.h"
@@ -9,15 +10,14 @@
 #include <stdio.h>
 #include <string.h>
 
-/* One bounded command/reply at a time. USB supplies test orchestration only;
- * T/R always use the physical SX1262; E/G/O/S/U execute on this MCU. The bench
- * does not claim to exercise the production network pump or Relay topology. */
+/* USB owns this lab's bounded command/reply scheduling. T/R use physical RF;
+ * the dedicated Relay adapter verifies custody at the MCU/Flash boundary.
+ * This does not exercise the autonomous production network pump. */
 static ninlil_edhoc handshake;
-static ninlil_secure_session session;
-static ninlil_counter_store counter;
-static ninlil_counter_config counter_config;
-static ninlil_esp_security_partition partition;
-static ninlil_security_io counter_io;
+static uint16_t selected_peer = CONFIG_NINLIL_PEER_ID;
+static uint8_t selected_hop;
+static uint16_t handshake_peer;
+#define session (*ninlil_bench_session(selected_peer, selected_hop))
 static ninlil_control_reassembly assembly;
 static ninlil_join_record saved;
 static ninlil_control_log *log_store;
@@ -89,6 +89,9 @@ static int reopen_log(void)
     ninlil_control_log_close(log_store);
     log_store = NULL;
     memset(&saved, 0, sizeof(saved));
+    if (ninlil_bench_relay_open(&log_store) != NINLIL_OK)
+        return NINLIL_ERR_STATE;
+    replay.relay = ninlil_bench_relay_restore;
     replay.join = restore_join;
     {
         int rc = ninlil_control_log_open(&log_store, "ninlil_control", 0x20000u,
@@ -120,37 +123,15 @@ static int approve(void *ctx, const uint8_t identity[32],
 
 static int open_session(size_t *written)
 {
-    ninlil_session_material material;
-    int rc = ninlil_edhoc_material(&handshake, &material, peer_identity);
-    if (rc != NINLIL_OK)
-        return rc;
-    ninlil_secure_close(&session);
-    ninlil_counter_close(&counter);
-    rc = ninlil_esp_session_counter_io(&partition, &counter_io, 0u);
-    memset(&counter_config, 0, sizeof(counter_config));
-    memcpy(counter_config.session_fingerprint, material.fingerprint, 16u);
-    counter_config.direction = CONFIG_NINLIL_NODE_ID == 1 ? 0u : 1u;
-    counter_config.reservation_size = 32u;
-    /* 32-counter reservations must also fit the store's 32-bit generation. */
-    counter_config.max_counter_exclusive = UINT64_C(1000000);
-    /* Fresh authenticated material only; this explicit bench operation reuses
-     * slot 0. The operator backs up all Flash before enabling this image. */
-    if (rc == NINLIL_OK)
-        rc = ninlil_security_format(&counter_io);
-    if (rc == NINLIL_OK)
-        rc = ninlil_counter_open(&counter, &counter_io,
-                                 NINLIL_COUNTER_CREATE_NEW, &counter_config);
-    if (rc == NINLIL_OK)
-        rc =
-            ninlil_secure_open(&session, &material, &counter, ninlil_psa_aead(),
-                               CONFIG_NINLIL_NODE_ID, CONFIG_NINLIL_PEER_ID,
-                               counter_config.direction);
+    int rc;
+    if (selected_peer != handshake_peer)
+        return NINLIL_ERR_STATE;
+    rc = ninlil_bench_sessions_open(&handshake, selected_peer, peer_identity,
+                                    output);
     if (rc == NINLIL_OK) {
-        memcpy(output, material.fingerprint, 16u);
+        selected_hop = 0u;
         *written = 16u;
     }
-    ninlil_secret_clear(&material, sizeof(material));
-    ninlil_edhoc_close(&handshake); /* O cannot reuse the same material. */
     return rc;
 }
 
@@ -158,7 +139,8 @@ static int join_command(char command, size_t length, size_t *written)
 {
     ninlil_join_record record, ack;
     int rc;
-    if (!log_store || !session.ready)
+    if (!log_store || !session.ready || selected_hop != 0u ||
+        selected_peer != CONFIG_NINLIL_PEER_ID)
         return NINLIL_ERR_STATE;
     if (command == 'A' && length == 0u && CONFIG_NINLIL_NODE_ID == 1) {
         rc =
@@ -203,6 +185,18 @@ static int radio_command(ninlil_sx1262_radio *radio, char command,
     uint16_t received = 0u;
     uint64_t deadline = milliseconds() + 2000u;
     int rc;
+    if (command == 't' && length == 0u) {
+        unsigned int i;
+        for (i = 0u; i < 4u; i++) {
+            rc = ninlil_sx1262_radio_receive(radio, output, 240u, &received,
+                                             NULL, 0u);
+            if (rc == NINLIL_ERR_EMPTY || rc == NINLIL_ERR_TIMEOUT)
+                return NINLIL_OK;
+            if (rc != NINLIL_OK)
+                return rc;
+        }
+        return NINLIL_ERR_BUSY;
+    }
     if (command == 'R' && length == 0u) {
         rc = ninlil_sx1262_radio_receive(radio, output, 240u, &received, NULL,
                                          pdMS_TO_TICKS(1000));
@@ -226,16 +220,43 @@ static int execute(ninlil_sx1262_radio *radio, char command, size_t length,
 {
     int rc;
     *written = 0u;
+    if (command == 'j' || command == 'k' || command == 'd' || command == 'r' ||
+        command == 'n' || command == 'q')
+        return ninlil_bench_relay_command(command, input, length,
+                                          milliseconds(), output,
+                                          sizeof(output), written);
     if (command == 'I' && length == 0u) {
         rc = ninlil_bench_identity(output);
         if (rc == NINLIL_OK)
             *written = 65u;
         return rc;
     }
-    if (command == 'P' && length == 65u) {
-        ninlil_secure_close(&session);
+    if (command == 'Y' && length == 3u) {
+        uint16_t peer = (uint16_t)(((uint16_t)input[0] << 8) | input[1]);
+        if (!ninlil_bench_session(peer, input[2]))
+            return NINLIL_ERR_INVALID;
+        selected_peer = peer;
+        selected_hop = input[2];
+        return NINLIL_OK;
+    }
+    if (command == 'P' && (length == 65u || length == 67u)) {
+        uint16_t peer = length == 65u
+                            ? CONFIG_NINLIL_PEER_ID
+                            : (uint16_t)(((uint16_t)input[0] << 8) | input[1]);
+        if (!ninlil_bench_session(peer, 0u))
+            return NINLIL_ERR_INVALID;
+        selected_peer = peer;
+        selected_hop = 0u;
+        ninlil_secure_close(ninlil_bench_session(peer, 0u));
+        ninlil_secure_close(ninlil_bench_session(peer, 1u));
         ninlil_edhoc_close(&handshake);
-        return ninlil_bench_handshake(&handshake, input, milliseconds());
+        handshake_peer = 0u;
+        rc = ninlil_bench_handshake(&handshake,
+                                    input + (length == 67u ? 2u : 0u), peer,
+                                    milliseconds());
+        if (rc == NINLIL_OK)
+            handshake_peer = peer;
+        return rc;
     }
     if (command == 'E')
         return ninlil_edhoc_exchange(&handshake, length ? input : NULL, length,
@@ -256,7 +277,7 @@ static int execute(ninlil_sx1262_radio *radio, char command, size_t length,
                    : ninlil_secure_unseal_control(&session, input, length,
                                                   output, sizeof(output),
                                                   written);
-    if (command == 'T' || command == 'R')
+    if (command == 'T' || command == 'R' || command == 't')
         return radio_command(radio, command, length, written);
     if (command == 'G')
         return ninlil_control_reassemble(&assembly, input, length,
@@ -266,12 +287,8 @@ static int execute(ninlil_sx1262_radio *radio, char command, size_t length,
         ninlil_control_reassembly_clear(&assembly);
         return NINLIL_OK;
     }
-    if (command == 'K' && length == 0u && session.ready) {
-        ninlil_counter_close(&counter);
-        return ninlil_counter_open(&counter, &counter_io,
-                                   NINLIL_COUNTER_RESUME_EXISTING,
-                                   &counter_config);
-    }
+    if (command == 'K' && length == 0u && session.ready)
+        return ninlil_bench_counter_resume(selected_peer, selected_hop);
     if (command == 'A' || command == 'Q' || command == 'V')
         return join_command(command, length, written);
     if (command == 'L' && length == 0u && CONFIG_NINLIL_NODE_ID == 1) {
@@ -314,7 +331,8 @@ void ninlil_secure_bench(ninlil_sx1262_radio *radio)
     size_t used = 0u;
     bool overflow = false;
     uint64_t expires = milliseconds() + 1800000u;
-    if (usb_serial_jtag_driver_install(&config) != ESP_OK)
+    if (!ninlil_bench_session(selected_peer, 0u) ||
+        usb_serial_jtag_driver_install(&config) != ESP_OK)
         return;
     /* No identities or sessions are loaded from durable membership state. */
     if (ninlil_bench_identity(output) != NINLIL_OK || reopen_log() != NINLIL_OK)
@@ -352,7 +370,7 @@ void ninlil_secure_bench(ninlil_sx1262_radio *radio)
         overflow = false;
     }
 cleanup:
-    ninlil_secure_close(&session);
+    ninlil_bench_sessions_close();
     ninlil_edhoc_close(&handshake);
     ninlil_control_log_close(log_store);
     (void)usb_serial_jtag_wait_tx_done(pdMS_TO_TICKS(1000));

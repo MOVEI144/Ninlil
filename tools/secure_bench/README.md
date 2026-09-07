@@ -2,8 +2,7 @@
 
 This default-off ESP32-S3 mode exposes bounded USB commands for testing the
 actual crypto, Flash and SX1262 library boundaries. It is not product firmware
-and does not implement the autonomous network pump, a third-node Relay, or
-production credential enrollment. There is no unsolicited RF transmission.
+and does not implement the autonomous network pump, production credential enrollment or autonomous Relay control. There is no unsolicited RF transmission.
 The loop expires after 30 minutes; each requested TX retries CCA busy for at
 most two seconds. The existing Japanese fixed PHY and TXDONE checks apply.
 
@@ -11,8 +10,8 @@ Private P256 keys are generated inside each MCU, held only in RAM, and never
 returned. The operator pins the other board's public key over the identity-
 checked USB connection. Reset requires new key generation and new EDHOC.
 `O` consumes completed fresh EDHOC material exactly once, closes the handshake,
-and explicitly formats only session-counter slot 0. Back up all Flash before
-flashing this mode. Membership is separate from cryptographic readiness.
+and formats the selected peer's separate E2E/hop counter slots. Follow the
+current user's preservation decision before flashing this mode. Membership is separate from cryptographic readiness.
 
 Commands are one ASCII letter, one space, lowercase hexadecimal, newline.
 One command is outstanding per board; at most 1024 decoded bytes are admitted.
@@ -60,3 +59,21 @@ initial lab counter configuration. It saves the current control/session area
 and verifies it against the MCU before writing. It never clears stored records.
 The fixed bench reserves 32 counters per block with a 1,000,000-counter limit,
 which fits the store's 32-bit generation bound. Production checks are unchanged.
+
+The September 8 three-board continuation uses `relay_hardware.py`,
+`relay_campaign.py`, and `relay_analyze.py`; no new device backups are made.
+The third kit's existing `ninlil_st` region is retained by its dedicated
+partition table. Existing data is checked with device-side hashes before
+and after the campaign. `Y <peer:u16><hop:u8>` selects a live context;
+`P <peer:u16><public-key:65>` admits another pinned EDHOC pair. Peers are 1..3.
+Lower node ID initiates. `O` opens separate exporter/counter contexts for
+end-to-end and hop encryption; unrelated peers survive a new handshake.
+
+The lowercase `j/n/k/d/r/q` commands perform authenticated Relay receive and
+Flash custody reply, next forward, downstream test ACK, drain, local readiness,
+and verified opaque-record inspection. Route 1 is a USB-granted static test
+path through node 2. Reboot requires fresh hop authentication before forwarding.
+Downstream test ACKs follow a committed host observation, not a MCU Core receipt.
+Local custody readiness does not establish Coordinator dependency removal.
+`t` processes at most four overheard RX frames before test-owned transmission;
+the physical driver still backpressures pending RX and checks CCA/TXDONE.

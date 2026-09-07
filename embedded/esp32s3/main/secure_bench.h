@@ -10,6 +10,12 @@
 void ninlil_secure_bench(ninlil_sx1262_radio *radio);
 int ninlil_bench_identity(uint8_t public_key[65]);
 int ninlil_bench_handshake(ninlil_edhoc *h, const uint8_t peer[65],
-                           uint64_t now_ms);
+                           uint16_t node, uint64_t now_ms);
+
+ninlil_secure_session *ninlil_bench_session(uint16_t peer, uint8_t hop);
+int ninlil_bench_sessions_open(ninlil_edhoc *h, uint16_t peer,
+                               uint8_t identity[32], uint8_t fingerprint[16]);
+int ninlil_bench_counter_resume(uint16_t peer, uint8_t hop);
+void ninlil_bench_sessions_close(void);
 
 #endif
