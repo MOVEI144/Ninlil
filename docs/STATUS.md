@@ -48,4 +48,10 @@ Loss, duplicates, receipt blackout, isolated peers, bounded capacity and process
 restart are separate cases. The model's fixed calendar and packet staging are
 not production firmware, automatic optimization, or physical acceptance.
 
+The [2026-09-07 local evidence](W01_W02_LOCAL_EVIDENCE_2026-09-07.md) records
+15 CTest entries passing in each of four compiler/sanitizer configurations,
+reproducibility, static analysis and 10,000 manifest fuzz executions. Hosted CI,
+the actual ESP-IDF link, physical RF and power-cut campaigns were not run for
+this host-only slice.
+
 Use repository source and recorded local evidence for the next decision.
