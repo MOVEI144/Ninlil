@@ -93,3 +93,8 @@ tools/secure_bench/hardware.py
 tools/secure_bench/campaign.py
 tools/secure_bench/restart.py
 tools/secure_bench/build.sh
+tools/secure_bench/analyze.py
+tools/secure_bench/README.md
+docs/SECURE_TWO_BOARD_HIL_2026-09-08.md
+tools/secure_bench/verify_idle.py
+docs/SECURE_TWO_BOARD_RESULTS_2026-09-08.json

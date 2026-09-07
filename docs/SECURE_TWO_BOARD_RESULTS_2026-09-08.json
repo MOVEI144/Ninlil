@@ -1,0 +1,209 @@
+{
+  "date_jst": "2026-09-08",
+  "source_revision": "8aacb0c4fae46517055da66ecca8de413098853b",
+  "source_foundation": "9c5e886",
+  "scope": "USB-owned MCU crypto/Join/Flash/SX1262 integration; not autonomous product pump/Core/Relay acceptance",
+  "local_verification": {
+    "ctest": {
+      "configurations": 4,
+      "tests_per_configuration": 27,
+      "passed": 108
+    },
+    "adapted_vendor_tests": 711,
+    "fuzz_runs": 20000,
+    "hosted_ci_run": false,
+    "target_build": "ESP-IDF v6.0.2 / Xtensa GCC15.2.0",
+    "target_analysis": "GCC -fanalyzer on bench sources"
+  },
+  "campaigns": [
+    {
+      "label": "secure-20260908-run2",
+      "started": "2026-09-07T15:47:03.669206+00:00",
+      "result": "PASS",
+      "tests": [
+        {
+          "name": "distinct MCU-generated P256 public credentials",
+          "result": "PASS"
+        },
+        {
+          "name": "invalid commands, oversized RF and unauthenticated session creation rejected",
+          "result": "PASS"
+        },
+        {
+          "name": "mutual EDHOC over LoRa with exact handshake retries",
+          "result": "PASS",
+          "fingerprint": "c0812f97af98b459d9265788ba1883ff"
+        },
+        {
+          "name": "encrypted Join accept/commit, duplicate commit, actual Flash reopen",
+          "result": "PASS"
+        },
+        {
+          "name": "bidirectional AES-CCM payload boundaries through maximum 240-byte RF frame",
+          "result": "PASS",
+          "frames": 20
+        },
+        {
+          "name": "encrypted bidirectional soak",
+          "result": "PASS",
+          "each_direction": 100
+        },
+        {
+          "name": "every byte tampered over RF rejected; original still usable; replay rejected",
+          "result": "PASS",
+          "mutations": 240
+        },
+        {
+          "name": "control/data channel separation and reflected packets rejected",
+          "result": "PASS"
+        },
+        {
+          "name": "lost envelope retry and physical Flash counter reservation reopen",
+          "result": "PASS"
+        },
+        {
+          "name": "in-window reordering accepted; outside replay window rejected",
+          "result": "PASS"
+        },
+        {
+          "name": "1024-byte control reassembly over RF, reorder and duplicate",
+          "result": "PASS",
+          "fragments": 11
+        },
+        {
+          "name": "fresh EDHOC rekey; previous-session ciphertext rejected",
+          "result": "PASS"
+        },
+        {
+          "name": "revocation committed in physical Flash and peer policy denied",
+          "result": "PASS"
+        },
+        {
+          "name": "closed session refuses encryption",
+          "result": "PASS"
+        },
+        {
+          "name": "wrong pinned peer credential fails handshake and prevents session creation",
+          "result": "PASS"
+        },
+        {
+          "name": "post-campaign stack/heap headroom",
+          "result": "PASS",
+          "board": "a",
+          "minimum_stack_free": 13624,
+          "heap_free": 324184,
+          "minimum_heap_free": 320572
+        },
+        {
+          "name": "post-campaign stack/heap headroom",
+          "result": "PASS",
+          "board": "b",
+          "minimum_stack_free": 13608,
+          "heap_free": 324628,
+          "minimum_heap_free": 321052
+        }
+      ],
+      "rf_frames": 504,
+      "finished": "2026-09-07T15:50:08.030925+00:00"
+    },
+    {
+      "label": "secure-20260908-restart1",
+      "started": "2026-09-07T15:50:47.917283+00:00",
+      "result": "PASS",
+      "tests": [
+        {
+          "name": "actual MCU reset retained committed Join/revoke records but no session or permission",
+          "result": "PASS"
+        },
+        {
+          "name": "physical fragmented-control conflict, poison, timeout, and clean recovery",
+          "result": "PASS"
+        },
+        {
+          "name": "fresh post-reset mutual authentication and encrypted RF; stale ciphertext rejected",
+          "result": "PASS",
+          "each_direction": 20
+        }
+      ],
+      "rf_frames": 52,
+      "finished": "2026-09-07T15:51:10.772878+00:00"
+    }
+  ],
+  "independent_reconciliation": [
+    {
+      "label": "secure-20260908-run2",
+      "result": "PASS",
+      "paired_RF_frames": 504,
+      "fresh_monotonic_envelopes": 300,
+      "log_sha256": {
+        "a": "578483177f2683a33dff5c3c0507fc740dfa4a97ed01949bca49b1ae9aac3fd7",
+        "b": "c9f2ee7a249bbcbadc99eb08c39e79ef442ddfb5d3b4e16d4b49b1e979a35292"
+      }
+    },
+    {
+      "label": "secure-20260908-restart1",
+      "result": "PASS",
+      "paired_RF_frames": 52,
+      "fresh_monotonic_envelopes": 40,
+      "log_sha256": {
+        "a": "55e934a36ef89897ac5ef3025f54574303ee5bdae4213d79c7a6d617ac06243a",
+        "b": "20e84bb29b5fb7e972b65f90168f0133b04b9d3954bc273289ee5fbbcc2505ef"
+      }
+    }
+  ],
+  "paired_rf_frames": 556,
+  "monotonic_emitted_envelopes": 340,
+  "boards": {
+    "a": {
+      "identity": "E0:72:A1:F7:FF:0C",
+      "original_8MiB_sha256": "ee66e7c606ae75fc3fe5ee563a1570ae776f337018e3404103aaf7fe9b116726",
+      "whole_flash_restored_and_device_digest_verified": true,
+      "tested_firmware_sha256": "5963295a9f44bc2f0d617eb05a1403f902a423bec883e7cb4cdfe638dcec347c",
+      "post_test_control_sha256": "5d3d164e470c666c1394a084ccfcf261f44d71831014c6eadd6fa48071b6a7c0",
+      "post_test_sessions_sha256": "e4acbcda29d5e9b31a7fc96103916c827d084b161cbed3b7098c75cff2d7952e",
+      "restored_idle": {
+        "board": "a",
+        "result": "PASS",
+        "initialization_cycles": 100,
+        "frequency_hz": 0,
+        "tx_disabled": true,
+        "log_sha256": "de0c59f663c4db566e3073db2e6478b4f1988e9aa4a960479f7691d3ef5a5402"
+      }
+    },
+    "b": {
+      "identity": "E0:72:A1:D8:3E:74",
+      "original_8MiB_sha256": "69dc0dc291ab1878cde60b7d7b7f9512c9dcbdc806b73122e5265bcd84b3f683",
+      "whole_flash_restored_and_device_digest_verified": true,
+      "tested_firmware_sha256": "f2dd7a74a49cac65c168f030487e148e0db06f1ede2bb6f114502f9d7a1de41f",
+      "post_test_control_sha256": "c61445d66bfe121dbd636673010943258c5adf723c96e3d315d218bf2ed7edea",
+      "post_test_sessions_sha256": "d0dd29030a68bf702630db51c8580c5e4a76caab962010c22927c624ecc77b85",
+      "restored_idle": {
+        "board": "b",
+        "result": "PASS",
+        "initialization_cycles": 100,
+        "frequency_hz": 0,
+        "tx_disabled": true,
+        "log_sha256": "de008b33c645977f101ecd4bceae935dbffbf43f5d590569b2613b589cafa1b3"
+      }
+    }
+  },
+  "failed_attempts_preserved": [
+    "stub whole-flash read failure; ROM backup succeeded",
+    "strict unterminated string warning; fixed",
+    "copied configuration timestamp left wrong node header; detected before flash, explicitly reconfigured",
+    "run1 counter configuration rejected by 32-bit generation bound; corrected lab maximum to 1000000 and reran"
+  ],
+  "not_established": [
+    "autonomous network pump and on-device control dispatch",
+    "Core application delivery through secure product integration",
+    "physical three-node Relay and alternate route",
+    "production credential enrollment and persisted private identities",
+    "timed Flash-write power interruption",
+    "field range/interference/environment and actuation"
+  ],
+  "artifact_manifest": {
+    "path": ".verify-m1-evidence/secure-20260908-artifact-manifest.json",
+    "sha256": "aae12721de70383436d2c64177cff0624788a32578b7ecea5dd5436f7e022c36",
+    "file_count": 115
+  }
+}

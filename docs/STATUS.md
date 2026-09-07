@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-09-07
+Updated: 2026-09-08
 
 ## Canonical repository
 
@@ -32,11 +32,18 @@ for exact final results: 108/108 local CTest runs, 711/711 adapted upstream test
 20,000 fuzz executions, static/syntax checks and a TX-disabled ESP32-S3 build
 pass. These conversation steps do not mean roadmap M6 bulk/OTA.
 
-The user's current decision ends additional hardware testing. Secure multi-hop
-RF, new 240-byte physical packets, controlled power interruption, field behavior
-and production security remain unaccepted. Earlier two-board plaintext tests do
-not become evidence for the new secure profile. No new board flash or RF campaign
-is performed for steps 4-6.
+On September 8 the user reconnected both boards and explicitly resumed feasible
+two-board testing. The [secure HIL campaign](SECURE_TWO_BOARD_HIL_2026-09-08.md)
+passed mutual EDHOC, encrypted Join/Flash replay, 100 encrypted test frames each
+way plus 20 each way after actual MCU reset, 240-byte RF boundaries, all-byte
+tamper/replay/rekey rejection, and fragmented-control failures. Independent
+capture reconciliation matched 556 physical RF frames. Both original full Flash
+images were restored and 100 TX-disabled initialization cycles passed per board.
+
+This is USB-owned library/RF integration evidence, not autonomous product pump
+or Core application delivery evidence. Secure multi-hop RF, product integration,
+controlled power interruption, field behavior and production security remain
+unaccepted. Earlier plaintext tests remain separate dated evidence.
 
 ## Acceptance state of the earlier durable HIL baseline
 
