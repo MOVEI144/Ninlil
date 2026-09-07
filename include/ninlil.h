@@ -225,6 +225,13 @@ void ninlil_close(ninlil_runtime *runtime);
 int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
                   ninlil_id *message_id);
 int ninlil_step(ninlil_runtime *runtime);
+/* Authenticated transport ingress, one synchronous packet. OK proves a
+ * matching durable inbound contract or outbound receipt state, not merely
+ * parsing/admission. A hop ACK may follow OK. Same execution owner as step. */
+int ninlil_ingest(ninlil_runtime *runtime, const uint8_t *packet,
+                  size_t length);
+/* Boot-local scheduling only; never alters ownership, deadlines or evidence. */
+int ninlil_set_retry_interval(ninlil_runtime *runtime, uint32_t steps);
 /* receive offers each stored message at most once per boot until explicit
  * acceptance. A crash before acceptance makes it eligible again. */
 int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out);

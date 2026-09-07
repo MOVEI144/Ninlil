@@ -1,0 +1,964 @@
+{
+  "base_commit": "355e4ab0f0329158b6360f5bbc38cf3c0546981a",
+  "normalization": "UTF-8 text with CRLF normalized to LF; sorted path/hash entries; SHA256 of compact sorted-key JSON list",
+  "source_tree_sha256": "ab38891d6c121b634effce7f7a3b1fd606a64c4b5c8efb3a7b0f69c4a4fd771f",
+  "file_count": 239,
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256_lf": "eac58ab444b97b78c19e11ccc6f0e0f3cafb0617ce469793105f46e9676ee8d0"
+    },
+    {
+      "path": ".gitignore",
+      "sha256_lf": "09ea90045ff4133c42e431679699bd5dded89d7d6c91df8f0030a47429c98df8"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "sha256_lf": "b009a470532753d420942aaa2ec0803a29c78fc2d87988e0091b8d5be27f7c7d"
+    },
+    {
+      "path": "cmake/security.cmake",
+      "sha256_lf": "41e168da70edc5d9f58bcddc18f4633cedcdd72824c2fa026ff9593d7fdfc010"
+    },
+    {
+      "path": "embedded/esp32s3/CMakeLists.txt",
+      "sha256_lf": "0c5d0dcb6be6c8fe88479a0b6fea67e41053c744835c93c3c07bb09689e6f88f"
+    },
+    {
+      "path": "embedded/esp32s3/components/ninlil_core/CMakeLists.txt",
+      "sha256_lf": "559779367dc87faf80fd3d9497123fc93c70f0175153eed3f15de881269c60cc"
+    },
+    {
+      "path": "embedded/esp32s3/components/ninlil_edhoc_vendor/CMakeLists.txt",
+      "sha256_lf": "5e9fb101eea67e40a6ee88092dde7bc661716131ee2871bd839872e27d5a20d6"
+    },
+    {
+      "path": "embedded/esp32s3/components/ninlil_network/CMakeLists.txt",
+      "sha256_lf": "f3c85fd55bd2235dac2e4db3eef554544a71f6cdc76887b2fa76d121d8fcd179"
+    },
+    {
+      "path": "embedded/esp32s3/components/ninlil_radio/CMakeLists.txt",
+      "sha256_lf": "ee7ed08bcf3e9f1964bc9c3be2bac120353f76289702039712ae4db2222f96b4"
+    },
+    {
+      "path": "embedded/esp32s3/components/sx126x_driver/CMakeLists.txt",
+      "sha256_lf": "b61051ccfc41dc73657ee643484d096955b9bd83ed0c6bdd3a251ecf84c07a03"
+    },
+    {
+      "path": "embedded/esp32s3/main/CMakeLists.txt",
+      "sha256_lf": "13b90be54ad61701a34409d449a2618ab4e4662c35a18fad0fab541d8c05079b"
+    },
+    {
+      "path": "embedded/esp32s3/main/Kconfig.projbuild",
+      "sha256_lf": "f43afaa43f8950860017a7ba2b593426e877dd48b0f40c6020adce889dcf2d21"
+    },
+    {
+      "path": "embedded/esp32s3/main/app_main.c",
+      "sha256_lf": "11b8bbc005b6da525683a4bcb4357b7b6554c924325a7c3271849dedac51a116"
+    },
+    {
+      "path": "embedded/esp32s3/main/hil_delivery.c",
+      "sha256_lf": "023aa75b664e0e58d590684e1cb91b9458cabc5c46a557ba75880e6e2865fffe"
+    },
+    {
+      "path": "embedded/esp32s3/main/hil_delivery.h",
+      "sha256_lf": "fda7e240ba035aa74609ab0162bf5874a46f591907b53b8b054ea13ec6f693ef"
+    },
+    {
+      "path": "embedded/esp32s3/partitions.csv",
+      "sha256_lf": "f40d0792d50a4f06c5b4820c8b49696e6b0a7536ceba7474a8b8708ffac7610a"
+    },
+    {
+      "path": "examples/secure_network/lab.h",
+      "sha256_lf": "c8e7b5b83de520c245c0e4a13f75008b29a006e2b71c7447ef23533d09f21f75"
+    },
+    {
+      "path": "examples/secure_network/lab_crypto.c",
+      "sha256_lf": "8c237f6e6f3135465062c0d3ebda4037fab967ed2d1908432c76dadee1057185"
+    },
+    {
+      "path": "examples/secure_network/lab_crypto.h",
+      "sha256_lf": "e36ead96e89a036f593f93031789b3ffeab94dfe12f2e5d895121189dd71bcb7"
+    },
+    {
+      "path": "examples/secure_network/lab_run.c",
+      "sha256_lf": "13fbd5813d6b9ee3454c90193090f7b47cb39a56e81cf588bf84dbfe666679b6"
+    },
+    {
+      "path": "examples/secure_network/lab_setup.c",
+      "sha256_lf": "a3bba93c0a8a1955fdaf4a6241f9232ccdc22a71b9a1af0ed6ae51df5b45c8be"
+    },
+    {
+      "path": "examples/secure_network/main.c",
+      "sha256_lf": "d27264a3882f21dba4fd8548b215b12b4dd70da2ac6b36f0785e8ed86dde5e2a"
+    },
+    {
+      "path": "include/ninlil.h",
+      "sha256_lf": "edbfe42aea7df2d28640d8c571a811348fb693399fcec8b69f41047699ad73eb"
+    },
+    {
+      "path": "include/ninlil_airtime.h",
+      "sha256_lf": "636d6a774f3dac7b1c96b724420e6f1368df890b7ce8fe1652112fcac3a412cf"
+    },
+    {
+      "path": "include/ninlil_control_fragment.h",
+      "sha256_lf": "516b153db0ca5183b734bd5d149f2246f7f67b11e0bf670daafd8f032902c84b"
+    },
+    {
+      "path": "include/ninlil_control_log.h",
+      "sha256_lf": "71c86dc66fdebb2be9d2028aa9b832cf189beb27cd731adfb3a3b1f692cfd871"
+    },
+    {
+      "path": "include/ninlil_custody.h",
+      "sha256_lf": "1b32363833f70ab567da4b200aedd9a44aaa1c76c397546406c1fecfdaae6146"
+    },
+    {
+      "path": "include/ninlil_diag.h",
+      "sha256_lf": "7f3025d2fba1ae2365629e7d53ebc60670c17b9f80e4a58ab0134ea039abeb82"
+    },
+    {
+      "path": "include/ninlil_group.h",
+      "sha256_lf": "5d5cf217b78111119149d9e4bedfbcf08c0727d35a96e5eda42790569482a85f"
+    },
+    {
+      "path": "include/ninlil_join.h",
+      "sha256_lf": "9ce39b08d9f39bcad77407ae7c47b4cf86aebcb8c99f7b51efab77e59bd82428"
+    },
+    {
+      "path": "include/ninlil_leaf.h",
+      "sha256_lf": "973f15fdd05319e619e37de99875e5228ecfca5144587066bfb9fd4525736184"
+    },
+    {
+      "path": "include/ninlil_network.h",
+      "sha256_lf": "b0cda883be2abb65bae10fd728f7c95e51bf78ef48ec2c0a136bd56e33480fa5"
+    },
+    {
+      "path": "include/ninlil_radio.h",
+      "sha256_lf": "5892cf15f925054c9b26d27ee875edf708bb8083e49644ab2100392bbdb0fc46"
+    },
+    {
+      "path": "include/ninlil_relay.h",
+      "sha256_lf": "f48801c3e4685689c4844fc6cb6931632b68d76b10f7dfb73ac601edf4f88177"
+    },
+    {
+      "path": "include/ninlil_rf_profile.h",
+      "sha256_lf": "6dda2f3cc87bd349e2dbde2fcfa739316d3b891f0d08bb7ee1baeafff37ee6fc"
+    },
+    {
+      "path": "include/ninlil_routed.h",
+      "sha256_lf": "ed80c3e524909b8c1894beb3af797e552c2fd59c4887b304658f78d44a52e908"
+    },
+    {
+      "path": "include/ninlil_secure.h",
+      "sha256_lf": "e0e2eb00c242930f9f7bd8bf91c31101841dfce220441cc9c285fdb62e61db9c"
+    },
+    {
+      "path": "include/ninlil_secure_link.h",
+      "sha256_lf": "a092c6e99aad501eafd75aafdaeb52f571b187b7874246b8412a43553614764b"
+    },
+    {
+      "path": "include/ninlil_security_state.h",
+      "sha256_lf": "5eaf16d2e32650912db23089dfc3fcd2905dbcdb60d9209ec57dabfa3d1ed386"
+    },
+    {
+      "path": "include/ninlil_topology.h",
+      "sha256_lf": "98f728576e66b55c609a2d8de0da88c12979688a70d2a2a793609de85edf5728"
+    },
+    {
+      "path": "ports/crypto/ninlil_edhoc.c",
+      "sha256_lf": "1e16432ec3e4bf8b0a833507a09018eceb0070b4cc471aa1a86afcb23feb1072"
+    },
+    {
+      "path": "ports/crypto/ninlil_edhoc.h",
+      "sha256_lf": "66f618b76fdd39bd9d2dc085ef2f0f3467659d62d358fbcd1b7f78e05bb7fe6c"
+    },
+    {
+      "path": "ports/crypto/ninlil_psa.c",
+      "sha256_lf": "7e3c9fed1412a08df325830ff4178234db0767a1b487270c76e4133d9a3e6a50"
+    },
+    {
+      "path": "ports/esp32s3/include/ninlil_flash_admin.h",
+      "sha256_lf": "2e2422ada6c478751b4fc7fb0602018af220b9abc72bc8e3e11b86f2b4039c57"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_board_seeed_b2b.h",
+      "sha256_lf": "c19bdbd326f14a295a31fbfc295a7affa540290164e04bf156fd5f296bf3781d"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_flash_admin.c",
+      "sha256_lf": "32882c5dda664b9a7cb57e2de997b0c60ea2880ab3087fd130e8c8a182c42979"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_flash_journal.c",
+      "sha256_lf": "b6d22c0d027ded87ac419b3c4f90cc60d4a47cc45aaa59f4dde33efe873c7ed9"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_network_pump.c",
+      "sha256_lf": "cffe246b249f7c6ed9c07e6339e661b1f0c4bbaa2501c426189850ed8da0723e"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_network_pump.h",
+      "sha256_lf": "a988adc64c16e6878b53100b951ac95dfe58c41a921f4b225329e677d8edd999"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_security_partitions.c",
+      "sha256_lf": "16542fdcfff68700ccd59d9d1abe0d3b3c9612d2274272d43bb1fac1dd0dd105"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_security_partitions.h",
+      "sha256_lf": "f8e87f4c03816a6a764176e677d9c162e693350625e59c537e30cf1e74996eb7"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_sx1262_hal.c",
+      "sha256_lf": "f1f5a070537a83a381158642cc7ed6bf101de9231858f407a41a4c9b8db8aa8d"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_sx1262_hal.h",
+      "sha256_lf": "212086f1a22e99d85d462e863005f9854b63a165235c6436828c6db7ff03943d"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_sx1262_radio.c",
+      "sha256_lf": "740b9b02bad2a3ee93f9ca391648bd847e641ac11ce8ec3980feba421c463541"
+    },
+    {
+      "path": "ports/esp32s3/ninlil_sx1262_radio.h",
+      "sha256_lf": "42a717400301cc9bd237742d19f8c7d5b27591c12e2647c33d0af0fe9ec5bf0a"
+    },
+    {
+      "path": "ports/flash/ninlil_flash_journal_file.c",
+      "sha256_lf": "0ca128b216087da4a3c0cbf0a12b8b6e5ca2d2cff6d4202a3d8c99e2aa63a209"
+    },
+    {
+      "path": "ports/flash/ninlil_flash_store.c",
+      "sha256_lf": "61bce354ae6dbae59e053909ca501a95c9c12367cf5821270ee5db5121a42715"
+    },
+    {
+      "path": "ports/flash/ninlil_flash_store.h",
+      "sha256_lf": "2eb9723630392d95539d95b5f4200f63e9d84e484f94b08463d2c01ecbef512a"
+    },
+    {
+      "path": "ports/flash/ninlil_security_state.c",
+      "sha256_lf": "823fbd5af2a18c7f0b971221df55fe0955b93aa90c6130f2b1017db3433a6960"
+    },
+    {
+      "path": "ports/posix/ninlil_journal.c",
+      "sha256_lf": "8f175b5b162461c7f0d92ccdc84f0c3f06cc2a07374e0862a25eb4e3a4ecba7f"
+    },
+    {
+      "path": "scripts/build_esp32s3.sh",
+      "sha256_lf": "fd53c260eb9624429aed1f03c333ab4d296720c1c44ac58b2d231ef3915ba063"
+    },
+    {
+      "path": "scripts/check_edhoc.py",
+      "sha256_lf": "2977033b3efb7c367526bec0ed5efb76996bba3841f17915c3a8b4ccc027a99b"
+    },
+    {
+      "path": "scripts/check_esp_syntax.sh",
+      "sha256_lf": "5d074abe8d6bbcd0f20be19400ef616b1f703a59ead89dc303b7329617475527"
+    },
+    {
+      "path": "scripts/check_sx126x_driver.sh",
+      "sha256_lf": "f190e5eed443435b1719176f75f8434bc9e62f8fabef6a82704861e605e3c898"
+    },
+    {
+      "path": "scripts/ci.sh",
+      "sha256_lf": "3ecc51a274757768f5dc26ab215f8b28b887b9f9ebf4a4e703205af9fe95a954"
+    },
+    {
+      "path": "scripts/ci_m1.sh",
+      "sha256_lf": "d8a50157f24ea57bd31e0c28e9ed0b6bb467f322b8d6e0fce003616a0b2d550a"
+    },
+    {
+      "path": "scripts/ci_m3.sh",
+      "sha256_lf": "92571c82eefa453ae6c909f47f40f35759c1322e7123ac0946a303142947ba7c"
+    },
+    {
+      "path": "scripts/fetch_edhoc.sh",
+      "sha256_lf": "44ad1c0719b5e439d35d92da94e15f86831812370fe2ee668cbd903b5f493756"
+    },
+    {
+      "path": "scripts/fetch_sx126x_driver.sh",
+      "sha256_lf": "a4349b1a67a3d89f37d9d5a41d443c0355396df725d8ad83c1eb6362a551aff9"
+    },
+    {
+      "path": "scripts/fuzz_control.sh",
+      "sha256_lf": "d1c3e04dfcb17368fe150e15c61797944e3308a3b63a418095f0268d2261c1bc"
+    },
+    {
+      "path": "scripts/fuzz_sim.sh",
+      "sha256_lf": "3e4e248e345178057b967ba0ebd12807a2d275a70603140454ae9f3fd8bda5ed"
+    },
+    {
+      "path": "scripts/loc.sh",
+      "sha256_lf": "10b1423a3223c78c69257d33b8557c5589c97d2fd2a9cdd39bedd3e68eecba71"
+    },
+    {
+      "path": "scripts/loc_m1_software.sh",
+      "sha256_lf": "2b4c74da8d5d414987a249241d628f6793cc04e59ed3f24cd66d35651c58dc41"
+    },
+    {
+      "path": "scripts/loc_m3_security.sh",
+      "sha256_lf": "517a89a8b186b5cdef420fd7ef862b7318d84bfe85e8cb0826d777a3f255dbbe"
+    },
+    {
+      "path": "scripts/loc_p0.sh",
+      "sha256_lf": "a36412317ee164316bb639220d2ea4660adcdabf593fb39bf7d9282bf518759c"
+    },
+    {
+      "path": "scripts/loc_secure_network.sh",
+      "sha256_lf": "5e6f4f4ef835769dc6cc4bbacfaa1f5c3e0242129d57a3ad27da61c62d7efeb0"
+    },
+    {
+      "path": "scripts/secure_network_files.txt",
+      "sha256_lf": "6c0ebace5c9113dbb9ab26844bf5ade12ceb1e706ba2fb387e6e87192f95dcd2"
+    },
+    {
+      "path": "scripts/static_analysis.sh",
+      "sha256_lf": "5ae77486e7e41c0ef209e8f6060de53c18419714e4cf66126717ee84d68062bd"
+    },
+    {
+      "path": "scripts/static_crypto.py",
+      "sha256_lf": "8ba8d059aa2365fdfd1de983583febf9c54fe2cf9619c202b28dcf6e3be271e9"
+    },
+    {
+      "path": "scripts/verify_sim.sh",
+      "sha256_lf": "0cdff3066173b0a33420664dda05d31f4d47e1cfd76dc13c3d55f60bdfa7187a"
+    },
+    {
+      "path": "scripts/verify_vendor.sh",
+      "sha256_lf": "12de84bc8e2d684616558ab2bd77ccea0b71e2183999dccc6f969672b2b9ed1f"
+    },
+    {
+      "path": "src/ninlil.c",
+      "sha256_lf": "4a47b4bf99adefb15cd53385b627ff75d54bdcc4b6969e041a69ac81f9390f48"
+    },
+    {
+      "path": "src/ninlil_airtime.c",
+      "sha256_lf": "4f97438e99cf387f725417ddf4fe6ca17c73f56e90dbe7a74e71e70d34607d09"
+    },
+    {
+      "path": "src/ninlil_authorization.c",
+      "sha256_lf": "8cbf1c016b26f40677557ca4c5993f1875b492dad1836ae99bbd72339e016049"
+    },
+    {
+      "path": "src/ninlil_control_fragment.c",
+      "sha256_lf": "cd4d9ed5c7729c53f6d9c075372d44731e4330f2bf3bcf2af2e0585ad7d420f7"
+    },
+    {
+      "path": "src/ninlil_control_log.c",
+      "sha256_lf": "a901564f41eee3bfe1cfd6c70929ad5f7cf7250b92d33f585a378542fd574a05"
+    },
+    {
+      "path": "src/ninlil_custody.c",
+      "sha256_lf": "ff29ac23dd07e2987055ad45f11b04c1c542b99320bd74f1ec754afe2f4093f7"
+    },
+    {
+      "path": "src/ninlil_diag.c",
+      "sha256_lf": "48106d39bcb8698450bc5b4e8f458779b3f5e311d8bb6103493fae17e2197c08"
+    },
+    {
+      "path": "src/ninlil_group.c",
+      "sha256_lf": "cc3ec28b13cb5ea64c486ac59487ff86bffd2d199f6916e89bbba177bbb7bed7"
+    },
+    {
+      "path": "src/ninlil_internal.h",
+      "sha256_lf": "d84103aee07a108b30e36f3c9be2e80d8ba7cdfc103b422c827ab439e40e22a5"
+    },
+    {
+      "path": "src/ninlil_join.c",
+      "sha256_lf": "178f943f2ae657f64ab9f244557d65659999836b3011968375ca815e004612da"
+    },
+    {
+      "path": "src/ninlil_join_wire.c",
+      "sha256_lf": "fa22ac8498f433dd4c773138eb161dc5683e1e62c1e700679ff6815ba8f20391"
+    },
+    {
+      "path": "src/ninlil_journal.h",
+      "sha256_lf": "a2b5f2ef5c5df17aedd162716fc51ef0a76fc05e3f9d27bfec3ade72e4b5c167"
+    },
+    {
+      "path": "src/ninlil_leaf.c",
+      "sha256_lf": "491101d13668418349de5f96d0c705f846b363406ce868dacaf9efbda73a541e"
+    },
+    {
+      "path": "src/ninlil_network.c",
+      "sha256_lf": "9861034f74ef923922979f8267097d92ace526132fdcac793e856ef98941732b"
+    },
+    {
+      "path": "src/ninlil_network_internal.h",
+      "sha256_lf": "4003f6126fd867be188b4c7f6dddbb95f87da0c6524b10c9d04e0c7bd5a606ae"
+    },
+    {
+      "path": "src/ninlil_network_route.c",
+      "sha256_lf": "91a7c496f51db8a2e031a3bedd8ce80c2c989cf257df70576068ac1b4cff0352"
+    },
+    {
+      "path": "src/ninlil_network_wire.c",
+      "sha256_lf": "44c3e03a0d5e277e2d78cb8b44a39f497ddb01eb1ba210ae01ffa46d484881b6"
+    },
+    {
+      "path": "src/ninlil_policy.c",
+      "sha256_lf": "30b916646ba4f248af00d1bc78960b6b6f1d3734eed9c0e45785d7c250d69938"
+    },
+    {
+      "path": "src/ninlil_profile.c",
+      "sha256_lf": "b331088d9e5257ac3e4de88dbd97a965e51a8332c375f468864751eb96372d73"
+    },
+    {
+      "path": "src/ninlil_radio.c",
+      "sha256_lf": "a74cdc6c8fd2c1b9c9d211b25f1e7fb75d002e285dee1492d35f9ea4c2882c22"
+    },
+    {
+      "path": "src/ninlil_receive.c",
+      "sha256_lf": "e28f710899c68f32e1d2e5b7e7cac837244871a10320856dc5a4a31fa8155b4c"
+    },
+    {
+      "path": "src/ninlil_relay.c",
+      "sha256_lf": "25db040442f5b3010374e9037a958cb8645c9ad8234831c65497595af98512f0"
+    },
+    {
+      "path": "src/ninlil_replay.c",
+      "sha256_lf": "abd4f8adb11b7e0b752885efbb04ceafad16960a89f8832a7ae6e58a4331da80"
+    },
+    {
+      "path": "src/ninlil_rf_profile.c",
+      "sha256_lf": "a21bae7a635cffe159442bfc0645f08ffe6eee0973affccd255effec5863e0b6"
+    },
+    {
+      "path": "src/ninlil_routed.c",
+      "sha256_lf": "524e960ef9b50793a8e62bcbc9e6c779f632d22174db365434d08d730d36ce2d"
+    },
+    {
+      "path": "src/ninlil_secure.c",
+      "sha256_lf": "de0279eda1371d94bb808abc4da7c557030dbf653f71c12f6d6be41976be4545"
+    },
+    {
+      "path": "src/ninlil_secure_link.c",
+      "sha256_lf": "4b54aef27825d360163c1f959d161645a524b380eaf78954e9a64f61df8801d5"
+    },
+    {
+      "path": "src/ninlil_send.c",
+      "sha256_lf": "aa2235c1744cfb2c508b1f8c60698ee5a0881773e07b1c1d28ff58766352c659"
+    },
+    {
+      "path": "src/ninlil_storage.c",
+      "sha256_lf": "caf18dbbb6f28d6fa38bcccf101bcc8391959663907036e4d0e93199c00db7f9"
+    },
+    {
+      "path": "src/ninlil_topology.c",
+      "sha256_lf": "e8637b9d91d7a05f5277abbfecf34db56810c15b28f3a19757944d3fe9f8da18"
+    },
+    {
+      "path": "src/ninlil_wire.c",
+      "sha256_lf": "8e7b91afc247cfc27de117f8abf93d4022864d81755e82c5031a0520dfd02836"
+    },
+    {
+      "path": "src/ninlil_wire.h",
+      "sha256_lf": "274c3088525f16171f1454f4803e3f3d7f9454e8e2315849c13251acd4262db6"
+    },
+    {
+      "path": "tests/edhoc_test_credentials.h",
+      "sha256_lf": "fac336d2d04dc9d12e8702c7ef49c5e1c5e7f80f7de0e7b9cc72c5d772094761"
+    },
+    {
+      "path": "tests/esp_stub/driver/gpio.h",
+      "sha256_lf": "2eae040c873c3b4328591b4528b8222377dae2dbda3d56119a6696162ea6d770"
+    },
+    {
+      "path": "tests/esp_stub/driver/spi_master.h",
+      "sha256_lf": "14068711222c8d2bf549bb32f55ba6005c078e29dd033cb35d9732ca5d970798"
+    },
+    {
+      "path": "tests/esp_stub/esp_attr.h",
+      "sha256_lf": "b6e89d21f1428ee43656389c1a3f07ea1b386dff838d1857349a3b07aafd4b54"
+    },
+    {
+      "path": "tests/esp_stub/esp_err.h",
+      "sha256_lf": "6471298d9586b02f9e0afa85bb84c44510e0130243e38b6c5250033b958a4a8f"
+    },
+    {
+      "path": "tests/esp_stub/esp_log.h",
+      "sha256_lf": "e654b01e59b193f5e06fb691260d02dca6e0e9f140bb30c99fc809b234c1cde3"
+    },
+    {
+      "path": "tests/esp_stub/esp_partition.h",
+      "sha256_lf": "011c882323486793ba648379b3bf1ff8a93462f7191ef8af0d161b5e4c1a0457"
+    },
+    {
+      "path": "tests/esp_stub/esp_random.h",
+      "sha256_lf": "d28448c5941776c57bce45b2961ca62ba192232ce773ecb54b295bc681747226"
+    },
+    {
+      "path": "tests/esp_stub/esp_rom_sys.h",
+      "sha256_lf": "b6465f963bceb444f283c061906289dc3864bad1d1856546aaa43e0e5b78df02"
+    },
+    {
+      "path": "tests/esp_stub/esp_system.h",
+      "sha256_lf": "839ecd8848059b2f76da308c8659f1b17a221bffd76cb4c656bd369a6453b546"
+    },
+    {
+      "path": "tests/esp_stub/esp_timer.h",
+      "sha256_lf": "e6fbd42cfd5cacd7b6e75db7474dec453cef5056422b2d7ed8a52d4623d76cf2"
+    },
+    {
+      "path": "tests/esp_stub/freertos/FreeRTOS.h",
+      "sha256_lf": "1ed79603355d874676c05bd3cd12e53ed530c46f46e767b91256d5298c1669c9"
+    },
+    {
+      "path": "tests/esp_stub/freertos/task.h",
+      "sha256_lf": "8fe6dd808326fd5e67feae2f99b2787433ad7a0fe65d409b3de45ffbb66fef17"
+    },
+    {
+      "path": "tests/esp_stub/ninlil.h",
+      "sha256_lf": "150bf1778d89301ed91791628f36ec9095d5bb4c3010807409a479017ee3c22f"
+    },
+    {
+      "path": "tests/esp_stub/sx126x.h",
+      "sha256_lf": "d9522f6dea4c5f3bcacd6886a3e3d0eb245bf225e5ab1c55d55c5c6570b596e4"
+    },
+    {
+      "path": "tests/esp_stub/sx126x_hal.h",
+      "sha256_lf": "f2623d0e5c4ed97cf453887ab95f0b82d53a013f407f6bfff985205f8f0b95ed"
+    },
+    {
+      "path": "tests/esp_stub/sx126x_regs.h",
+      "sha256_lf": "89f31df749c7f8b7e459c2c0e229ede4c25f270166e93e74398cbcba2914aa54"
+    },
+    {
+      "path": "tests/fuzz_control.c",
+      "sha256_lf": "b8d214176c872545e4d410566997ae0222837f447dfe3cf2ea64df7bf6809df5"
+    },
+    {
+      "path": "tests/m1/CMakeLists.txt",
+      "sha256_lf": "7a3467007d83de7ab16bd3d0878ea41677284a4cf90240f0fdb292556053d613"
+    },
+    {
+      "path": "tests/m3/CMakeLists.txt",
+      "sha256_lf": "3cf51fcb94f683f79de692f8d2e4c9596d69e7a04cdb48e1edbc0ca86149cbe5"
+    },
+    {
+      "path": "tests/security_test_io.h",
+      "sha256_lf": "b94f0200ebc883677ca0676f267d6fe3227120d1f708aef3db0eba240b0c279b"
+    },
+    {
+      "path": "tests/sim/fuzz_manifest.c",
+      "sha256_lf": "c9a08a8f12ef0baa0c6c769a75053281f7b076d9b4f88b143641400a3d555fb2"
+    },
+    {
+      "path": "tests/sim/manifests/direct.txt",
+      "sha256_lf": "b8099e0cdbf9e6118b63c565300a7af5eeac710515e57fcc1125d16aceb7f7fb"
+    },
+    {
+      "path": "tests/sim/manifests/recovery.txt",
+      "sha256_lf": "f61fefbabda3c3dd0a41838458f712ac6b6473f2630802cafa7a4c4b16fb6e48"
+    },
+    {
+      "path": "tests/sim/manifests/star.txt",
+      "sha256_lf": "90e2e111d2ff800246d8d7859f5280f10770b9b29156bb4c5bc750d343ca372b"
+    },
+    {
+      "path": "tests/sim/sim.h",
+      "sha256_lf": "352a76a9eb306c21d993e54beb5116843450cecc1195fb3d88e98a6f566b6319"
+    },
+    {
+      "path": "tests/sim/sim_main.c",
+      "sha256_lf": "639ac292cbcd082aa0067a0b9f342bf110a059990460807adc443e83945236e0"
+    },
+    {
+      "path": "tests/sim/sim_manifest.c",
+      "sha256_lf": "fe0f50e96c048f6cd79833452fedba9578acee57d5c075331f456318dbf07193"
+    },
+    {
+      "path": "tests/sim/sim_radio.c",
+      "sha256_lf": "9ddc8f67b8e8eef0089a52408f13ae45c8320e97357cce73239e4f0787280554"
+    },
+    {
+      "path": "tests/sim/sim_workload.c",
+      "sha256_lf": "ee2b1eb07f0a016f8613ffc1f06cd29ee5746894c561186fb084b4b65942a2cb"
+    },
+    {
+      "path": "tests/sim/test_sim_model.c",
+      "sha256_lf": "f0c17dc0b25b9d9d51d5bd82e397daae55c10d4e4ceee5cca714b2556857ce05"
+    },
+    {
+      "path": "tests/sim/test_sim_scenarios.c",
+      "sha256_lf": "3b4d7abd3b42e63c9ffaf65ca7d4fc5982e187ad4efccd21ff4bfc9b472d3611"
+    },
+    {
+      "path": "tests/test_airtime.c",
+      "sha256_lf": "f88627647c929ba8cbc651d2eae513782d3da54fe09716b20847724dc3d18258"
+    },
+    {
+      "path": "tests/test_control_fragment.c",
+      "sha256_lf": "4b7d8d04e8bd44bced77020c05d156a38a662a1dba04ecd23b6a39cda5300fda"
+    },
+    {
+      "path": "tests/test_control_log.c",
+      "sha256_lf": "8b42de9fc2a2c4782f13908e79d0664b68e6cd9a549c00a4555ac6e83acec7cd"
+    },
+    {
+      "path": "tests/test_core.c",
+      "sha256_lf": "ec94e2014b8e0e454b719a52e34c59826aa7a34ab4ded25ab3a697a28970ec36"
+    },
+    {
+      "path": "tests/test_delivery_state.c",
+      "sha256_lf": "c911354284f601e1dc563e7a8f80beae986e3d21a1f5d0d0f72a90ab09c71289"
+    },
+    {
+      "path": "tests/test_diag_radio.c",
+      "sha256_lf": "8a4eeea5652b759e9cc4b41504593a207f850c2c82105b4bf972468a48045541"
+    },
+    {
+      "path": "tests/test_edhoc.c",
+      "sha256_lf": "1c4f1d2c1655aa4334647d5b2794ed717fb1bdb67d407587b47c77406b4766b0"
+    },
+    {
+      "path": "tests/test_flash.c",
+      "sha256_lf": "a9028d9d41fc4f4f31c0fe9ff99257725655cc072a71cb43ec9990782080a5fc"
+    },
+    {
+      "path": "tests/test_hil_delivery.c",
+      "sha256_lf": "877cbb8c48d60b79d0c1530e718d10a96a5c5932f8f3eca6975daf1e3d63db2a"
+    },
+    {
+      "path": "tests/test_join.c",
+      "sha256_lf": "1970da07ceb022b844d1751ddb8352692a8a409ef92039abd4c7cb9689ab5dcc"
+    },
+    {
+      "path": "tests/test_network.c",
+      "sha256_lf": "dd95f5cf36e2959b9c9e320c950c1c124c42b48cd3b1c5530770bd7084f9cd89"
+    },
+    {
+      "path": "tests/test_network_pump.c",
+      "sha256_lf": "2c8e51982a856ef1ddc723f02d7a6168db76c4a69dda9690ddc9075887d1365a"
+    },
+    {
+      "path": "tests/test_operations.c",
+      "sha256_lf": "2bd98b667fe682f9978a827c6d3b44f48dce0eac0e842b831a9c811609e323af"
+    },
+    {
+      "path": "tests/test_radio_delivery.c",
+      "sha256_lf": "03b7451337f94375ffd108ce1d512cc58196d95bebf5b48d9bef1b2b04c7be16"
+    },
+    {
+      "path": "tests/test_secure.c",
+      "sha256_lf": "e774465d77c4ba6eec9007b28107a8fcaadd54df2582040e45d2ca994daf3689"
+    },
+    {
+      "path": "tests/test_security_partitions.c",
+      "sha256_lf": "0b38dbf2a5edf827b4e2b6e4558a2db11abe1739878f1ab6944272066ac43a41"
+    },
+    {
+      "path": "tests/test_security_state.c",
+      "sha256_lf": "eecf9de0e04cc5e799ae4ecbf704fd17eb497bc6e6d72b9457e2964165756c38"
+    },
+    {
+      "path": "tests/test_support.c",
+      "sha256_lf": "3f1cafdfae5939c00a5a05ce4085920644626c83c20ececa2e55d3ce6120bf1d"
+    },
+    {
+      "path": "tests/test_support.h",
+      "sha256_lf": "eef0d3af7db62886ec2bafa3f2bf7d3adaf6ae76cd2df5c39e326984ce01756f"
+    },
+    {
+      "path": "tests/test_sx1262_hal.c",
+      "sha256_lf": "1a666d6bb7f17ce571c213bc498bf719e613ef6e72951aa58765bed2acc451a8"
+    },
+    {
+      "path": "tests/test_sx1262_physical.c",
+      "sha256_lf": "819d615c941f4314b48d2819ed0ae11f6b130a51ce329100c78acc603d04a93a"
+    },
+    {
+      "path": "tests/vendor/CMakeLists.txt",
+      "sha256_lf": "9d8f708bc9a8c0c9d8653e10596da0b385e6c832e3ae440392745a58bedb9bcd"
+    },
+    {
+      "path": "third_party/UPSTREAM.toml",
+      "sha256_lf": "ba64c7ac42d1ae8fe841b53ebc3167cf021c5463f3cbc6063b4a239d9be27f00"
+    },
+    {
+      "path": "third_party/adapted/LICENSE.libedhoc.txt",
+      "sha256_lf": "6abcc5a875247bf22da6b271339cb6a38380ef129fd8acea169a8fe4e7575033"
+    },
+    {
+      "path": "third_party/adapted/LICENSE.zcbor.txt",
+      "sha256_lf": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "third_party/adapted/PROVENANCE.json",
+      "sha256_lf": "204a534ea914f59e54b4d51bafcdc0b435870f0a02daa6b1e09e744c98c741a4"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_bstr_type_decode.c",
+      "sha256_lf": "41e3f280260946c6029878341ef9efb9eae2e1a638057147424663230987ac6a"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_bstr_type_decode.c.patch",
+      "sha256_lf": "c18b5375facdb38d326d60a005ff7bd2059ed37d7ee9039ceaab4074ea238ae5"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_bstr_type_encode.c",
+      "sha256_lf": "422ab58c39933507fe776e49dfa8766513fe25bdec1988d2330734ac2c1b3bcc"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_bstr_type_encode.c.patch",
+      "sha256_lf": "29e14abecebfc4b2a46337c2a73ded8de0e267b0a2d56b96d1d3aaebed2a72b0"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_connection_identifier_decode.c",
+      "sha256_lf": "e37347f37d2650418c21d3ab5de750821cb9a62e924433cedc1ff686459a5554"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_connection_identifier_decode.c.patch",
+      "sha256_lf": "45df89016f1649ca604be1262fdb7cdc65bfa912b9a443f60861a61a630dfe2f"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_connection_identifier_encode.c",
+      "sha256_lf": "788b29f19e9f4c84871a2426dd71b1f47fd0a2958baaf409f890bce80c9f7bf6"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_connection_identifier_encode.c.patch",
+      "sha256_lf": "750f1ac2507ac5a4e2c628bdb0e7f0519001d2176b7cd1298351bc851eb1b07c"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_ead_decode.c",
+      "sha256_lf": "0a6872dd62ceb395f199bf551014212087d1952c5fda01c09a5ed11ca682a903"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_ead_decode.c.patch",
+      "sha256_lf": "d2ada3ab9a3c21b07b73798ec643a6ea9922b1bfb8235832b4fd9d257e5d25c3"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_ead_encode.c",
+      "sha256_lf": "0e67a24e2b5510de807880b3d288570852cbcb97d91c825b644336e5d7df824e"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_ead_encode.c.patch",
+      "sha256_lf": "4847dd74b9c7519b47cdf5f8d19128e652a403747d6fc6bc0410384cc428a175"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_enc_structure_decode.c",
+      "sha256_lf": "672bfa7fd4bfc446ed9bd629d3279f7b4d26de7761ddb36f7f653712aa0d488b"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_enc_structure_decode.c.patch",
+      "sha256_lf": "096a141b94904041dfde9e13affc175f20100a46a4339633e360cd17f1f43bf1"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_enc_structure_encode.c",
+      "sha256_lf": "d92e4acd8b9c424769da46425c056a26032272161a4375f3b6200be32b3cc946"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_enc_structure_encode.c.patch",
+      "sha256_lf": "9898b783533863752176902487f5fb7bbd3b7fc28efdba5cb917c1ec2fd7a7a4"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_id_cred_x_decode.c",
+      "sha256_lf": "7d5fee72f64b07bab06fad2bed32ab481d51d26b75d4caeca3ecb3f28652a5c0"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_id_cred_x_decode.c.patch",
+      "sha256_lf": "25315af36ca587a360d1aaf96b7673fb5e7300d8349b148b230a5a94113fa3f0"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_id_cred_x_encode.c",
+      "sha256_lf": "d4a253d7a01ca031926c524be80ad3d42dd645a4f3587a44ad9153eb225cc3c3"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_id_cred_x_encode.c.patch",
+      "sha256_lf": "dbec54f4ed556e823d9ddb59ed535a585d5ce6473e1e4c5289c78253ab929362"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_info_decode.c",
+      "sha256_lf": "21954e1eed3c43760ebf9625c6a7fdc16a2540a7672b23220016db17946bf22a"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_info_decode.c.patch",
+      "sha256_lf": "8483bb6ee5f22b0e81d516ac02a0c3e0e2501d52ff432a683141f784effbac84"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_info_encode.c",
+      "sha256_lf": "f1ea3cc4abbca10517d968790a8d07d664568f977876258efa6f9208c1ecf47e"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_info_encode.c.patch",
+      "sha256_lf": "8c0ac33e6f7048c6d11466d8ec527addd50544dbbc8c11a8548180191b5871cd"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_int_type_decode.c",
+      "sha256_lf": "583eaa993445a3a1cd850bb0b8a8c623909dfb77970a7041b82a61d0b26b7e0d"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_int_type_decode.c.patch",
+      "sha256_lf": "2164802ae8d7b133834dac2a7352a13667d8db5d2a46bd15b02179352f3dff9e"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_int_type_encode.c",
+      "sha256_lf": "a892162d7dfad7d63203820b8e401383cbf7a054960fd30b67148364bae59370"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_int_type_encode.c.patch",
+      "sha256_lf": "9f6a0f6df27602ca106d92eaf0c8ea2ad3a9fc10b6bbb7a1409344c6eec3b426"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_1_decode.c",
+      "sha256_lf": "971e0039a33fad7b3ac34a3433393d9875ed6ffb3ef8ab397e2502dd45d547cf"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_1_decode.c.patch",
+      "sha256_lf": "609d3cf660b13b5b2861e03ff8b926e548140fc8bc1637cfe154bf0100092341"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_1_encode.c",
+      "sha256_lf": "4150543f45de3321995ebace661bd73df23cadd34aeb37741b32dfb4aa11fe41"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_1_encode.c.patch",
+      "sha256_lf": "590dd96d398cf514b9c6a82cc8fdb56e439c60136b64a731a56420cdb8bcad3d"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_2_decode.c",
+      "sha256_lf": "c126951bb7bbe7cdad156775754fe5963af79e9e5c6cd8c4d555a4d79bd17771"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_2_decode.c.patch",
+      "sha256_lf": "c418dcae24dc659d400a94f36b60ffcf35e86879dc6e0589e497ea1f7e140d10"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_2_encode.c",
+      "sha256_lf": "5da7461b815025cd15a42c865553661b072ae8f9f7ee782eda703dbbf18bc138"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_2_encode.c.patch",
+      "sha256_lf": "8880ea0f94a52b541cbc1b6348a5e3e362ba7083be7e3015016bca90623c11fd"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_3_decode.c",
+      "sha256_lf": "a928138bcc973bca2fb75498811f83b78362350084328e8d9ba6ed438182e59c"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_3_decode.c.patch",
+      "sha256_lf": "21e4f9f7e901c56e3a4a6ad06620f179c12c72ace65cc621dea9a9cdd7f92f67"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_3_encode.c",
+      "sha256_lf": "14a3ca0562f092d491eabeef4390a23d86a1c1b129bdb45ad3e378edd26e22cd"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_3_encode.c.patch",
+      "sha256_lf": "645d2824b0b80b2de21dc35f6e71c2bdc76b8185f8053fceeed521ed3f722c8b"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_4_decode.c",
+      "sha256_lf": "9e6728ce6abd41fe39b911c1a9ab831e1e4c9b0acdd9761df96dd8f1a3524329"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_4_decode.c.patch",
+      "sha256_lf": "8c4dfde592ff5f1c25ac1b3099542506472c2a7d2fdc8ebe392707ba47b6d8a4"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_4_encode.c",
+      "sha256_lf": "86947cec8ec1f2e0431494b8fb145cb2e9c8af52994898a69fa7121f31901a21"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_4_encode.c.patch",
+      "sha256_lf": "75adbb269f0c794ef4c86f9131ed673940fc9e5d8fe80c25d39c27cc0364b3db"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_error_decode.c",
+      "sha256_lf": "618b63513518240e4243b4f60a1481af5106781dd556fc92f645e28fe09e6462"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_error_decode.c.patch",
+      "sha256_lf": "02147cb7bb2911cfe5b607dba207eaa5a1d047ed879090eedd8e68c8fbc701b0"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_error_encode.c",
+      "sha256_lf": "49885fa974678e76429530ccca0e41b4c36cdd9b9fa7130d179e2828d394c417"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_message_error_encode.c.patch",
+      "sha256_lf": "1dbf3538b9ebf0b95cd3c6cb6656145feb103c942112e00378cc1102347f2e73"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_2_decode.c",
+      "sha256_lf": "52f5be095a0a7db280406cc363929ea2ab68f93aef5eed01f630cbe0c8492ba9"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_2_decode.c.patch",
+      "sha256_lf": "3a146a5976a62b2e8ede60e2af14bb9aa1d31a0d866aa7086882f8f3838bead2"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_2_encode.c",
+      "sha256_lf": "0bd01aa79f4231ed7223643083a49340813557791d709491dc9463f9760e398f"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_2_encode.c.patch",
+      "sha256_lf": "3e77eca8aff8bc4ee581f6ecdb876e40091b1f28fffd4ed334d6c0bc0cc31dae"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_3_decode.c",
+      "sha256_lf": "4082f54e1834584eddd4eec5a391f81ba1bf4291742ae2b0179cbb3f6a147de0"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_3_decode.c.patch",
+      "sha256_lf": "235747032fb172eab9ee4326be08ef1332fee2070020ffbe3344eab44f790956"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_3_encode.c",
+      "sha256_lf": "e7361971935816af8faa62b6adda3e91dac806f147f5fd052a54cd568653e5de"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_3_encode.c.patch",
+      "sha256_lf": "d23afba2e462fc30b6d58058ed605eac4acabe2c8232f1c556277e4b920e09bf"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_4_decode.c",
+      "sha256_lf": "476a897f104c0cd63fef4e11810486b823893654ee8c3b4987e18b18867c231b"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_4_decode.c.patch",
+      "sha256_lf": "5c0778360828b7e8cec73650ed9b5caa7c2de3c581e871b394f79dc536299153"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_4_encode.c",
+      "sha256_lf": "da7d0212b1c9dbffb0ed4e3d29bf7f6566e83b3abbc21aae8655bbd091afb574"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_plaintext_4_encode.c.patch",
+      "sha256_lf": "d89ac830970b2c3913d30b9ef9d8b05ce392b2ef9a9f18adb7fd40ee3fdb5585"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_sig_structure_decode.c",
+      "sha256_lf": "c023caebfd4512d636d1d2ca153c6459feaf80d739242e9dfa481bc02b4b5f88"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_sig_structure_decode.c.patch",
+      "sha256_lf": "9dc6b80788baf500698523e835a336f8b31499147e6f9dc89c110aa5b7a4597f"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_sig_structure_encode.c",
+      "sha256_lf": "a34164a412c7e3eda1b7e9e657a341929540e8f33ec72dd8bb8e965512e98dfe"
+    },
+    {
+      "path": "third_party/adapted/cbor/backend_cbor_sig_structure_encode.c.patch",
+      "sha256_lf": "3330bfe812bc369aeb985851973b051e91ea8d4bc1b647d16675e566c635cea6"
+    },
+    {
+      "path": "third_party/adapted/edhoc_cipher_suite_2.c",
+      "sha256_lf": "a5e606d0856d08a6bf2c6e3c8e465383dfeb882ce089d040734b88276a1b5c36"
+    },
+    {
+      "path": "third_party/adapted/edhoc_cipher_suite_2.c.patch",
+      "sha256_lf": "4c90801bb77a722f44deb72291cb1b40559cd218a300df18a40e9277b8c0e6df"
+    },
+    {
+      "path": "third_party/adapted/zcbor_encode.c",
+      "sha256_lf": "ca059eb63ba9c0d44d0d510a29de10819de793469426e58f39f1d5dc2a3cfbb2"
+    },
+    {
+      "path": "third_party/adapted/zcbor_encode.c.patch",
+      "sha256_lf": "9648b73c81da6fa65e4a576f98aba232d1d5e6029975d41e0b1f761384bf9c5b"
+    }
+  ]
+}

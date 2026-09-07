@@ -601,3 +601,13 @@ int ninlil_mark_unknown(ninlil_runtime *runtime, const ninlil_id *message_id)
         return NINLIL_ERR_STATE;
     return ninlil_finish_outbound(runtime, entry, NINLIL_OUTCOME_UNKNOWN);
 }
+
+int ninlil_set_retry_interval(ninlil_runtime *runtime, uint32_t steps)
+{
+    if (!runtime || steps == 0u || steps > NINLIL_MAX_RETRY_INTERVAL_STEPS)
+        return NINLIL_ERR_INVALID;
+    if (runtime->fatal_error != NINLIL_OK)
+        return runtime->fatal_error;
+    runtime->config.retry_interval_steps = steps;
+    return NINLIL_OK;
+}

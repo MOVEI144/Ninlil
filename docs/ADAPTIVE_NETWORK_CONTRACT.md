@@ -1,6 +1,10 @@
 # Adaptive network contract — initial static-direct slice
 
-Status: selected scope for W01 and the first W02 implementation, 2026-09-07.
+Status: historical selected scope for W01 and the first W02 implementation,
+2026-09-07. The later explicit user decision authorizes steps 4-6 software
+implementation in [the secure network profile](SECURE_NETWORK_PROFILE_2026-09-07.md).
+The initial simulator described here keeps its original 92-byte/fixed baseline;
+new secure/Relay/Coordinator behavior is specified and evidenced separately.
 Source: [Issue #14](https://github.com/MOVEI144/Ninlil/issues/14), with
 [FOUNDATIONS](FOUNDATIONS.md), [P0 delivery](P0_DELIVERY_CONTRACT_V2.md),
 [operational profiles](P0_OPERATIONAL_PROFILES_V1.md), and the

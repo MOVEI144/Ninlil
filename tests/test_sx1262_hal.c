@@ -39,6 +39,10 @@ static spi_bus_config_t fake_bus_config;
 static spi_device_interface_config_t fake_device_config;
 static int fake_levels[64];
 static int fake_contract_error;
+static uint8_t fake_transmitted[512];
+static size_t fake_transmitted_size;
+static size_t fake_received_size;
+static int fake_pattern_reads;
 
 static void reset_fakes(void)
 {
@@ -60,6 +64,9 @@ static void reset_fakes(void)
     memset(&fake_device_config, 0, sizeof(fake_device_config));
     memset(fake_levels, 0, sizeof(fake_levels));
     fake_contract_error = 0;
+    fake_transmitted_size = 0u;
+    fake_received_size = 0u;
+    fake_pattern_reads = 0;
 }
 
 esp_err_t gpio_config(const gpio_config_t *config)
@@ -180,6 +187,7 @@ esp_err_t spi_device_polling_transmit(spi_device_handle_t device,
                                       spi_transaction_t *transaction)
 {
     if (device != &fake_spi_token || transaction->length % 8u != 0u ||
+        transaction->length > 64u * 8u ||
         fake_levels[NINLIL_SX1262_PIN_NSS] != 0) {
         fake_contract_error = 1;
         return ESP_FAIL;
@@ -187,8 +195,22 @@ esp_err_t spi_device_polling_transmit(spi_device_handle_t device,
     fake_transmit_calls++;
     if (fake_transmit_calls == fake_transmit_fail_call)
         return ESP_FAIL;
+    if (transaction->tx_buffer) {
+        size_t size = transaction->length / 8u;
+        if (size > sizeof(fake_transmitted) - fake_transmitted_size)
+            return ESP_FAIL;
+        memcpy(fake_transmitted + fake_transmitted_size, transaction->tx_buffer,
+               size);
+        fake_transmitted_size += size;
+    }
     if (fake_transmit_result == ESP_OK && transaction->rx_buffer) {
         memset(transaction->rx_buffer, UINT8_C(0xA5), transaction->length / 8u);
+        if (fake_pattern_reads) {
+            size_t i;
+            for (i = 0u; i < transaction->length / 8u; i++)
+                ((uint8_t *)transaction->rx_buffer)[i] =
+                    (uint8_t)fake_received_size++;
+        }
     }
     return fake_transmit_result;
 }
@@ -336,10 +358,48 @@ static int test_init_and_reset_fail_closed(void)
     return 0;
 }
 
+static int test_long_non_dma_transfers(void)
+{
+    const uint16_t lengths[] = {0u, 1u, 63u, 64u, 65u, 200u, 240u};
+    uint8_t command[2] = {0x0Eu, 0u}, payload[240], output[242];
+    ninlil_sx1262_hal_context context;
+    size_t i, j;
+    for (i = 0u; i < sizeof(payload); i++)
+        payload[i] = (uint8_t)i;
+    for (i = 0u; i < sizeof(lengths) / sizeof(lengths[0]); i++) {
+        reset_fakes();
+        CHECK(ninlil_sx1262_hal_init(&context) == 0);
+        CHECK(sx126x_hal_write(&context, command, 2u, payload, lengths[i]) ==
+              SX126X_HAL_STATUS_OK);
+        CHECK(fake_transmitted_size == 2u + lengths[i]);
+        CHECK(memcmp(fake_transmitted, command, 2u) == 0);
+        CHECK(memcmp(fake_transmitted + 2, payload, lengths[i]) == 0);
+        CHECK(fake_transmit_calls == 1u + (lengths[i] + 63u) / 64u);
+        fake_pattern_reads = 1;
+        memset(output, 0xEE, sizeof(output));
+        CHECK(sx126x_hal_read(&context, command, 2u, output + 1, lengths[i]) ==
+              SX126X_HAL_STATUS_OK);
+        for (j = 0u; j < lengths[i]; j++)
+            CHECK(output[j + 1u] == (uint8_t)j);
+        CHECK(output[0] == 0xEE && output[lengths[i] + 1u] == 0xEE);
+        CHECK(fake_levels[NINLIL_SX1262_PIN_NSS] == 1 && !fake_contract_error);
+        ninlil_sx1262_hal_deinit(&context);
+    }
+    reset_fakes();
+    CHECK(ninlil_sx1262_hal_init(&context) == 0);
+    fake_transmit_fail_call = 3u;
+    CHECK(sx126x_hal_write(&context, command, 2u, payload, 240u) ==
+          SX126X_HAL_STATUS_ERROR);
+    CHECK(fake_transmit_calls == 3u && fake_levels[NINLIL_SX1262_PIN_NSS] == 1);
+    ninlil_sx1262_hal_deinit(&context);
+    return 0;
+}
+
 static int (*const tests[])(void) = {
     test_init_io_and_cleanup,
     test_bounded_operation_failures,
     test_init_and_reset_fail_closed,
+    test_long_non_dma_transfers,
 };
 
 int main(void)

@@ -615,7 +615,7 @@ static int test_mtu_and_incompatible_journal_rejected(void)
     ninlil_id key;
     ninlil_id message_id;
     ninlil_submission request;
-    uint8_t payload[53];
+    uint8_t payload[NINLIL_RADIO_MTU - 40u + 1u];
     struct stat before;
     struct stat after;
     FILE *file;

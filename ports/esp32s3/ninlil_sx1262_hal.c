@@ -39,18 +39,28 @@ static int wait_busy(const ninlil_sx1262_hal_context *context,
 static esp_err_t transmit(spi_device_handle_t spi, const void *tx, void *rx,
                           size_t length)
 {
-    spi_transaction_t transaction;
-
-    if (length == 0u)
-        return ESP_OK;
-    memset(&transaction, 0, sizeof(transaction));
-    transaction.length = length * 8u;
-    transaction.tx_buffer = tx;
-    transaction.rx_buffer = rx;
+    size_t offset = 0u;
     // The radio task exclusively owns this bus/device with no queued work.
     // NSS stays asserted across command/data calls below. ESP-IDF v6.0.2
     // rejects finite waits for the unnecessary explicit bus acquisition.
-    return spi_device_polling_transmit(spi, &transaction);
+    // ESP32-S3 non-DMA transfers have a 64-byte hardware buffer. Keep manual
+    // NSS asserted while splitting longer encrypted/control packets.
+    while (offset < length) {
+        spi_transaction_t transaction;
+        size_t size = length - offset;
+        esp_err_t rc;
+        if (size > 64u)
+            size = 64u;
+        memset(&transaction, 0, sizeof(transaction));
+        transaction.length = size * 8u;
+        transaction.tx_buffer = tx ? (const uint8_t *)tx + offset : NULL;
+        transaction.rx_buffer = rx ? (uint8_t *)rx + offset : NULL;
+        rc = spi_device_polling_transmit(spi, &transaction);
+        if (rc != ESP_OK)
+            return rc;
+        offset += size;
+    }
+    return ESP_OK;
 }
 
 static int select_radio(const ninlil_sx1262_hal_context *context)

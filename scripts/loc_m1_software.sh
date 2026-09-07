@@ -78,9 +78,16 @@ if ((${#files[@]} == 0)); then
   exit 1
 fi
 
+# The M1 glob predates M2-M5. Keep those separately measured modules out of
+# the direct-radio milestone, while the project-wide 50,000 ceiling covers all.
+network_files=()
+mapfile -t network_files < "$root/scripts/secure_network_files.txt"
 physical=0
 nonblank=0
 for file in "${files[@]}"; do
+  for network_file in "${network_files[@]}"; do
+    [[ "$file" != "$root/$network_file" ]] || continue 2
+  done
   physical=$((physical + $(wc -l < "$file")))
   nonblank=$((nonblank + $(awk 'NF { n++ } END { print n + 0 }' "$file")))
 done

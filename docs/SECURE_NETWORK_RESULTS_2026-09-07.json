@@ -1,0 +1,99 @@
+{
+  "decision_date": "2026-09-07",
+  "verified_utc": "2026-09-07T14:47:32.393954+00:00",
+  "verified_jst": "2026-09-07T23:47:32.393954+09:00",
+  "scope": "Conversation steps 4-6: secure many-peer membership, powered Relay recovery/removal, fixed-profile adaptive routes/retries/airtime",
+  "implementation_status": "complete for documented software profile; physical/security acceptance separate",
+  "source_manifest": "docs/SECURE_NETWORK_SOURCE_2026-09-07.json",
+  "source_tree_sha256": "ab38891d6c121b634effce7f7a3b1fd606a64c4b5c8efb3a7b0f69c4a4fd771f",
+  "native_matrix": {
+    "gcc": "27/27 PASS",
+    "clang": "27/27 PASS",
+    "gcc_asan_ubsan": "27/27 PASS",
+    "clang_asan_ubsan": "27/27 PASS",
+    "total": 108
+  },
+  "vendor_adapted_suite": {
+    "tests": 711,
+    "failures": 0,
+    "ignored": 0,
+    "scope": "Pinned upstream module tests with committed CBOR/helper adaptations; upstream default memory backend"
+  },
+  "fuzz": {
+    "manifest": 10000,
+    "control_join_plan_relay": 10000,
+    "seed": 20260907,
+    "result": "PASS with ASan/UBSan"
+  },
+  "analysis": [
+    "GCC analyzer",
+    "Clang analyzer",
+    "crypto bridge Clang analyzer from compile database",
+    "ESP strict syntax",
+    "clang-format",
+    "shell syntax",
+    "source/provenance hashes",
+    "simulation reproducibility"
+  ],
+  "target": {
+    "result": "ESP32-S3 configure/build/link PASS; image checksum/hash valid",
+    "idf": "v6.0.2",
+    "idf_commit": "7101770dc6db2667b3c477cc31365dd1acd6db4e",
+    "compiler": "Xtensa GCC 15.2.0 esp-15.2.0_20251204",
+    "cmake": "4.0.3",
+    "python": "3.12.3",
+    "mbedtls": "4.1.0",
+    "tf_psa_crypto": "1.1.0",
+    "app_version": "ninlil-456-20260907",
+    "image": ".verify-m1-evidence/456-final-firmware.bin",
+    "image_bytes": 390288,
+    "image_sha256": "642eb91014406c90fde15954aa2b3a6b0fe61c9022ef63d760a2203b48498a99",
+    "tx_enabled": false,
+    "frequency_hz": 0,
+    "hardware_wiring": "Seeed XIAO ESP32-S3 + Wio-SX1262 B2B; ports/esp32s3/ninlil_board_seeed_b2b.h; unchanged pins; 64-byte non-DMA SPI chunks"
+  },
+  "comparison": {
+    "model": "Deterministic in-process four-node radio; same 18 durable messages; not physical airtime/latency",
+    "fixed": {
+      "ticks": 412,
+      "tx_attempts": 120
+    },
+    "adaptive": {
+      "ticks": 60,
+      "tx_attempts": 97
+    },
+    "tick_ms": 10,
+    "additional_cases": [
+      "relay absence",
+      "lease expiry fence",
+      "fresh EDHOC/session",
+      "same original message completion",
+      "drain and epoch-bound route retirement",
+      "revocation",
+      "optimizer disabled while effective route remains"
+    ]
+  },
+  "limits": {
+    "project_nonblank_ceiling": 50000,
+    "m1_ceiling_unchanged": 7000,
+    "secure_network_ledger_ceiling": 12000,
+    "p0_ceiling_unchanged": 12000,
+    "m3_security_ceiling_unchanged": 3500
+  },
+  "unrun": [
+    "Any new hardware flash or RF transmission",
+    "Secure/multi-hop RF HIL and 240-byte physical packet acceptance",
+    "Controlled Flash-write electrical power cut",
+    "Field/production-security acceptance",
+    "Hosted CI",
+    "GitHub push/issue/project mutation"
+  ],
+  "artifacts": {
+    "manifest": ".verify-m1-evidence/456-evidence-manifest.json",
+    "manifest_sha256": "27a62e21a16fc12c76c8d43df6ea7f2a4a3e16f83fdfed44bdde98ccb9de2b10",
+    "count": 89,
+    "final_native_log": ".verify-m1-evidence/456-release-local-verification.log",
+    "final_vendor_log": ".verify-m1-evidence/456-adapted-vendor-final.log",
+    "final_target_log": ".verify-m1-evidence/456-release-target.log"
+  }
+}

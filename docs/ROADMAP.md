@@ -1,5 +1,7 @@
 # Roadmap
 
+The 2026-09-07 conversation steps 4-6 have a scoped [software implementation](SECURE_NETWORK_PROFILE_2026-09-07.md). Physical milestone acceptance remains separate; conversation step 6 is adaptive communication, not the M6 bulk/OTA milestone below.
+
 ## B0 — Canonical baseline import
 
 Import the reviewed compact C11 baseline into `MOVEI144/Ninlil`, add governance and remote CI, and verify that the imported tree is reproducible.

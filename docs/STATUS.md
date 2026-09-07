@@ -21,11 +21,24 @@ The first review branch imports a compact C11 baseline containing:
 
 The P0 implementation candidate adds versioned per-message delivery evidence, immediate durable-store receipts, at-least-once Application handoff, restart-safe deadline boundaries, bounded role scheduling, default-deny service grants, and caller-backed Host custody/topology/group contracts. This is not accepted hardware or production-security evidence. See [`P0_IMPLEMENTATION.md`](P0_IMPLEMENTATION.md).
 
-## Important non-claims
+## Current steps 4-6 software implementation
 
-The official baseline does **not** yet contain a completed secure-link layer, EDHOC integration, Join protocol, multi-peer Gateway authority store, Relay, scheduled MAC, or fragmentation. Earlier conversational milestones do not become official implementation evidence unless their source and tests are imported and reviewed here.
+The [secure network profile](SECURE_NETWORK_PROFILE_2026-09-07.md) now implements
+EDHOC/AES-CCM, committed Join and membership, secure many-peer delivery, powered
+Relay custody/recovery/removal, and fixed-profile route/retry/airtime adjustment.
+The actual C modules run together in two host examples and have an ESP-IDF
+component/pump integration. See the [local evidence](SECURE_NETWORK_LOCAL_EVIDENCE_2026-09-07.md)
+for exact final results: 108/108 local CTest runs, 711/711 adapted upstream tests,
+20,000 fuzz executions, static/syntax checks and a TX-disabled ESP32-S3 build
+pass. These conversation steps do not mean roadmap M6 bulk/OTA.
 
-## Acceptance state
+The user's current decision ends additional hardware testing. Secure multi-hop
+RF, new 240-byte physical packets, controlled power interruption, field behavior
+and production security remain unaccepted. Earlier two-board plaintext tests do
+not become evidence for the new secure profile. No new board flash or RF campaign
+is performed for steps 4-6.
+
+## Acceptance state of the earlier durable HIL baseline
 
 - Host/model tests: all 16 tests pass in four local compiler/sanitizer configurations on the durable HIL source; hosted CI not run.
 - ESP-IDF configure/link: local v6.0.2 builds pass for diagnostic roles and six durable/recovery variants.

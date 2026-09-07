@@ -40,6 +40,8 @@ int ninlil_sx1262_radio_init(ninlil_sx1262_radio *radio,
                              const ninlil_rf_profile *profile,
                              bool rx_gate_active_high);
 void ninlil_sx1262_radio_deinit(ninlil_sx1262_radio *radio);
+int ninlil_sx1262_radio_airtime(const ninlil_sx1262_radio *radio,
+                                uint16_t length, uint32_t *airtime_us);
 int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio, const uint8_t *data,
                              uint16_t length);
 int ninlil_sx1262_radio_receive(ninlil_sx1262_radio *radio, uint8_t *data,

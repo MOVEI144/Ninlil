@@ -16,6 +16,7 @@ common=(
   -Wstrict-prototypes -Wmissing-prototypes -fno-common
 )
 platform_sources=(
+  "$root/ports/esp32s3/ninlil_network_pump.c"
   "$root/ports/esp32s3/ninlil_sx1262_hal.c"
   "$root/ports/esp32s3/ninlil_sx1262_radio.c"
   "$root/ports/esp32s3/ninlil_flash_journal.c"

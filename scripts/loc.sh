@@ -6,7 +6,8 @@ mapfile -d '' files < <(
   find "$root" -type f \
     \( -name '*.c' -o -name '*.h' -o -name '*.md' -o \
        -name 'CMakeLists.txt' -o -name '*.sh' -o -name '*.toml' -o \
-       -name '*.csv' \) \
+       -name '*.csv' -o -name '*.py' -o -name '*.cmake' -o \
+       -name '*.json' -o -name '*.yml' -o -name '*.yaml' \) \
     ! -path "$root/.git/*" \
     ! -path "$root/build*/*" \
     ! -path "$root/.build-*/*" \
@@ -18,6 +19,9 @@ mapfile -d '' files < <(
     ! -path "$root/.verify-*/*" \
     ! -path "$root/.fake-build/*" \
     ! -path "$root/third_party/sx126x_driver/src/*" \
+    ! -path "$root/third_party/libedhoc/*" \
+    ! -path "$root/third_party/adapted/edhoc_cipher_suite_2.c" \
+    ! -path "$root/third_party/adapted/zcbor_encode.c" \
     -print0 | sort -z
 )
 nonblank=0

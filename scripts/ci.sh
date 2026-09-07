@@ -67,16 +67,21 @@ run_build clang-sanitize "$clang_bin" ON
 
 mapfile -d '' format_files < <(
   find "$root/include" "$root/src" "$root/ports" "$root/tests" \
-    "$root/embedded" -type f \( -name '*.c' -o -name '*.h' \) \
+    "$root/embedded" "$root/examples" -type f \( -name '*.c' -o -name '*.h' \) \
     ! -path "$root/third_party/*" -print0 | sort -z
 )
 "$clang_format_bin" --dry-run --Werror "${format_files[@]}"
 
 "$root/scripts/check_sx126x_driver.sh"
+python3 "$root/scripts/check_edhoc.py"
 CC="$gcc_bin" CLANG="$clang_bin" "$root/scripts/check_esp_syntax.sh"
 "$root/scripts/static_analysis.sh" "$gcc_bin" "$clang_bin"
+python3 "$root/scripts/static_crypto.py" "$build_root/clang"
 bash "$root/scripts/fuzz_sim.sh"
+bash "$root/scripts/fuzz_control.sh"
+bash "$root/scripts/verify_vendor.sh" "$build_root/vendor"
 "$root/scripts/loc_m1_software.sh"
+bash "$root/scripts/loc_secure_network.sh"
 "$root/scripts/loc_m3_security.sh"
 "$root/scripts/loc_p0.sh"
 "$root/scripts/loc.sh"

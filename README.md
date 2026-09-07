@@ -74,3 +74,13 @@ Read in this order:
 ## License
 
 Apache License 2.0. See [`LICENSE`](LICENSE).
+
+## Secure many-peer and adaptive Relay profile
+
+Conversation steps 4-6 are implemented in the [2026-09-07 profile](docs/SECURE_NETWORK_PROFILE_2026-09-07.md).
+Run `bash scripts/fetch_edhoc.sh` before configuring the host build. The runnable
+examples are `ninlil_secure_network star` and `ninlil_secure_network compare`.
+They use real crypto/Core/control with a deterministic model radio; see the
+[local evidence](docs/SECURE_NETWORK_LOCAL_EVIDENCE_2026-09-07.md) for results and
+unrun physical gates. ESP32-S3 components and the bounded radio pump are included;
+no production credentials or deployment authorization are supplied by the examples.

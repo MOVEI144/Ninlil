@@ -9,8 +9,10 @@ static int partition_read(void *ctx, size_t offset, uint8_t *buffer,
 {
     ninlil_esp_security_partition *context = ctx;
 
-    return esp_partition_read(context->partition, offset, buffer, length) ==
-                   ESP_OK
+    if (offset > context->size || length > context->size - offset)
+        return -1;
+    return esp_partition_read(context->partition, context->offset + offset,
+                              buffer, length) == ESP_OK
                ? 0
                : -1;
 }
@@ -20,8 +22,10 @@ static int partition_write(void *ctx, size_t offset, const uint8_t *buffer,
 {
     ninlil_esp_security_partition *context = ctx;
 
-    return esp_partition_write(context->partition, offset, buffer, length) ==
-                   ESP_OK
+    if (offset > context->size || length > context->size - offset)
+        return -1;
+    return esp_partition_write(context->partition, context->offset + offset,
+                               buffer, length) == ESP_OK
                ? 0
                : -1;
 }
@@ -30,8 +34,10 @@ static int partition_erase(void *ctx, size_t offset, size_t length)
 {
     ninlil_esp_security_partition *context = ctx;
 
-    return esp_partition_erase_range(context->partition, offset, length) ==
-                   ESP_OK
+    if (offset > context->size || length > context->size - offset)
+        return -1;
+    return esp_partition_erase_range(context->partition,
+                                     context->offset + offset, length) == ESP_OK
                ? 0
                : -1;
 }
@@ -51,11 +57,37 @@ static int open_partition(ninlil_esp_security_partition *context,
     if (!partition || partition->size != NINLIL_SECURITY_PARTITION_SIZE)
         return NINLIL_ERR_NOT_FOUND;
     context->partition = partition;
+    context->size = partition->size;
     io->read = partition_read;
     io->write = partition_write;
     io->erase = partition_erase;
     io->ctx = context;
     io->size = partition->size;
+    return NINLIL_OK;
+}
+
+int ninlil_esp_session_counter_io(ninlil_esp_security_partition *context,
+                                  ninlil_security_io *io, uint16_t slot)
+{
+    const esp_partition_t *partition;
+    if (!context || !io || slot >= NINLIL_SESSION_COUNTER_SLOTS)
+        return NINLIL_ERR_INVALID;
+    memset(context, 0, sizeof(*context));
+    memset(io, 0, sizeof(*io));
+    partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA,
+                                         NINLIL_SESSION_PARTITION_SUBTYPE,
+                                         NINLIL_SESSION_PARTITION_LABEL);
+    if (!partition || partition->size != NINLIL_SESSION_COUNTER_SLOTS *
+                                             NINLIL_SECURITY_PARTITION_SIZE)
+        return NINLIL_ERR_NOT_FOUND;
+    context->partition = partition;
+    context->offset = (size_t)slot * NINLIL_SECURITY_PARTITION_SIZE;
+    context->size = NINLIL_SECURITY_PARTITION_SIZE;
+    io->read = partition_read;
+    io->write = partition_write;
+    io->erase = partition_erase;
+    io->ctx = context;
+    io->size = context->size;
     return NINLIL_OK;
 }
 

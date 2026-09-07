@@ -14,13 +14,15 @@
 
 typedef struct fake_partition {
     esp_partition_t descriptor;
-    uint8_t bytes[NINLIL_SECURITY_PARTITION_SIZE];
+    uint8_t
+        bytes[NINLIL_SESSION_COUNTER_SLOTS * NINLIL_SECURITY_PARTITION_SIZE];
     esp_partition_subtype_t subtype;
     const char *label;
 } fake_partition;
 
 static fake_partition counter_partition;
 static fake_partition membership_partition;
+static fake_partition session_partition;
 static uint8_t hide_counter;
 static uint8_t hide_membership;
 
@@ -30,6 +32,8 @@ static fake_partition *from_descriptor(const esp_partition_t *partition)
         return &counter_partition;
     if (partition == &membership_partition.descriptor)
         return &membership_partition;
+    if (partition == &session_partition.descriptor)
+        return &session_partition;
     return NULL;
 }
 
@@ -39,6 +43,9 @@ const esp_partition_t *esp_partition_find_first(int type,
 {
     if (type != ESP_PARTITION_TYPE_DATA || !label)
         return NULL;
+    if (subtype == NINLIL_SESSION_PARTITION_SUBTYPE &&
+        strcmp(label, NINLIL_SESSION_PARTITION_LABEL) == 0)
+        return &session_partition.descriptor;
     if (!hide_counter && subtype == counter_partition.subtype &&
         strcmp(label, counter_partition.label) == 0)
         return &counter_partition.descriptor;
@@ -100,10 +107,10 @@ static void initialize_partitions(void)
            sizeof(counter_partition.bytes));
     memset(membership_partition.bytes, UINT8_C(0xFF),
            sizeof(membership_partition.bytes));
-    counter_partition.descriptor.size = sizeof(counter_partition.bytes);
+    counter_partition.descriptor.size = NINLIL_SECURITY_PARTITION_SIZE;
     counter_partition.subtype = NINLIL_COUNTER_PARTITION_SUBTYPE;
     counter_partition.label = NINLIL_COUNTER_PARTITION_LABEL;
-    membership_partition.descriptor.size = sizeof(membership_partition.bytes);
+    membership_partition.descriptor.size = NINLIL_SECURITY_PARTITION_SIZE;
     membership_partition.subtype = NINLIL_MEMBERSHIP_PARTITION_SUBTYPE;
     membership_partition.label = NINLIL_MEMBERSHIP_PARTITION_LABEL;
     hide_counter = 0u;
@@ -120,6 +127,25 @@ int main(void)
     uint8_t output = 0u;
 
     initialize_partitions();
+    {
+        ninlil_esp_security_partition first, last;
+        ninlil_security_io a, b;
+        memset(session_partition.bytes, 255, sizeof(session_partition.bytes));
+        session_partition.descriptor.size = sizeof(session_partition.bytes);
+        CHECK(ninlil_esp_session_counter_io(&first, &a, 0u) == NINLIL_OK);
+        CHECK(ninlil_esp_session_counter_io(&last, &b, 31u) == NINLIL_OK);
+        CHECK(a.write(a.ctx, 0u, &value, 1u) == 0);
+        CHECK(b.read(b.ctx, 0u, &output, 1u) == 0 && output == 255u);
+        CHECK(b.write(b.ctx, 0u, &value, 1u) == 0);
+        CHECK(a.erase(a.ctx, 0u, NINLIL_SECURITY_PARTITION_SIZE) == 0);
+        CHECK(b.read(b.ctx, 0u, &output, 1u) == 0 && output == value);
+        CHECK(a.read(a.ctx, NINLIL_SECURITY_PARTITION_SIZE, &output, 1u) != 0);
+        CHECK(a.write(a.ctx, NINLIL_SECURITY_PARTITION_SIZE, &value, 1u) != 0);
+        CHECK(a.erase(a.ctx, NINLIL_SECURITY_PARTITION_SIZE,
+                      NINLIL_SECURITY_SECTOR_SIZE) != 0);
+        CHECK(ninlil_esp_session_counter_io(&first, &a, 32u) ==
+              NINLIL_ERR_INVALID);
+    }
     CHECK(ninlil_esp_counter_io(NULL, &counter_io) == NINLIL_ERR_INVALID);
     CHECK(ninlil_esp_counter_io(&counter_context, NULL) == NINLIL_ERR_INVALID);
     CHECK(ninlil_esp_counter_io(&counter_context, &counter_io) == NINLIL_OK);

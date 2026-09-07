@@ -422,6 +422,23 @@ int ninlil_sx1262_radio_recover(ninlil_sx1262_radio *radio)
     return rc;
 }
 
+int ninlil_sx1262_radio_airtime(const ninlil_sx1262_radio *radio,
+                                uint16_t length, uint32_t *airtime_us)
+{
+    sx126x_mod_params_lora_t modulation;
+    sx126x_pkt_params_lora_t packet;
+    uint32_t ms;
+    if (!radio || !airtime_us || !length || length > NINLIL_RADIO_MTU ||
+        build_lora_parameters(&radio->profile, (uint8_t)length, &modulation,
+                              &packet) != NINLIL_OK)
+        return NINLIL_ERR_INVALID;
+    ms = sx126x_get_lora_time_on_air_in_ms(&packet, &modulation);
+    if (!ms || ms > 400u)
+        return NINLIL_ERR_TOO_LARGE;
+    *airtime_us = ms * 1000u;
+    return NINLIL_OK;
+}
+
 int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio, const uint8_t *data,
                              uint16_t length)
 {

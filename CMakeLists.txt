@@ -7,6 +7,12 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 option(NINLIL_SANITIZE "Enable AddressSanitizer and UBSan" OFF)
 
+# Instrument external parsers and crypto too, not only the wrapper.
+if(NINLIL_SANITIZE)
+  add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=address,undefined)
+endif()
+
 function(ninlil_strict_target target)
   if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(${target} PRIVATE
@@ -248,3 +254,5 @@ foreach(scenario direct star recovery)
     ${CMAKE_CURRENT_SOURCE_DIR}/tests/sim/manifests/${scenario}.txt)
   set_tests_properties(w02_${scenario} PROPERTIES TIMEOUT 60)
 endforeach()
+
+include(cmake/security.cmake)
