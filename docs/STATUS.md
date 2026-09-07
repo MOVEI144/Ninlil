@@ -59,7 +59,13 @@ Use repository source and recorded local evidence for the next decision.
 ## M1 preflight (2026-09-07)
 
 The [local M1 preflight record](M1_PREFLIGHT_2026-09-07.md) records successful
-ESP-IDF v6.0.2 default and TX-disabled Board A initialization builds. One USB
-device is visible on COM4; ROM chip identification did not respond and requires
-manual bootloader entry. No backup, erase, flash, RF or physical initialization
-campaign has been completed by this preflight.
+ESP-IDF v6.0.2 default and TX-disabled Board A initialization builds.
+The later [physical initialization record](M1_BOARD_INIT_2026-09-07.md) records
+Board A identification, verified 8MB backup, erase, verified flash, a real
+first-cycle SPI API failure, and its dedicated-bus HAL fix. The full local host
+matrix and target build pass; Board A then completes 100 initialization cycles.
+Board B is independently identified, backed up, flashed with node 2 / peer 1,
+and also completes 100 initialization cycles. Each selected raw boot log retains
+99 accounted-for shared GPIO ISR service messages. Both images keep RF TX
+disabled and frequency unset. Two-board RF, hard-power recovery and overall M1
+acceptance remain unrun/unaccepted.
