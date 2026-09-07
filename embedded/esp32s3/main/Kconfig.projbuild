@@ -48,6 +48,12 @@ config NINLIL_DELIVERY_MESSAGE_COUNT
     default 100
     depends on NINLIL_M1_MODE_DELIVERY
 
+config NINLIL_DELIVERY_CAMPAIGN_ID
+    int "Durable HIL campaign identity (retain across recovery boots)"
+    range 1 2147483647
+    default 1
+    depends on NINLIL_M1_MODE_DELIVERY
+
 config NINLIL_RF_TX_ENABLE
     bool "Enable RF transmission (requires local legal/HIL review)"
     default n

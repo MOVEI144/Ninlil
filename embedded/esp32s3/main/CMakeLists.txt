@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "app_main.c"
+    SRCS "app_main.c" "hil_delivery.c"
     INCLUDE_DIRS "."
     REQUIRES
         ninlil_core

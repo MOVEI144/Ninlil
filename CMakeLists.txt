@@ -105,6 +105,23 @@ ninlil_strict_target(ninlil_flash_runtime)
 
 enable_testing()
 
+add_executable(test_hil_delivery
+  tests/test_hil_delivery.c
+  tests/test_support.c
+  embedded/esp32s3/main/hil_delivery.c
+)
+target_include_directories(test_hil_delivery PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests
+  ${CMAKE_CURRENT_SOURCE_DIR}/embedded/esp32s3/main
+)
+target_link_libraries(test_hil_delivery PRIVATE ninlil_flash_runtime)
+ninlil_strict_target(test_hil_delivery)
+add_test(NAME m1_hil_delivery COMMAND test_hil_delivery)
+
+add_executable(m1_flash_inspect tools/m1_flash_inspect.c)
+target_link_libraries(m1_flash_inspect PRIVATE ninlil_flash_store)
+ninlil_strict_target(m1_flash_inspect)
+
 add_executable(test_core
   tests/test_core.c
   tests/test_support.c
