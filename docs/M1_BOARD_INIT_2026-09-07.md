@@ -29,7 +29,8 @@ Board Bも元の8MBを検証付きで保存し、同じ修正sourceの別node設
 保存先は `C:/dev/job/iot/Ninlil/.verify-m1-evidence/`。
 raw backupはGitへ入れず、内容をログやAI入力へ展開していない。
 `board-a-artifacts.json`、`board-b-artifacts.json`にファイル名・サイズ・SHA-256を保存した。
-2台目接続後のWindows列挙はBoard Bのみだった。2台同時接続の証拠にはしない。
+2台目接続直後のWindows列挙はBoard Bのみだった。その後の2台同時接続は
+下記17:30 JSTの別観測で確認した。
 
 ## Board A：backup、書き込み、起動
 
@@ -192,6 +193,17 @@ bootloaderはesptoolがflash設定をheaderへ反映するため、元binary has
 Board B appの完全なELF SHA-256は
 `dce4f915b8016e303ddde6ec4f41898a051d65a7b80bb0f85c8f7e277fc532ce`。
 
+## 2台同時USB接続（17:30 JST）
+
+ユーザーの接続済みとの連絡を受けて再列挙した。Board AはCOM3・USB location 1-2、
+Board BはCOM5・USB location 1-1で、両方のVID/PIDとserialが記録済み個体に一致した。
+Windows PnP statusは両個体ともOK。両ポートを115200 baudで同時にopenできた。
+DTR/RTSを無効として開き、データ送信や意図的なresetはせず、確認後に両方closeした。
+これはUSB列挙とポート利用可能性の確認であり、RF送受信や配送回復の証拠ではない。
+
+保存先：`.verify-m1-evidence/dual-usb-confirmation-2026-09-07.json`。
+SHA-256：`cd885fe4c323b151612b1db73d9689e08d3f7ce47d695639781abbe805832287`。
+
 ## 残る条件
 
 ### 使用アンテナの特定（同日追記）
@@ -211,7 +223,8 @@ Board B appの完全なELF SHA-256は
 下記の公開証明書だけでは指定3種とSKU 113070002の対応を確定できていない。
 総務省の登録詳細ページも確認を試みたが、ブラウザのサイト制限で閲覧できなかった。
 この未確認を「使用不可」とも「認証条件一致」とも断定せず、送信有効化の前に残す。
-今回の再列挙ではBoard BのCOM5のみを認識し、Board Aとの同時接続は未確認。
+アンテナ特定時点ではBoard BのCOM5のみを認識していたが、17:30 JSTに上記の
+2台同時接続を確認した。
 
 ### 日本向けRF試験の条件
 
@@ -223,7 +236,7 @@ Board B appの完全なELF SHA-256は
 含むRF profileを別途照合する。現時点ではfrequency 0・TX無効を維持する。
 
 両個体の写真と基板／配線revision、GPIO38極性、
-地域と周波数・出力などのRF profile、同時接続を確認してから2台通信へ進む。
+地域と周波数・出力などのRF profileを確認してから2台通信へ進む。
 RF、永続配送、故障注入、USB再接続後の配送回復、制御された電源断は未実施。
 ビルドはLinux、実機接続はWindowsであり、正本手順のLinux実機hostによる全campaignと
 同一視しない。Issue #7全体、field readiness、production securityはいずれも未受入。

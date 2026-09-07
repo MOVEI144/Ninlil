@@ -67,5 +67,6 @@ matrix and target build pass; Board A then completes 100 initialization cycles.
 Board B is independently identified, backed up, flashed with node 2 / peer 1,
 and also completes 100 initialization cycles. Each selected raw boot log retains
 99 accounted-for shared GPIO ISR service messages. Both images keep RF TX
-disabled and frequency unset. Two-board RF, hard-power recovery and overall M1
+disabled and frequency unset. Both recorded USB identities and concurrent COM3 /
+COM5 port access are confirmed at 17:30 JST. Two-board RF, hard-power recovery and overall M1
 acceptance remain unrun/unaccepted.
