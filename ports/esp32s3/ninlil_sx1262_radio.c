@@ -287,6 +287,10 @@ static int check_jp_channel(ninlil_sx1262_radio *radio,
     // Sense wider than the entire 200 kHz unit channel, not just LoRa 125 kHz.
     sensing.bw = SX126X_LORA_BW_250;
     sensing.ldro = modulation->sf >= 12 ? 1u : 0u;
+    radio->cca_stage = 1u;
+    radio->cca_chip_mode = 0u;
+    radio->cca_cmd_status = 0u;
+    radio->cca_rssi_dbm = 0;
     radio->rx_active = false;
     if (sx126x_set_standby(&radio->hal, SX126X_STANDBY_CFG_RC) !=
             SX126X_STATUS_OK ||
@@ -296,14 +300,19 @@ static int check_jp_channel(ninlil_sx1262_radio *radio,
             &radio->hal, SX126X_RX_CONTINUOUS) != SX126X_STATUS_OK)
         goto restore;
     esp_rom_delay_us(1000u);
-    if (sx126x_get_status(&radio->hal, &status) != SX126X_STATUS_OK ||
-        status.chip_mode != SX126X_CHIP_MODE_RX ||
+    radio->cca_stage = 2u;
+    if (sx126x_get_status(&radio->hal, &status) != SX126X_STATUS_OK)
+        goto restore;
+    radio->cca_chip_mode = (uint8_t)status.chip_mode;
+    radio->cca_cmd_status = (uint8_t)status.cmd_status;
+    if (status.chip_mode != SX126X_CHIP_MODE_RX ||
         (status.cmd_status != SX126X_CMD_STATUS_DATA_AVAILABLE &&
          status.cmd_status != SX126X_CMD_STATUS_CMD_TX_DONE))
         goto restore;
     start = esp_timer_get_time();
     if (start < 0)
         goto restore;
+    radio->cca_stage = 3u;
     // A stalled/backward clock or repeated busy channel cannot hold this call.
     for (sample = 0u; sample < 100u; sample++) {
         int16_t rssi = 0;
@@ -311,6 +320,7 @@ static int check_jp_channel(ninlil_sx1262_radio *radio,
 
         if (sx126x_get_rssi_inst(&radio->hal, &rssi) != SX126X_STATUS_OK)
             break;
+        radio->cca_rssi_dbm = rssi;
         if (rssi < -127)
             break;
         if (rssi >= -80) {
@@ -333,10 +343,12 @@ restore:
         sx126x_set_lora_mod_params(&radio->hal, modulation) !=
             SX126X_STATUS_OK) {
         radio->configured = false;
+        radio->cca_stage = 4u;
         return NINLIL_ERR_IO;
     }
     if (result != NINLIL_OK)
         return resume_rx(radio, result);
+    radio->cca_stage = 5u;
     return NINLIL_OK;
 }
 

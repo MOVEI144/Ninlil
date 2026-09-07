@@ -439,9 +439,14 @@ static int diagnostic_send(ninlil_sx1262_radio *radio, uint8_t type,
         return NINLIL_ERR_INVALID;
     rc = ninlil_sx1262_radio_send(radio, packet, (uint16_t)length);
     if (rc != NINLIL_ERR_BUSY)
-        ESP_LOGI(TAG, "DIAG_TX type=%u seq=%lu source=%u target=%u rc=%d",
+        ESP_LOGI(TAG,
+                 "DIAG_TX type=%u seq=%lu source=%u target=%u rc=%d "
+                 "cca_stage=%u chip=%u command=%u rssi=%d",
                  (unsigned int)type, (unsigned long)sequence,
-                 (unsigned int)frame.source, (unsigned int)target, rc);
+                 (unsigned int)frame.source, (unsigned int)target, rc,
+                 (unsigned int)radio->cca_stage,
+                 (unsigned int)radio->cca_chip_mode,
+                 (unsigned int)radio->cca_cmd_status, (int)radio->cca_rssi_dbm);
     return rc;
 }
 
