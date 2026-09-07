@@ -16,6 +16,7 @@ Board Bも元の8MBを検証付きで保存し、同じ修正sourceの別node設
 | 項目 | Board A | Board B |
 |---|---|---|
 | 構成 | ユーザー確認：XIAO ESP32-S3＋Wio-SX1262、アンテナあり | 同構成の2台目、アンテナ接続依頼に対し接続完了の返信 |
+| 使用アンテナ（同日追加確認） | 公式キットページ画像のAntenna 2、SKU 113070002 / 2dBi | ユーザーが同じ使用構成として指定。個体ごとの実物写真は未保存 |
 | アプリUSB | COM4 / 303A:4001 / E072A1F7FF0C | COM6 / 303A:4001 / E072A1D83E74 |
 | ROM USB | COM3 / 303A:1001 / E0:72:A1:F7:FF:0C | COM5 / 303A:1001 / E0:72:A1:D8:3E:74 |
 | MCU実測 | ESP32-S3 QFN56 rev v0.2、PSRAM 8MB、40MHz | ESP32-S3 QFN56 rev v0.2、PSRAM 8MB、40MHz |
@@ -192,6 +193,27 @@ Board B appの完全なELF SHA-256は
 `dce4f915b8016e303ddde6ec4f41898a051d65a7b80bb0f85c8f7e277fc532ce`。
 
 ## 残る条件
+
+### 使用アンテナの特定（同日追記）
+
+ユーザーが[日本語版キットページ](https://wiki.seeedstudio.com/ja/wio_sx1262_with_xiao_esp32s3_kit/)
+の構成と、ページ内画像の「Antenna 2」を使用していると明示した。
+[公式比較画像](https://files.seeedstudio.com/wiki/XIAO_ESP32S3_for_Meshtastic_LoRa/37.png)
+をブラウザで目視し、次の掲載値を照合した。
+
+- アンテナ：SKU `113070002`、外付け折り畳み型、利得2dBi、195×12×12mm。
+- 画像に示された変換ケーブル：SKU `321990397`、SMA–I-PEX、120mm。
+  これは掲載セットの構成であり、手元のケーブルの印字まで確認したものではない。
+- [アンテナ単体の公式商品ページ](https://jp.seeedstudio.com/External-Antenna-868-915MHZ-2dBi-SMA-L195mm-Foldable-p-5863.html)
+  もSKU・利得を確認できる。商品名と説明には868–915MHzの記載がある。
+
+キット向け推奨と、日本向け認証のアンテナ組合せ・920MHz帯での適合確認は別である。
+下記の公開証明書だけでは指定3種とSKU 113070002の対応を確定できていない。
+総務省の登録詳細ページも確認を試みたが、ブラウザのサイト制限で閲覧できなかった。
+この未確認を「使用不可」とも「認証条件一致」とも断定せず、送信有効化の前に残す。
+今回の再列挙ではBoard BのCOM5のみを認識し、Board Aとの同時接続は未確認。
+
+### 日本向けRF試験の条件
 
 試験国はユーザーが日本と確認した。Seeedが公開する
 [Wio-SX1262の日本向け証明書](https://files.seeedstudio.com/Seeed_Certificate/documents_certificate/113991436-TELEC.pdf)
