@@ -25,6 +25,13 @@
 
 The default host gate is `./scripts/ci.sh`. The standard ESP32 target is built separately with ESP-IDF v6.0.2.
 
+The W02 [static-network simulator](SIMULATION.md) runs the actual delivery Core
+and POSIX journals. CTest covers channel/manifest boundaries and multi-peer fault,
+capacity, receipt ambiguity and restart scenarios. `scripts/verify_sim.sh` checks
+byte-identical replay of workloads and CLI exit semantics in every compiler build;
+`scripts/fuzz_sim.sh` fuzzes the new manifest parser under Clang ASan/UBSan.
+All of these are host evidence, not physical RF or Flash power-cut evidence.
+
 Physical RF, USB/restart, and delivery-journal power campaigns follow
 [`M1_HIL_ACCEPTANCE.md`](M1_HIL_ACCEPTANCE.md) and record results with
 [`M1_HIL_EVIDENCE_TEMPLATE.md`](M1_HIL_EVIDENCE_TEMPLATE.md).

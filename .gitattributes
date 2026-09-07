@@ -1,0 +1,3 @@
+*.sh text eol=lf
+tests/sim/manifests/*.txt text eol=lf
+third_party/UPSTREAM.toml text eol=lf

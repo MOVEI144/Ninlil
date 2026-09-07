@@ -21,6 +21,11 @@ The design authority is:
 
 ## M1 — Direct radio physical acceptance
 
+W01 and the initial W02 static-direct host baseline from Issue #14 are described
+in [ADAPTIVE_NETWORK_CONTRACT.md](ADAPTIVE_NETWORK_CONTRACT.md) and
+[SIMULATION.md](SIMULATION.md). This allows design and model evaluation before
+physical M1 acceptance without enabling later milestone features.
+
 Canonical procedure: [`M1_HIL_ACCEPTANCE.md`](M1_HIL_ACCEPTANCE.md).
 
 - exact ESP-IDF v6.0.2 build;

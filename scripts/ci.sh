@@ -55,6 +55,8 @@ run_build() {
   else
     "$ctest_bin" --test-dir "$build" --output-on-failure
   fi
+  ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
+    bash "$root/scripts/verify_sim.sh" "$build/ninlil_sim"
 }
 
 mkdir -p "$build_root"
@@ -73,6 +75,7 @@ mapfile -d '' format_files < <(
 "$root/scripts/check_sx126x_driver.sh"
 CC="$gcc_bin" CLANG="$clang_bin" "$root/scripts/check_esp_syntax.sh"
 "$root/scripts/static_analysis.sh" "$gcc_bin" "$clang_bin"
+bash "$root/scripts/fuzz_sim.sh"
 "$root/scripts/loc_m1_software.sh"
 "$root/scripts/loc_m3_security.sh"
 "$root/scripts/loc_p0.sh"

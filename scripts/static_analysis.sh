@@ -12,6 +12,8 @@ common=(
   -I"$root/ports/esp32s3"
   -I"$root/ports/esp32s3/include"
   -I"$root/tests/esp_stub"
+  -I"$root/tests"
+  -I"$root/tests/sim"
   -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion -Wsign-conversion
   -Wformat=2 -Wundef -Wcast-align -Wstrict-prototypes
   -Wmissing-prototypes -Wvla -fno-common
@@ -37,6 +39,10 @@ host_sources=(
   "$root/ports/flash/ninlil_security_state.c"
   "$root/ports/flash/ninlil_flash_journal_file.c"
   "$root/ports/posix/ninlil_journal.c"
+  "$root/tests/sim/sim_manifest.c"
+  "$root/tests/sim/sim_radio.c"
+  "$root/tests/sim/sim_workload.c"
+  "$root/tests/sim/sim_main.c"
 )
 esp_sources=(
   "$root/ports/esp32s3/ninlil_sx1262_hal.c"

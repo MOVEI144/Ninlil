@@ -198,3 +198,36 @@ target_include_directories(test_sx1262_physical PRIVATE
 )
 ninlil_strict_target(test_sx1262_physical)
 add_test(NAME m1_sx1262_physical COMMAND test_sx1262_physical)
+
+add_library(ninlil_sim_support STATIC
+  tests/sim/sim_manifest.c
+  tests/sim/sim_radio.c
+  tests/sim/sim_workload.c
+  tests/test_support.c
+)
+target_include_directories(ninlil_sim_support PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests/sim
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+target_link_libraries(ninlil_sim_support PUBLIC ninlil_posix)
+ninlil_strict_target(ninlil_sim_support)
+add_executable(ninlil_sim tests/sim/sim_main.c)
+target_link_libraries(ninlil_sim PRIVATE ninlil_sim_support)
+ninlil_strict_target(ninlil_sim)
+
+add_executable(test_sim_model tests/sim/test_sim_model.c)
+target_include_directories(test_sim_model PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(test_sim_model PRIVATE ninlil_sim_support)
+ninlil_strict_target(test_sim_model)
+add_test(NAME w02_sim_model COMMAND test_sim_model)
+
+add_executable(test_sim_scenarios tests/sim/test_sim_scenarios.c)
+target_link_libraries(test_sim_scenarios PRIVATE ninlil_sim_support)
+ninlil_strict_target(test_sim_scenarios)
+add_test(NAME w02_sim_scenarios COMMAND test_sim_scenarios)
+set_tests_properties(w02_sim_scenarios PROPERTIES TIMEOUT 120)
+foreach(scenario direct star recovery)
+  add_test(NAME w02_${scenario} COMMAND ninlil_sim
+    ${CMAKE_CURRENT_SOURCE_DIR}/tests/sim/manifests/${scenario}.txt)
+  set_tests_properties(w02_${scenario} PROPERTIES TIMEOUT 60)
+endforeach()

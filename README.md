@@ -68,6 +68,8 @@ Read in this order:
 10. [`docs/TESTING.md`](docs/TESTING.md)
 11. [`docs/M1_HIL_ACCEPTANCE.md`](docs/M1_HIL_ACCEPTANCE.md)
 12. [`docs/ROADMAP.md`](docs/ROADMAP.md)
+13. [`docs/ADAPTIVE_NETWORK_CONTRACT.md`](docs/ADAPTIVE_NETWORK_CONTRACT.md)
+14. [`docs/SIMULATION.md`](docs/SIMULATION.md)
 
 ## License
 

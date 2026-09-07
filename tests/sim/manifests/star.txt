@@ -1,0 +1,17 @@
+version=1
+seed=7
+nodes=5
+burst=4
+payload_bytes=52
+sf=7
+duration_ms=120000
+interval_ms=0
+latency_target_ms=120000
+loss_permille=0
+duplicate_permille=0
+offline_node=0
+offline_start_ms=0
+offline_end_ms=0
+restart_node=0
+restart_ms=0
+receipt_hold_ms=0

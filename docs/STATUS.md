@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-09-04
+Updated: 2026-09-07
 
 ## Canonical repository
 
@@ -27,8 +27,8 @@ The official baseline does **not** yet contain a completed secure-link layer, ED
 
 ## Acceptance state
 
-- Host/model tests: candidate evidence exists and is re-run by repository CI.
-- ESP-IDF configure/link: required remote CI gate.
+- Host/model tests: candidate evidence exists; run the full applicable matrix locally.
+- ESP-IDF configure/link: required local target-build gate under the current no-hosted-CI decision.
 - Two-board RF: not accepted.
 - Hard-power flash interruption: not accepted.
 - Production security: not accepted.
@@ -39,4 +39,13 @@ The physical M1 procedure is now defined in
 procedure does not complete any physical gate; Issue #7 remains the canonical
 acceptance tracker.
 
-The next decision is based on repository commits and CI evidence, not on generated reports alone.
+## W01 / initial W02
+
+The scoped [adaptive-network contract](ADAPTIVE_NETWORK_CONTRACT.md) and
+[static direct-network simulator](SIMULATION.md) add a product-independent
+one-to-one/one-to-many host baseline using the existing C Core and POSIX journals.
+Loss, duplicates, receipt blackout, isolated peers, bounded capacity and process
+restart are separate cases. The model's fixed calendar and packet staging are
+not production firmware, automatic optimization, or physical acceptance.
+
+Use repository source and recorded local evidence for the next decision.
