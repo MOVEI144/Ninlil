@@ -21,6 +21,12 @@ typedef struct ninlil_esp_security_partition {
     size_t offset;
     size_t size;
 } ninlil_esp_security_partition;
+/* Explicit checked subregion for application-selected, separate security
+ *
+ * storage. Opening does not erase or provision it. */
+int ninlil_esp_security_region(ninlil_esp_security_partition *context,
+                               ninlil_security_io *io, const char *label,
+                               size_t offset, size_t size);
 
 /* Assign one persistent slot per live TX context. E2E and hop never share
  * slots. Reuse only after closing the prior session and fresh EDHOC. */

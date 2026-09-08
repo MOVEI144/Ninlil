@@ -6,6 +6,8 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 option(NINLIL_SANITIZE "Enable AddressSanitizer and UBSan" OFF)
+option(NINLIL_BUILD_SECURE "Build the pinned host-reference secure profile" ON)
+option(NINLIL_BUILD_TESTS "Build repository tests and validation tools" ON)
 
 # Instrument external parsers and crypto too, not only the wrapper.
 if(NINLIL_SANITIZE)
@@ -43,9 +45,12 @@ function(ninlil_strict_target target)
   endif()
 endfunction()
 
+add_library(ninlil_contract STATIC src/ninlil_authorization.c)
+target_include_directories(ninlil_contract PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ninlil_strict_target(ninlil_contract)
+
 set(NINLIL_DELIVERY_SOURCES
   src/ninlil.c
-  src/ninlil_authorization.c
   src/ninlil_custody.c
   src/ninlil_group.c
   src/ninlil_leaf.c
@@ -68,10 +73,12 @@ target_include_directories(ninlil_posix
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 ninlil_strict_target(ninlil_posix)
+target_link_libraries(ninlil_posix PUBLIC ninlil_contract)
 
 add_library(ninlil_radio_model STATIC
   src/ninlil_diag.c
   src/ninlil_radio.c
+  src/ninlil_rf_profile.c
 )
 target_include_directories(ninlil_radio_model
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -106,9 +113,10 @@ target_include_directories(ninlil_flash_runtime
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/ports/flash
 )
-target_link_libraries(ninlil_flash_runtime PRIVATE ninlil_flash_store)
+target_link_libraries(ninlil_flash_runtime PUBLIC ninlil_contract PRIVATE ninlil_flash_store)
 ninlil_strict_target(ninlil_flash_runtime)
 
+if(NINLIL_BUILD_TESTS)
 enable_testing()
 
 add_executable(test_hil_delivery
@@ -136,6 +144,11 @@ target_include_directories(test_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(test_core PRIVATE ninlil_posix)
 ninlil_strict_target(test_core)
 add_test(NAME m1_core COMMAND test_core)
+add_executable(test_quota_retry tests/test_quota_retry.c tests/test_support.c)
+target_include_directories(test_quota_retry PRIVATE tests)
+target_link_libraries(test_quota_retry PRIVATE ninlil_posix)
+ninlil_strict_target(test_quota_retry)
+add_test(NAME core_quota_retry COMMAND test_quota_retry)
 
 add_executable(test_delivery_state
   tests/test_delivery_state.c
@@ -255,4 +268,8 @@ foreach(scenario direct star recovery)
   set_tests_properties(w02_${scenario} PROPERTIES TIMEOUT 60)
 endforeach()
 
-include(cmake/security.cmake)
+endif()
+if(NINLIL_BUILD_SECURE)
+  include(cmake/security.cmake)
+endif()
+include(cmake/package.cmake)

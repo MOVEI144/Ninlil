@@ -43,7 +43,8 @@ const esp_partition_t *esp_partition_find_first(int type,
 {
     if (type != ESP_PARTITION_TYPE_DATA || !label)
         return NULL;
-    if (subtype == NINLIL_SESSION_PARTITION_SUBTYPE &&
+    if ((subtype == NINLIL_SESSION_PARTITION_SUBTYPE ||
+         subtype == ESP_PARTITION_SUBTYPE_ANY) &&
         strcmp(label, NINLIL_SESSION_PARTITION_LABEL) == 0)
         return &session_partition.descriptor;
     if (!hide_counter && subtype == counter_partition.subtype &&
@@ -145,6 +146,18 @@ int main(void)
                       NINLIL_SECURITY_SECTOR_SIZE) != 0);
         CHECK(ninlil_esp_session_counter_io(&first, &a, 32u) ==
               NINLIL_ERR_INVALID);
+        CHECK(ninlil_esp_security_region(
+                  &first, &a, NINLIL_SESSION_PARTITION_LABEL, 0u,
+                  NINLIL_SECURITY_PARTITION_SIZE) == NINLIL_OK);
+        CHECK(a.read(a.ctx, 0u, &output, 1u) == 0 && output == 255u);
+        CHECK(b.read(b.ctx, 0u, &output, 1u) == 0 && output == value);
+        CHECK(ninlil_esp_security_region(
+                  &first, &a, NINLIL_SESSION_PARTITION_LABEL, 1u,
+                  NINLIL_SECURITY_PARTITION_SIZE) == NINLIL_ERR_INVALID);
+        CHECK(ninlil_esp_security_region(
+                  &first, &a, NINLIL_SESSION_PARTITION_LABEL,
+                  session_partition.descriptor.size,
+                  NINLIL_SECURITY_PARTITION_SIZE) == NINLIL_ERR_NOT_FOUND);
     }
     CHECK(ninlil_esp_counter_io(NULL, &counter_io) == NINLIL_ERR_INVALID);
     CHECK(ninlil_esp_counter_io(&counter_context, NULL) == NINLIL_ERR_INVALID);

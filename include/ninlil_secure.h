@@ -69,6 +69,25 @@ int ninlil_secure_unseal_control(ninlil_secure_session *session,
                                  const uint8_t *frame, size_t length,
                                  uint8_t *plain, size_t capacity,
                                  size_t *written);
+/* Channel 2 proves a direct authenticated neighbor observation. Autonomous
+ *
+ * control forwarding never forwards this channel. Shares the session counter.
+ */
+int ninlil_secure_seal_neighbor(ninlil_secure_session *session,
+                                const uint8_t *plain, size_t length,
+                                uint8_t *frame, size_t capacity,
+                                size_t *written);
+int ninlil_secure_unseal_neighbor(ninlil_secure_session *session,
+                                  const uint8_t *frame, size_t length,
+                                  uint8_t *plain, size_t capacity,
+                                  size_t *written);
+/* Authenticate our own queued TX, without changing RX replay state or
+ * consuming
+ * another nonce. Never use this as a receive path. Caller wipes
+ * plaintext. */
+int ninlil_secure_inspect_tx(const ninlil_secure_session *session,
+                             const uint8_t *frame, size_t length,
+                             uint8_t *plain, size_t capacity, size_t *written);
 /* PSA Crypto AES-128-CCM, 8-byte tag. Caller initializes the PSA subsystem. */
 ninlil_aead ninlil_psa_aead(void);
 

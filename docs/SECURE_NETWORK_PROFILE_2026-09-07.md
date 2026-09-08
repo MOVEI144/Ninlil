@@ -1,5 +1,11 @@
 # Secure many-peer and adaptive Relay implementation
 
+Historical September 7 profile. Current autonomous ownership, NRv2 and hardware
+results supersede its host-controlled entry points; see
+[the September 8 integration](OSS_COMPLETION_2026-09-08.md) and
+[source accounting](SOURCE_BUDGETS.md). Removed source is indexed in
+[the historical controller record](HISTORICAL_CONTROLLERS.md).
+
 Decision date: 2026-09-07. This is the implementation profile for the user's
 conversation steps **4, 5, 6**, not roadmap milestone M6 (bulk/OTA).
 The user explicitly ended additional hardware testing and requested completion

@@ -13,31 +13,20 @@ static int nonzero(const uint8_t *bytes, size_t size)
 
 int ninlil_join_grant_valid(const ninlil_join_grant *g)
 {
-    unsigned int i, j;
+    ninlil_peer_policy policy = {0};
     if (!g || !nonzero(g->identity, 32u) || !nonzero(g->authority, 16u) ||
         g->node == 0u || g->node == UINT16_MAX || g->membership_epoch == 0u ||
-        g->binding_epoch == 0u ||
-        (g->capabilities & ~NINLIL_CAP_KNOWN_MASK) != 0u ||
-        g->role < NINLIL_ROLE_BATTERY_LEAF ||
-        g->role > NINLIL_ROLE_SITE_GATEWAY ||
-        g->service_count > NINLIL_JOIN_SERVICES_MAX ||
-        (g->role == NINLIL_ROLE_BATTERY_LEAF &&
-         (g->capabilities & NINLIL_CAP_RELAY_CUSTODY) != 0u))
+        g->binding_epoch == 0u)
         return NINLIL_ERR_INVALID;
-    for (i = 0u; i < g->service_count; i++) {
-        const ninlil_service_grant *s = &g->services[i];
-        if (s->service_id < NINLIL_APPLICATION_SERVICE_MIN ||
-            s->maximum_payload_bytes > NINLIL_MAX_PAYLOAD ||
-            s->maximum_live_messages == 0u || s->directions == 0u ||
-            (s->directions & ~NINLIL_SERVICE_BOTH) != 0u ||
-            s->traffic_class_mask == 0u ||
-            (s->traffic_class_mask & 0xF0u) != 0u)
-            return NINLIL_ERR_INVALID;
-        for (j = 0u; j < i; j++)
-            if (g->services[j].service_id == s->service_id)
-                return NINLIL_ERR_INVALID;
-    }
-    return NINLIL_OK;
+    policy.role = g->role;
+    policy.capabilities = g->capabilities;
+    policy.membership_epoch = g->membership_epoch;
+    policy.grants = g->services;
+    policy.grant_count = g->service_count;
+    return ninlil_policy_validate(&policy, NINLIL_JOIN_SERVICES_MAX) ==
+                   NINLIL_OK
+               ? NINLIL_OK
+               : NINLIL_ERR_INVALID;
 }
 
 static int equal_grant(const ninlil_join_grant *a, const ninlil_join_grant *b)

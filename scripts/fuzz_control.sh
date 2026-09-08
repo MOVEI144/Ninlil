@@ -6,9 +6,9 @@ trap 'rm -rf "$temp"' EXIT
 "${CLANG:-clang}" -std=c11 -Wall -Wextra -Werror -Wconversion -Wsign-conversion \
   -g -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer \
   -I"$root/include" "$root/tests/fuzz_control.c" \
-  "$root/src/ninlil_join.c" "$root/src/ninlil_join_wire.c" \
+  "$root/src/ninlil_join.c" "$root/src/ninlil_join_wire.c" "$root/src/ninlil_authorization.c" \
   "$root/src/ninlil_network.c" "$root/src/ninlil_network_route.c" "$root/src/ninlil_network_wire.c" \
-  "$root/src/ninlil_relay.c" "$root/src/ninlil_control_fragment.c" \
+  "$root/src/ninlil_relay.c" \
   -o "$temp/fuzz_control"
 mkdir "$temp/corpus"
 python3 - "$temp/corpus" <<'PY'
@@ -23,10 +23,10 @@ struct.pack_into('>HQHQ', p, 48, 1, 1, 2, 1); (root/'plan').write_bytes(p)
 r = bytearray(88); r[:6] = b'NR\x01\x00\x03\x02'
 struct.pack_into('>HHHHQ', r, 6, 40, 1, 3, 2, 0); struct.pack_into('>Q', r, 18, 1)
 r[26:42] = bytes([4])*16; (root/'relay').write_bytes(r)
-f = bytearray(240); f[:8] = b'NF\x01\x01\x00\x01\x00\xe0'; struct.pack_into('>Q', f, 8, 1)
-(root/'fragment').write_bytes(f); (root/'long').write_bytes(bytes(1024))
+r2 = r[:48] + bytes(8) + r[48:]; r2[2] = 2
+(root/'relay-v2').write_bytes(r2); (root/'long').write_bytes(bytes(1024))
 PY
 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
   "$temp/fuzz_control" "$temp/corpus" -seed=20260907 -runs=10000 -max_len=1024 \
   -timeout=5 -artifact_prefix="$temp/"
-echo 'Join/plan/Relay/control fragment fuzz PASS (10000 executions)'
+echo 'Join/plan/Relay v1-v2 fuzz PASS (10000 executions)'

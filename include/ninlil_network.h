@@ -11,6 +11,7 @@
 #define NINLIL_NETWORK_HOLD_MS 2000u
 #define NINLIL_NETWORK_FLOWS_MAX 32u
 #define NINLIL_NETWORK_PLAN_MAX 98u
+#define NINLIL_NETWORK_LEASE_MAX_MS 60000u
 
 typedef struct ninlil_network_path {
     uint16_t nodes[NINLIL_NETWORK_PATH_MAX];
@@ -76,6 +77,8 @@ typedef struct ninlil_coordinator {
     void *commit_ctx;
     ninlil_network_plan active;
     ninlil_network_plan pending;
+    uint8_t prepared_live;
+    uint8_t applied_live;
     uint64_t last_epoch;
     uint64_t last_change_ms;
     uint32_t permitted_profile;
@@ -117,6 +120,14 @@ int ninlil_coordinator_activate(ninlil_coordinator *c, uint64_t now_ms,
 int ninlil_coordinator_applied(ninlil_coordinator *c, uint16_t peer,
                                uint64_t epoch);
 int ninlil_coordinator_abort(ninlil_coordinator *c);
+/* Abort is only for STAGED work. Once committed, withdrawal requires the
+ *
+ * exact epoch and either authenticated release of every participant or
+ *
+ * proven lease expiry. It never retires Core or Relay custody. */
+int ninlil_coordinator_withdraw(ninlil_coordinator *c, uint64_t epoch,
+                                uint64_t now_ms, ninlil_time_quality quality,
+                                int all_released);
 /* Explicit retirement after every participant released the old epoch, or its
  * restart-safe lease expired. Does not retire any Core or Relay ownership. */
 int ninlil_coordinator_retire(ninlil_coordinator *c, uint16_t source,
@@ -129,6 +140,12 @@ int ninlil_coordinator_restore(ninlil_coordinator *c,
 void ninlil_coordinator_enable(ninlil_coordinator *c, int enabled);
 int ninlil_coordinator_reconcile(ninlil_coordinator *c, uint16_t peer,
                                  uint64_t epoch);
+/* Authentication owner calls before removing/replacing a live peer session.
+ *
+ * Invalidates volatile application evidence and observations, preserving
+ *
+ * every committed plan/lease fence. A fresh session alone cannot reapply it. */
+void ninlil_coordinator_disconnect(ninlil_coordinator *c, uint16_t peer);
 int ninlil_coordinator_route_check(void *ctx, const ninlil_network_path *path,
                                    uint64_t epoch, uint64_t now_ms);
 int ninlil_network_path_valid(const ninlil_network_path *path);

@@ -4,6 +4,8 @@ set -euo pipefail
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 build_root=${NINLIL_BUILD_ROOT:-"$root/.ci-build"}
 jobs=${NINLIL_JOBS:-2}
+clean=${NINLIL_CLEAN_BUILD:-1}
+[[ "$clean" == 0 || "$clean" == 1 ]] || { echo 'NINLIL_CLEAN_BUILD must be 0 or 1' >&2; exit 1; }
 cmake_bin=${CMAKE:-cmake}
 ctest_bin=${CTEST:-ctest}
 gcc_bin=${GCC:-gcc}
@@ -41,7 +43,9 @@ run_build() {
   local sanitize=$3
   local build="$build_root/$name"
 
-  rm -rf "$build"
+  if [[ "$clean" == 1 ]]; then
+    rm -rf "$build"
+  fi
   "$cmake_bin" -S "$root" -B "$build" -G Ninja \
     -DCMAKE_MAKE_PROGRAM="$ninja_bin" \
     -DCMAKE_C_COMPILER="$compiler" \
@@ -80,6 +84,7 @@ python3 "$root/scripts/static_crypto.py" "$build_root/clang"
 bash "$root/scripts/fuzz_sim.sh"
 bash "$root/scripts/fuzz_control.sh"
 bash "$root/scripts/verify_vendor.sh" "$build_root/vendor"
+bash "$root/scripts/verify_package.sh" "$build_root/gcc"
 "$root/scripts/loc_m1_software.sh"
 bash "$root/scripts/loc_secure_network.sh"
 "$root/scripts/loc_m3_security.sh"
@@ -87,7 +92,7 @@ bash "$root/scripts/loc_secure_network.sh"
 "$root/scripts/loc.sh"
 
 if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  git -C "$root" diff --check
+  git -C "$root" diff HEAD --check
 fi
 for script in "$root"/scripts/*.sh; do
   bash -n "$script"

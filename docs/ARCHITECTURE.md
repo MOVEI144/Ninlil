@@ -18,6 +18,22 @@ Platform persistence and clock ports
 
 The portable core does not create tasks, threads, sockets, or hidden global state. Platform owners provide explicit storage, random, clock, and link operations.
 
+## Autonomous small-message owner
+
+`ninlil_node` is the single optional execution owner above the existing Core,
+Join, secure envelopes, Coordinator and Relay libraries. The caller drives
+receive, step and actual TX completion; it creates no background task. It
+owns bounded session/participant/observation/route state, while Core owns logical
+outbound/inbound contracts and Relay owns only committed opaque forwarding copies.
+The reference application's transaction ledger remains outside the runtime.
+
+The owner accepts a copied public trust roster and borrows explicit identity,
+storage, entropy, UTC, boot-era counter and radio callbacks. Fresh EDHOC sessions
+follow restart; persistent plan records never substitute for live participant
+proofs. Routing time is a separate conservative lease clock, not UTC.
+The low-bandwidth reference is limited to 64 application bytes / 240 RF bytes.
+Current operation and limits: [integration](OSS_COMPLETION_2026-09-08.md).
+
 ## Evidence stages
 
 Ninlil keeps these facts distinct:

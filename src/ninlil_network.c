@@ -110,6 +110,12 @@ static uint8_t all(const ninlil_network_plan *p)
     return (uint8_t)((1u << p->path.count) - 1u);
 }
 
+static void clear_pending(ninlil_coordinator *c)
+{
+    memset(&c->pending, 0, sizeof(c->pending));
+    c->prepared_live = c->applied_live = 0u;
+}
+
 int ninlil_coordinator_stage(ninlil_coordinator *c,
                              const ninlil_network_path *path, uint64_t now,
                              uint64_t until, ninlil_time_quality quality)
@@ -119,8 +125,9 @@ int ninlil_coordinator_stage(ninlil_coordinator *c,
     int rc;
     if (!c || c->poisoned || !c->enabled || !ninlil_network_path_valid(path) ||
         quality != NINLIL_TIME_RESTART_SAFE || until <= now ||
-        until - now > 60000u || c->last_epoch == UINT64_MAX ||
-        c->pending.epoch != 0u || now < c->last_change_ms)
+        until - now > NINLIL_NETWORK_LEASE_MAX_MS ||
+        c->last_epoch == UINT64_MAX || c->pending.epoch != 0u ||
+        now < c->last_change_ms)
         return NINLIL_ERR_STATE;
     cost = ninlil_network_path_cost(c, path, now);
     if (cost == UINT64_MAX)
@@ -151,6 +158,7 @@ int ninlil_coordinator_stage(ninlil_coordinator *c,
     rc = persist(c, &p);
     if (rc == NINLIL_OK) {
         c->pending = p;
+        c->prepared_live = c->applied_live = 0u;
         c->last_epoch = p.epoch;
     }
     return rc;
@@ -160,6 +168,7 @@ static int acknowledge(ninlil_coordinator *c, uint16_t peer, uint64_t epoch,
                        int applied)
 {
     ninlil_network_plan p;
+    uint8_t bit, *live;
     unsigned int i;
     int rc;
     if (!c || c->poisoned || epoch == 0u)
@@ -196,16 +205,22 @@ static int acknowledge(ninlil_coordinator *c, uint16_t peer, uint64_t epoch,
     if (i == p.path.count ||
         !ninlil_network_policy(c, peer, 0, p.path.membership_epochs[i]))
         return NINLIL_ERR_UNAUTHORIZED;
-    if (((applied ? p.applied : p.prepared) & (uint8_t)(1u << i)) != 0u)
+    bit = (uint8_t)(1u << i);
+    live = applied ? &c->applied_live : &c->prepared_live;
+    if ((*live & bit) != 0u)
         return NINLIL_OK;
     if (applied)
-        p.applied |= (uint8_t)(1u << i);
+        p.applied |= bit;
     else
-        p.prepared |= (uint8_t)(1u << i);
-    if (applied && p.applied == all(&p))
+        p.prepared |= bit;
+    if (applied && (uint8_t)(*live | bit) == all(&p))
         p.phase = NINLIL_PLAN_EFFECTIVE;
-    rc = persist(c, &p);
+    rc = p.phase == c->pending.phase && p.applied == c->pending.applied &&
+                 p.prepared == c->pending.prepared
+             ? NINLIL_OK
+             : persist(c, &p);
     if (rc == NINLIL_OK) {
+        *live |= bit;
         c->pending = p;
         if (p.phase == NINLIL_PLAN_EFFECTIVE) {
             ninlil_network_flow *f = ninlil_network_flow_find(c, &p.path, 1);
@@ -216,7 +231,7 @@ static int acknowledge(ninlil_coordinator *c, uint16_t peer, uint64_t epoch,
             f->active = p;
             f->reconciled = all(&p);
             c->active = p;
-            memset(&c->pending, 0, sizeof(c->pending));
+            clear_pending(c);
         }
     }
     return rc;
@@ -237,13 +252,22 @@ int ninlil_coordinator_activate(ninlil_coordinator *c, uint64_t now,
                                 ninlil_time_quality quality, int released)
 {
     ninlil_network_plan p;
+    ninlil_network_flow *old;
     int rc;
     if (!c || c->poisoned || quality != NINLIL_TIME_RESTART_SAFE ||
         c->pending.phase != NINLIL_PLAN_STAGED || c->pending.epoch == 0u ||
         c->pending.prepared != all(&c->pending) ||
-        now >= c->pending.valid_until_ms ||
-        (c->active.epoch != 0u && !released && now < c->active.valid_until_ms))
+        c->prepared_live != all(&c->pending) || now < c->last_change_ms ||
+        now >= c->pending.valid_until_ms)
         return NINLIL_ERR_STATE;
+    old = ninlil_network_flow_find(c, &c->pending.path, 0);
+    if (old && !released && now < old->active.valid_until_ms)
+        return NINLIL_ERR_STATE;
+    for (unsigned int i = 0u; i < c->pending.path.count; i++)
+        if (!ninlil_network_policy(c, c->pending.path.nodes[i],
+                                   i > 0u && i + 1u < c->pending.path.count,
+                                   c->pending.path.membership_epochs[i]))
+            return NINLIL_ERR_UNAUTHORIZED;
     p = c->pending;
     p.phase = NINLIL_PLAN_COMMITTED;
     rc = persist(c, &p);
@@ -258,13 +282,35 @@ int ninlil_coordinator_abort(ninlil_coordinator *c)
 {
     ninlil_network_plan p;
     int rc;
-    if (!c || c->poisoned || c->pending.epoch == 0u)
+    if (!c || c->poisoned || c->pending.epoch == 0u ||
+        c->pending.phase != NINLIL_PLAN_STAGED)
         return NINLIL_ERR_STATE;
     p = c->pending;
     p.phase = NINLIL_PLAN_ABORTED;
     rc = persist(c, &p);
     if (rc == NINLIL_OK)
-        memset(&c->pending, 0, sizeof(c->pending));
+        clear_pending(c);
+    return rc;
+}
+
+int ninlil_coordinator_withdraw(ninlil_coordinator *c, uint64_t epoch,
+                                uint64_t now, ninlil_time_quality quality,
+                                int released)
+{
+    ninlil_network_plan p;
+    int rc;
+    if (!c || c->poisoned || !epoch || c->pending.epoch != epoch ||
+        (c->pending.phase != NINLIL_PLAN_STAGED &&
+         c->pending.phase != NINLIL_PLAN_COMMITTED) ||
+        quality != NINLIL_TIME_RESTART_SAFE || now < c->last_change_ms ||
+        (c->pending.phase == NINLIL_PLAN_COMMITTED && !released &&
+         now < c->pending.valid_until_ms))
+        return NINLIL_ERR_STATE;
+    p = c->pending;
+    p.phase = NINLIL_PLAN_ABORTED;
+    rc = persist(c, &p);
+    if (rc == NINLIL_OK)
+        clear_pending(c);
     return rc;
 }
 
@@ -318,12 +364,14 @@ int ninlil_coordinator_restore(ninlil_coordinator *c,
         f->active = *p;
         f->reconciled = 0u;
         c->active = *p;
-        memset(&c->pending, 0, sizeof(c->pending));
+        clear_pending(c);
     } else if (p->phase == NINLIL_PLAN_ABORTED ||
                p->phase == NINLIL_PLAN_RETIRED)
-        memset(&c->pending, 0, sizeof(c->pending));
-    else
+        clear_pending(c);
+    else {
         c->pending = *p;
+        c->prepared_live = c->applied_live = 0u;
+    }
     return NINLIL_OK;
 }
 
@@ -331,6 +379,24 @@ void ninlil_coordinator_enable(ninlil_coordinator *c, int enabled)
 {
     if (c)
         c->enabled = enabled ? 1u : 0u;
+}
+
+void ninlil_coordinator_disconnect(ninlil_coordinator *c, uint16_t peer)
+{
+    unsigned int i, j;
+    if (!c || !peer)
+        return;
+    for (i = 0u; i < c->pending.path.count; i++)
+        if (c->pending.path.nodes[i] == peer) {
+            c->prepared_live = c->applied_live = 0u;
+        }
+    for (i = 0u; i < NINLIL_NETWORK_FLOWS_MAX; i++)
+        for (j = 0u; j < c->flows[i].active.path.count; j++)
+            if (c->flows[i].active.path.nodes[j] == peer)
+                c->flows[i].reconciled = 0u;
+    for (i = 0u; i < c->edge_capacity; i++)
+        if (c->edges[i].from == peer || c->edges[i].to == peer)
+            c->edges[i].used = 0u;
 }
 
 int ninlil_coordinator_reconcile(ninlil_coordinator *c, uint16_t peer,

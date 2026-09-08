@@ -187,7 +187,8 @@ int ninlil_coordinator_tick(ninlil_coordinator *c, uint16_t source,
     ninlil_network_flow *f;
     int rc;
     if (!c || c->poisoned || quality != NINLIL_TIME_RESTART_SAFE ||
-        now > UINT64_MAX - 60000u || now < c->last_change_ms)
+        now > UINT64_MAX - NINLIL_NETWORK_LEASE_MAX_MS ||
+        now < c->last_change_ms)
         return NINLIL_ERR_STATE;
     if (!c->enabled)
         return NINLIL_ERR_EMPTY;
@@ -210,5 +211,6 @@ int ninlil_coordinator_tick(ninlil_coordinator *c, uint16_t source,
         if (difference <= old_cost / 5u)
             return NINLIL_ERR_EMPTY;
     }
-    return ninlil_coordinator_stage(c, &selected, now, now + 60000u, quality);
+    return ninlil_coordinator_stage(c, &selected, now,
+                                    now + NINLIL_NETWORK_LEASE_MAX_MS, quality);
 }

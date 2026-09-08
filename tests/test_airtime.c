@@ -56,6 +56,22 @@ int main(void)
               NINLIL_ERR_EMPTY);
     CHECK(ninlil_airtime_next(&s, 1000000u, &job) == NINLIL_OK);
     CHECK(ninlil_airtime_complete(&s, NINLIL_OK) == NINLIL_OK);
+    /* A full-budget critical packet must not lose every refill to smaller
+
+     * normal packets. The selected turn accumulates credit for <= one second.
+     */
+    CHECK(ninlil_airtime_open(&s, 0u, 200000u, 0u) == NINLIL_OK);
+    CHECK(ninlil_airtime_enqueue(&s, 1u, 2u, NINLIL_TRAFFIC_CRITICAL, 200000u,
+                                 bytes, sizeof(bytes)) == NINLIL_OK);
+    for (i = 1u; i <= 20u; i++) {
+        int rc = ninlil_airtime_enqueue(&s, i + 1u, 3u, NINLIL_TRAFFIC_NORMAL,
+                                        10000u, bytes, 20u);
+        CHECK(rc == NINLIL_OK || rc == NINLIL_ERR_CAPACITY);
+        rc = ninlil_airtime_next(&s, (uint64_t)i * 50000u, &job);
+        CHECK(rc == (i == 20u ? NINLIL_OK : NINLIL_ERR_EMPTY));
+    }
+    CHECK(job->token == 1u);
+    CHECK(ninlil_airtime_complete(&s, NINLIL_OK) == NINLIL_OK);
     puts("one-radio airtime budget/reserves/fairness/ambiguous TX retention "
          "PASS");
     return 0;

@@ -4,9 +4,6 @@
 #include "ninlil_radio.h"
 #include "ninlil_rf_profile.h"
 #include "ninlil_sx1262_radio.h"
-#if defined(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
-#include "secure_bench.h"
-#endif
 
 #include "esp_log.h"
 #include "esp_random.h"
@@ -765,8 +762,6 @@ void app_main(void)
     }
 #if defined(CONFIG_NINLIL_M1_MODE_DIAGNOSTIC)
     run_diagnostic(&radio);
-#elif defined(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
-    ninlil_secure_bench(&radio);
 #else
     run_delivery(&radio);
 #endif

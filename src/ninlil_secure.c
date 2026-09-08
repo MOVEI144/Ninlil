@@ -205,3 +205,36 @@ int ninlil_secure_unseal_control(ninlil_secure_session *s, const uint8_t *frame,
 {
     return unseal_channel(s, 1u, frame, length, plain, capacity, written);
 }
+
+int ninlil_secure_seal_neighbor(ninlil_secure_session *s, const uint8_t *plain,
+                                size_t length, uint8_t *frame, size_t capacity,
+                                size_t *written)
+{
+    return seal_channel(s, 2u, plain, length, frame, capacity, written);
+}
+int ninlil_secure_unseal_neighbor(ninlil_secure_session *s,
+                                  const uint8_t *frame, size_t length,
+                                  uint8_t *plain, size_t capacity,
+                                  size_t *written)
+{
+    return unseal_channel(s, 2u, frame, length, plain, capacity, written);
+}
+int ninlil_secure_inspect_tx(const ninlil_secure_session *s,
+                             const uint8_t *frame, size_t length,
+                             uint8_t *plain, size_t capacity, size_t *written)
+{
+    ninlil_secure_session mirror;
+    int rc;
+    if (!s || s->direction > 1u || !frame || length < NINLIL_SECURE_OVERHEAD ||
+        frame[31] > 2u)
+        return NINLIL_ERR_UNAUTHORIZED;
+    mirror = *s;
+    mirror.local = s->peer;
+    mirror.peer = s->local;
+    mirror.direction = (uint8_t)(1u - s->direction);
+    mirror.rx_high = mirror.rx_bitmap = 0u;
+    rc = unseal_channel(&mirror, frame[31], frame, length, plain, capacity,
+                        written);
+    ninlil_secret_clear(&mirror, sizeof(mirror));
+    return rc;
+}

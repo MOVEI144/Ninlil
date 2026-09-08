@@ -1628,6 +1628,37 @@ static int test_posix_runtime_stops_on_payload_corruption(void)
     return 0;
 }
 
+static int test_empty_duplicate_revalidates_durable_record(void)
+{
+    char directory[40], path[80];
+    scripted_link link = {0};
+    controlled_policy policy;
+    ninlil_role_profile profile;
+    ninlil_runtime *runtime = NULL;
+    ninlil_id id;
+    ninlil_submission submission;
+    uint8_t packet[NINLIL_WIRE_DATA_HEADER];
+    uint32_t random_state = 9u;
+    size_t length;
+    CHECK(setup_leaf(directory, path, &profile, &policy) == 0);
+    CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
+                       &profile) == NINLIL_OK);
+    test_fill_id(&id, 0x41u);
+    ninlil_submission_defaults(&submission);
+    submission.target = 1u;
+    submission.service = APP_SERVICE;
+    length = ninlil_wire_encode_data(packet, 2u, &submission, &id, NULL);
+    CHECK(length == sizeof(packet));
+    CHECK(ninlil_ingest(runtime, packet, length) == NINLIL_OK);
+    CHECK(ninlil_ingest(runtime, packet, length) == NINLIL_OK);
+    CHECK(flip_file_byte(path, 10L) == 0);
+    CHECK(ninlil_ingest(runtime, packet, length) == NINLIL_ERR_CORRUPT);
+    CHECK(link.send_calls == 0u);
+    ninlil_close(runtime);
+    test_remove_directory(directory, path, NULL);
+    return 0;
+}
+
 static int test_deadline_time_quality_recovery(void)
 {
     char directory[40];
@@ -2343,6 +2374,7 @@ static int (*const tests[])(void) = {
     test_rejection_attempts_consume_interval,
     test_posix_referenced_reads_revalidate_records,
     test_posix_runtime_stops_on_payload_corruption,
+    test_empty_duplicate_revalidates_durable_record,
     test_deadline_time_quality_recovery,
     test_deadline_outbound_and_expired_receipts,
     test_deadline_inbound_and_replay_contract,

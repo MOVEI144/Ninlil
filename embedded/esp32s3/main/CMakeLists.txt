@@ -1,6 +1,6 @@
 set(main_sources "app_main.c" "hil_delivery.c")
-if(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
-    list(APPEND main_sources "secure_bench.c" "secure_bench_crypto.c" "bench_sessions.c" "bench_relay.c")
+if(CONFIG_NINLIL_MODE_AUTONOMOUS)
+    set(main_sources "node_main.c" "node_storage.c" "node_application.c")
 endif()
 idf_component_register(
     SRCS ${main_sources}
@@ -9,6 +9,7 @@ idf_component_register(
         ninlil_network
         ninlil_core
         ninlil_radio
+        bootloader_support
         esp_hw_support
         esp_timer
         esp_driver_gpio
@@ -17,6 +18,12 @@ idf_component_register(
         freertos
         log
 )
+if(NINLIL_NODE_ROSTER_HEADER)
+    # The supplied header contains public trust only; private keys stay on the
+    # board. An absent roster builds an RF-disabled provisioning console.
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE
+        NINLIL_NODE_ROSTER_HEADER="${NINLIL_NODE_ROSTER_HEADER}")
+endif()
 
 # ESP-IDF public headers rely on GNU extensions and configuration macros that
 # are intentionally undefined for some targets. Compile first-party firmware

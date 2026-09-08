@@ -49,10 +49,10 @@ int ninlil_authorize(ninlil_runtime *runtime, uint16_t peer, uint16_t service,
     grant = find_grant(&policy, service);
     if (!grant || (grant->directions & direction) == 0u ||
         payload_len > grant->maximum_payload_bytes ||
-        (grant->traffic_class_mask & NINLIL_TRAFFIC_MASK(traffic_class)) ==
-            0u ||
-        live_messages >= grant->maximum_live_messages)
+        (grant->traffic_class_mask & NINLIL_TRAFFIC_MASK(traffic_class)) == 0u)
         return NINLIL_ERR_UNAUTHORIZED;
+    if (live_messages >= grant->maximum_live_messages)
+        return NINLIL_ERR_CAPACITY;
     return NINLIL_OK;
 }
 

@@ -40,9 +40,9 @@ host_sources=(
   "$root/src/ninlil_network_wire.c"
   "$root/src/ninlil_relay.c"
   "$root/src/ninlil_routed.c"
-  "$root/src/ninlil_control_fragment.c"
   "$root/src/ninlil_control_log.c"
   "$root/src/ninlil_airtime.c"
+  "$root/src/ninlil_lease_clock.c"
   "$root/src/ninlil_diag.c"
   "$root/src/ninlil_radio.c"
   "$root/src/ninlil_rf_profile.c"
@@ -64,9 +64,15 @@ esp_sources=(
   "$root/ports/esp32s3/ninlil_security_partitions.c"
 )
 
-"$gcc_bin" "${common[@]}" -fanalyzer -fsyntax-only "${host_sources[@]}"
-"$gcc_bin" "${common[@]}" -DESP_PLATFORM=1 -fanalyzer -fsyntax-only \
-  "${esp_sources[@]}"
+temporary=$(mktemp -d)
+trap 'rm -rf "$temporary"' EXIT
+# GCC's analyzer needs object compilation; -fsyntax-only does not run it.
+for source in "${host_sources[@]}"; do
+  "$gcc_bin" "${common[@]}" -fanalyzer -c "$source" -o "$temporary/analysis.o"
+done
+for source in "${esp_sources[@]}"; do
+  "$gcc_bin" "${common[@]}" -DESP_PLATFORM=1 -fanalyzer -c "$source" -o "$temporary/analysis.o"
+done
 
 for source in "${host_sources[@]}"; do
   "$clang_bin" "${common[@]}" --analyze \

@@ -10,7 +10,11 @@ build = pathlib.Path(sys.argv[1]).resolve()
 subprocess.run(["cmake", "-S", str(root), "-B", str(build),
                 "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"], check=True)
 expected = {(root / "ports/crypto/ninlil_edhoc.c").resolve(),
-            (root / "ports/crypto/ninlil_psa.c").resolve()}
+            (root / "ports/crypto/ninlil_psa.c").resolve(),
+            (root / "ports/crypto/ninlil_identity.c").resolve(),
+            (root / "ports/posix/ninlil_identity_file.c").resolve(),
+            (root / "ports/flash/ninlil_identity_flash.c").resolve()}
+expected.update(path.resolve() for path in (root / "src").glob("ninlil_node*.c"))
 seen = set()
 for entry in json.loads((build / "compile_commands.json").read_text()):
     path = pathlib.Path(entry["file"]).resolve()
@@ -33,4 +37,4 @@ for entry in json.loads((build / "compile_commands.json").read_text()):
     seen.add(path)
 if seen != expected:
     raise SystemExit("crypto compile-database coverage mismatch")
-print("EDHOC wrapper / PSA bridge static analysis PASS")
+print("EDHOC / PSA / identity / autonomous owner static analysis PASS")

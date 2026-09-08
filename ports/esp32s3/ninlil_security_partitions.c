@@ -42,6 +42,28 @@ static int partition_erase(void *ctx, size_t offset, size_t length)
                : -1;
 }
 
+int ninlil_esp_security_region(ninlil_esp_security_partition *context,
+                               ninlil_security_io *io, const char *label,
+                               size_t offset, size_t size)
+{
+    const esp_partition_t *partition;
+    if (!context || !io || !label || !size ||
+        offset % NINLIL_SECURITY_SECTOR_SIZE ||
+        size % NINLIL_SECURITY_SECTOR_SIZE)
+        return NINLIL_ERR_INVALID;
+    partition = esp_partition_find_first(ESP_PARTITION_TYPE_DATA,
+                                         ESP_PARTITION_SUBTYPE_ANY, label);
+    if (!partition || offset > partition->size ||
+        size > partition->size - offset)
+        return NINLIL_ERR_NOT_FOUND;
+    context->partition = partition;
+    context->offset = offset;
+    context->size = size;
+    *io = (ninlil_security_io){partition_read, partition_write, partition_erase,
+                               context, size};
+    return NINLIL_OK;
+}
+
 static int open_partition(ninlil_esp_security_partition *context,
                           ninlil_security_io *io, const char *label,
                           esp_partition_subtype_t subtype)

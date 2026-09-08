@@ -23,7 +23,20 @@ The P0 implementation candidate adds versioned per-message delivery evidence, im
 
 ## Current steps 4-6 software implementation
 
-The [secure network profile](SECURE_NETWORK_PROFILE_2026-09-07.md) now implements
+The September 8 review fixes and autonomous-owner integration are implemented.
+Three-board application delivery, actual Relay/receiver reset recovery, and
+Relay drain/removal readiness pass with preserved console evidence. Stable
+identity, storage binding, lease synchronization and application commits are
+integrated. Earlier Root/source-reset campaigns retained the message and receiver
+commit but missed their receipt deadline; campaign 24 recovered that same receipt
+without duplicate application records. Campaign 26 separately passed a fresh
+Root/source reset through source application acceptance, with receiver growth 6→7.
+The final proof-isolation source passes 45 tests in four local compiler/sanitizer
+configurations, 711 vendor tests, 20,000 fuzz executions and package/build gates. See
+[the current checkpoint](OSS_COMPLETION_2026-09-08.md). Results below belong
+to their dated revisions and do not constitute final acceptance of these edits.
+
+At its September 7 revision, the [secure network profile](SECURE_NETWORK_PROFILE_2026-09-07.md) implemented
 EDHOC/AES-CCM, committed Join and membership, secure many-peer delivery, powered
 Relay custody/recovery/removal, and fixed-profile route/retry/airtime adjustment.
 The actual C modules run together in two host examples and have an ESP-IDF

@@ -1,0 +1,18 @@
+# Additive reference layout for the three verified 8 MiB boards. The original
+# 0x190000..0x614000 range is retained; never flash a blank image over it.
+# Name, Type, SubType, Offset, Size, Flags
+nvs, data, nvs, 0x9000, 0x6000,
+phy_init, data, phy, 0xf000, 0x1000,
+factory, app, factory, 0x10000, 0x180000,
+ninlil_st, data, 0x40, 0x190000, 0x400000,
+ninlil_journal, data, 0x40, 0x590000, 0x20000,
+ninlil_counter, data, 0x41, 0x5b0000, 0x2000,
+ninlil_membership, data, 0x42, 0x5b2000, 0x2000,
+ninlil_control, data, 0x40, 0x5b4000, 0x20000,
+ninlil_sessions, data, 0x43, 0x5d4000, 0x40000,
+node_core, data, 0x40, 0x620000, 0x20000,
+node_control, data, 0x40, 0x640000, 0x20000,
+node_sessions, data, 0x43, 0x660000, 0x40000,
+node_identity, data, 0x44, 0x6a0000, 0x2000,
+node_era, data, 0x41, 0x6a2000, 0x2000,
+node_app, data, 0x40, 0x6a4000, 0x20000,

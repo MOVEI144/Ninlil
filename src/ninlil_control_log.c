@@ -9,6 +9,7 @@
 #define JOIN_RECORD 1u
 #define PLAN_RECORD 2u
 #define RELAY_RECORD 3u
+#define STORAGE_BINDING 4u
 
 typedef struct packet_reference {
     uint8_t id[16];
@@ -21,6 +22,9 @@ struct ninlil_control_log {
     ninlil_control_replay replay;
     packet_reference packets[NINLIL_RELAY_PACKETS_MAX];
     uint8_t poisoned;
+    uint8_t identity[32];
+    uint8_t bound;
+    uint8_t has_records;
 };
 
 static int index_record(ninlil_control_log *log, const ninlil_relay_record *r,
@@ -57,6 +61,15 @@ static int replay_record(void *ctx, uint8_t type, const uint8_t *data,
                          uint16_t length, const ninlil_journal_ref *ref)
 {
     ninlil_control_log *log = ctx;
+    if (type == STORAGE_BINDING) {
+        if (log->has_records || length != 33u || data[0] != 1u ||
+            memcmp(data + 1, (uint8_t[32]){0}, 32u) == 0)
+            return NINLIL_ERR_CORRUPT;
+        memcpy(log->identity, data + 1, 32u);
+        log->bound = log->has_records = 1u;
+        return NINLIL_OK;
+    }
+    log->has_records = 1u;
     if (type == JOIN_RECORD) {
         ninlil_join_record r;
         if (ninlil_join_decode(data, length, &r) != NINLIL_OK ||
@@ -125,12 +138,38 @@ static int append(ninlil_control_log *log, uint8_t type, const uint8_t *data,
         return NINLIL_ERR_STATE;
     rc = ninlil_journal_append(log->journal, type, data, (uint16_t)size, ref);
     if (rc == NINLIL_OK)
+        log->has_records = 1u;
+    if (rc == NINLIL_OK)
         rc =
             ninlil_journal_read(log->journal, ref, 0u, checked, (uint16_t)size);
     if (rc == NINLIL_OK && memcmp(data, checked, size) != 0)
         rc = NINLIL_ERR_CORRUPT;
     if (rc != NINLIL_OK)
         log->poisoned = 1u;
+    return rc;
+}
+
+int ninlil_control_log_bind(ninlil_control_log *log, const uint8_t identity[32],
+                            int initialize)
+{
+    ninlil_journal_ref ref;
+    uint8_t data[33];
+    int rc;
+    if (!log || log->poisoned || !identity ||
+        memcmp(identity, (uint8_t[32]){0}, 32u) == 0)
+        return NINLIL_ERR_INVALID;
+    if (log->bound)
+        return memcmp(log->identity, identity, 32u) == 0 ? NINLIL_OK
+                                                         : NINLIL_ERR_CONFLICT;
+    if (!initialize || log->has_records)
+        return NINLIL_ERR_CORRUPT;
+    data[0] = 1u;
+    memcpy(data + 1, identity, 32u);
+    rc = append(log, STORAGE_BINDING, data, sizeof(data), &ref);
+    if (rc == NINLIL_OK) {
+        memcpy(log->identity, identity, 32u);
+        log->bound = 1u;
+    }
     return rc;
 }
 
@@ -183,6 +222,7 @@ int ninlil_control_log_verify_relay(void *ctx, const ninlil_relay_record *r)
 {
     ninlil_control_log *log = ctx;
     uint8_t expected[NINLIL_RELAY_FRAME_MAX], actual[NINLIL_RELAY_FRAME_MAX];
+    ninlil_relay_record restored;
     size_t length;
     unsigned int i;
     int rc = NINLIL_ERR_NOT_FOUND;
@@ -195,13 +235,18 @@ int ninlil_control_log_verify_relay(void *ctx, const ninlil_relay_record *r)
         packet_reference *p = &log->packets[i];
         if (!p->used || memcmp(p->id, r->packet_id, 16u) != 0)
             continue;
-        if (p->reference.length != length) {
+        if (p->reference.length > sizeof(actual)) {
             rc = NINLIL_ERR_CORRUPT;
             break;
         }
         rc = ninlil_journal_read(log->journal, &p->reference, 0u, actual,
-                                 (uint16_t)length);
-        if (rc == NINLIL_OK && memcmp(actual, expected, length) != 0)
+                                 p->reference.length);
+        /* Canonical comparison also revalidates retained NRv1 journals. */
+        if (rc == NINLIL_OK &&
+            (ninlil_relay_decode(actual, p->reference.length, &restored) !=
+                 NINLIL_OK ||
+             ninlil_relay_encode(&restored, actual, sizeof(actual)) != length ||
+             memcmp(actual, expected, length) != 0))
             rc = NINLIL_ERR_CORRUPT;
         break;
     }

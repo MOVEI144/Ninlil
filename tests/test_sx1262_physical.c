@@ -34,6 +34,8 @@ static sx126x_irq_mask_t fake_irq_status;
 static sx126x_irq_mask_t fake_tx_completion_irq;
 static uint8_t fake_rx_data[NINLIL_RADIO_MTU];
 static uint8_t fake_rx_length;
+static uint8_t fake_payload_limit;
+static bool fake_enforce_payload_limit;
 static bool fake_tx_notifies;
 static bool fake_fail_hal_init;
 static bool fake_fail_standby;
@@ -65,6 +67,9 @@ static unsigned int fake_busy_sample;
 static unsigned int fake_rssi_error_sample;
 static uint32_t fake_airtime_ms;
 static sx126x_lora_bw_t fake_bandwidth;
+static int fake_packet_type;
+static bool fake_sync_restored;
+static unsigned int fake_modem_failure;
 
 int64_t esp_timer_get_time(void)
 {
@@ -91,7 +96,8 @@ sx126x_status_t sx126x_get_rssi_inst(const void *context, int16_t *rssi)
     (void)context;
     fake_rssi_calls++;
     fake_notifications = 1u;
-    if (fake_bandwidth != SX126X_LORA_BW_250 ||
+    if (fake_packet_type != SX126X_PKT_TYPE_GFSK ||
+        fake_bandwidth != SX126X_GFSK_BW_234300 ||
         fake_rssi_calls == fake_rssi_error_sample)
         return ESP_FAIL;
     *rssi = fake_rssi_calls == fake_busy_sample ? -80 : fake_rssi;
@@ -108,6 +114,8 @@ static void reset_fakes(void)
     fake_tx_completion_irq = SX126X_IRQ_NONE;
     memset(fake_rx_data, 0, sizeof(fake_rx_data));
     fake_rx_length = 0u;
+    fake_payload_limit = 0u;
+    fake_enforce_payload_limit = false;
     fake_tx_notifies = false;
     fake_fail_hal_init = false;
     fake_fail_standby = false;
@@ -139,6 +147,7 @@ static void reset_fakes(void)
     fake_rssi_error_sample = 0u;
     fake_airtime_ms = 100u;
     fake_bandwidth = SX126X_LORA_BW_125;
+    fake_modem_failure = 0u;
 }
 
 static ninlil_rf_profile make_profile(bool tx_enabled)
@@ -338,7 +347,11 @@ sx126x_status_t sx126x_set_rx_tx_fallback_mode(const void *context, int mode)
 sx126x_status_t sx126x_set_pkt_type(const void *context, int type)
 {
     (void)context;
-    (void)type;
+    if ((type == SX126X_PKT_TYPE_GFSK && fake_modem_failure == 1u) ||
+        (type == SX126X_PKT_TYPE_LORA && fake_modem_failure == 4u))
+        return ESP_FAIL;
+    fake_packet_type = type;
+    fake_sync_restored = false;
     return SX126X_STATUS_OK;
 }
 
@@ -346,11 +359,12 @@ sx126x_status_t sx126x_write_register(const void *context, uint16_t address,
                                       const uint8_t *data, uint8_t length)
 {
     (void)context;
-    if (!data || length != 2u)
+    if (!data || length != 2u || fake_modem_failure == 5u)
         return ESP_FAIL;
     fake_register_writes++;
     fake_register_address = address;
     memcpy(fake_register_data, data, 2u);
+    fake_sync_restored = true;
     return SX126X_STATUS_OK;
 }
 
@@ -359,6 +373,26 @@ sx126x_status_t sx126x_set_rf_freq(const void *context, uint32_t frequency)
     (void)context;
     (void)frequency;
     return SX126X_STATUS_OK;
+}
+sx126x_status_t sx126x_set_gfsk_mod_params(const void *ctx,
+                                           const sx126x_mod_params_gfsk_t *p)
+{
+    (void)ctx;
+    if (fake_modem_failure == 2u || fake_packet_type != SX126X_PKT_TYPE_GFSK ||
+        p->bw_dsb_param != SX126X_GFSK_BW_234300)
+        return ESP_FAIL;
+    fake_bandwidth = p->bw_dsb_param;
+    return SX126X_STATUS_OK;
+}
+sx126x_status_t sx126x_set_gfsk_pkt_params(const void *ctx,
+                                           const sx126x_pkt_params_gfsk_t *p)
+{
+    (void)ctx;
+    return fake_modem_failure != 3u &&
+                   fake_packet_type == SX126X_PKT_TYPE_GFSK &&
+                   p->crc_type == SX126X_GFSK_CRC_OFF
+               ? SX126X_STATUS_OK
+               : ESP_FAIL;
 }
 
 sx126x_status_t
@@ -375,7 +409,7 @@ sx126x_set_lora_pkt_params(const void *context,
                            const sx126x_pkt_params_lora_t *params)
 {
     (void)context;
-    (void)params;
+    fake_payload_limit = params->pld_len_in_bytes;
     return SX126X_STATUS_OK;
 }
 
@@ -428,6 +462,8 @@ sx126x_status_t sx126x_set_rx_with_timeout_in_rtc_step(const void *context,
 
 sx126x_status_t sx126x_set_tx(const void *context, uint32_t timeout_ms)
 {
+    if (fake_packet_type != SX126X_PKT_TYPE_LORA || !fake_sync_restored)
+        return ESP_FAIL;
     (void)context;
     if (fake_notifications != 0u)
         return ESP_FAIL;
@@ -463,7 +499,9 @@ sx126x_status_t sx126x_get_irq_status(const void *context,
     (void)context;
     if (fake_fail_get_irq)
         return ESP_FAIL;
-    *mask = fake_irq_status;
+    *mask = fake_enforce_payload_limit && fake_rx_length > fake_payload_limit
+                ? SX126X_IRQ_NONE
+                : fake_irq_status;
     return SX126X_STATUS_OK;
 }
 
@@ -471,7 +509,9 @@ sx126x_status_t sx126x_get_and_clear_irq_status(const void *context,
                                                 sx126x_irq_mask_t *mask)
 {
     (void)context;
-    *mask = fake_irq_status;
+    *mask = fake_enforce_payload_limit && fake_rx_length > fake_payload_limit
+                ? SX126X_IRQ_NONE
+                : fake_irq_status;
     fake_irq_status = SX126X_IRQ_NONE;
     return SX126X_STATUS_OK;
 }
@@ -606,6 +646,21 @@ static int test_receive_polling_irq_and_errors(void)
 
     reset_fakes();
     CHECK(init_radio(&radio, true) == NINLIL_OK);
+
+    /* A short TX must not lower the subsequent explicit-header RX maximum. */
+    fake_tx_notifies = true;
+    fake_tx_completion_irq = SX126X_IRQ_TX_DONE;
+    CHECK(ninlil_sx1262_radio_send(&radio, (const uint8_t *)"tiny", 4u) ==
+          NINLIL_OK);
+    fake_enforce_payload_limit = true;
+    memset(fake_rx_data, 0x53, sizeof(fake_rx_data));
+    fake_rx_length = NINLIL_RADIO_MTU;
+    fake_irq_status = SX126X_IRQ_RX_DONE;
+    CHECK(ninlil_sx1262_radio_receive(&radio, output, sizeof(output), &length,
+                                      NULL, 0u) == NINLIL_OK);
+    CHECK(length == NINLIL_RADIO_MTU &&
+          memcmp(output, fake_rx_data, length) == 0);
+    fake_enforce_payload_limit = false;
 
     memcpy(fake_rx_data, "radio", 5u);
     fake_rx_length = 5u;
@@ -810,13 +865,70 @@ static int test_jp_fail_closed(void)
     CHECK(ninlil_rf_profile_validate(&profile) == NINLIL_ERR_INVALID);
     profile.bandwidth_hz = UINT32_C(125000);
     CHECK(ninlil_rf_profile_validate(&profile) == NINLIL_OK);
+    for (unsigned int stage = 1u; stage <= 5u; stage++) {
+        reset_fakes();
+        CHECK(ninlil_sx1262_radio_init(&radio, &profile, true) == NINLIL_OK);
+        fake_modem_failure = stage;
+        fake_time_us = radio.tx_not_before_us;
+        CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
+        CHECK(fake_set_tx_calls == 0u);
+        if (stage >= 4u)
+            CHECK(!radio.configured);
+        else
+            CHECK(radio.rx_active && fake_packet_type == SX126X_PKT_TYPE_LORA &&
+                  fake_sync_restored);
+        ninlil_sx1262_radio_deinit(&radio);
+    }
+    return 0;
+}
+
+static int test_receive_in_progress_precedes_transmit(void)
+{
+    ninlil_sx1262_radio radio;
+    uint8_t data = 1u, output[NINLIL_RADIO_MTU];
+    uint16_t length = 0u;
+    unsigned int starts;
+    reset_fakes();
+    CHECK(init_radio(&radio, true) == NINLIL_OK);
+    fake_tx_notifies = true;
+    fake_tx_completion_irq = SX126X_IRQ_TX_DONE;
+    fake_irq_status = SX126X_IRQ_PREAMBLE_DETECTED | SX126X_IRQ_HEADER_VALID;
+    starts = fake_start_rx_calls;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_BUSY);
+    CHECK(fake_set_tx_calls == 0u && fake_start_rx_calls == starts);
+    CHECK(ninlil_sx1262_radio_receive(&radio, output, sizeof(output), &length,
+                                      NULL, 0u) == NINLIL_ERR_EMPTY);
+    CHECK(fake_irq_status & SX126X_IRQ_HEADER_VALID);
+    fake_time_us += 200000;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_BUSY);
+    memset(fake_rx_data, 0x5a, NINLIL_RADIO_MTU);
+    fake_rx_length = NINLIL_RADIO_MTU;
+    fake_irq_status |= SX126X_IRQ_RX_DONE;
+    CHECK(ninlil_sx1262_radio_receive(&radio, output, sizeof(output), &length,
+                                      NULL, 0u) == NINLIL_OK);
+    CHECK(length == NINLIL_RADIO_MTU &&
+          memcmp(output, fake_rx_data, length) == 0);
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_OK);
+    /* A false preamble cannot hold the transmitter forever. */
+    fake_irq_status = SX126X_IRQ_PREAMBLE_DETECTED;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_BUSY);
+    fake_time_us += 6000000;
+    CHECK(ninlil_sx1262_radio_receive(&radio, output, sizeof(output), &length,
+                                      NULL, 0u) == NINLIL_ERR_TIMEOUT);
+    CHECK(radio.rx_active && radio.timeouts == 1u);
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_OK);
+    ninlil_sx1262_radio_deinit(&radio);
     return 0;
 }
 
 static int (*const tests[])(void) = {
-    test_init_profile_and_owner,         test_tx_completion_timeout_and_rx_race,
-    test_receive_polling_irq_and_errors, test_recovery_and_fail_closed_profiles,
-    test_jp_channel_and_pause,           test_jp_fail_closed,
+    test_init_profile_and_owner,
+    test_tx_completion_timeout_and_rx_race,
+    test_receive_polling_irq_and_errors,
+    test_recovery_and_fail_closed_profiles,
+    test_jp_channel_and_pause,
+    test_jp_fail_closed,
+    test_receive_in_progress_precedes_transmit,
 };
 
 int main(void)

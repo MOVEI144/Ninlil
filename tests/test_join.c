@@ -62,6 +62,14 @@ int main(void)
     CHECK(ninlil_join_begin(&a, id, 0u) == NINLIL_OK);
     CHECK(ninlil_join_prepare(&a, id, 1u, &accept) == NINLIL_ERR_STATE);
     CHECK(ninlil_join_authenticated(&a, id, session, 1u) == NINLIL_OK);
+    gateway.approved.services[0].maximum_payload_bytes = 0u;
+    CHECK(ninlil_join_prepare(&a, id, 2u, &accept) == NINLIL_ERR_UNAUTHORIZED);
+    CHECK(gateway.count == 0u);
+    gateway.approved.services[0].maximum_payload_bytes = 96u;
+    gateway.approved.capabilities |= NINLIL_CAP_GATEWAY_RADIO_HEAD;
+    CHECK(ninlil_join_prepare(&a, id, 2u, &accept) == NINLIL_ERR_UNAUTHORIZED);
+    CHECK(gateway.count == 0u);
+    gateway.approved.capabilities &= ~NINLIL_CAP_GATEWAY_RADIO_HEAD;
     CHECK(ninlil_join_prepare(&a, id, 2u, &accept) == NINLIL_OK &&
           gateway.count == 1u);
     CHECK(ninlil_join_policy(&a, 2u, &policy) == NINLIL_ERR_UNAUTHORIZED);
@@ -79,6 +87,8 @@ int main(void)
     CHECK(ninlil_join_confirm(&a, &ack, session, 5u) == NINLIL_OK &&
           gateway.count == 2u);
     CHECK(ninlil_join_policy(&a, 2u, &policy) == NINLIL_OK);
+    CHECK(ninlil_policy_validate(&policy, NINLIL_JOIN_SERVICES_MAX) ==
+          NINLIL_OK);
     CHECK(ninlil_join_begin(&a, id, 6u) == NINLIL_ERR_BUSY);
     CHECK(ninlil_join_open(&a, peers, 65u, authority, commit_record, &gateway,
                            approve, &gateway) == NINLIL_OK);

@@ -13,5 +13,8 @@ Do not publish exploit details in a public issue. Use GitHub private vulnerabili
 - Secure sessions require authenticated key establishment; diagnostic M1 radio traffic is not production-secure.
 - Unknown, corrupt, or ambiguous persistent state fails closed.
 - Secrets and application payloads must not be written to routine logs.
+- The reference identity journal stores private keys without at-rest encryption.
+  Device secure boot, Flash encryption and physical access controls belong to
+  the deployment; the example does not enable them or claim physical tamper resistance.
 
 Security fixes must add a regression test or a written explanation of why automation is not possible.

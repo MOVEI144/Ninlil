@@ -5,17 +5,19 @@
 
 #define NINLIL_RELAY_PACKETS_MAX 64u
 #define NINLIL_RELAY_CIPHERTEXT_MAX 144u
-#define NINLIL_RELAY_HEADER 48u
-#define NINLIL_RELAY_FRAME_MAX 192u
+#define NINLIL_RELAY_HEADER 56u
+#define NINLIL_RELAY_FRAME_MAX 200u
 
 typedef struct ninlil_relay_record {
     ninlil_network_path path;
     uint64_t route_epoch;
+    uint64_t absolute_deadline_ms;
     uint8_t packet_id[16];
     uint8_t ciphertext[NINLIL_RELAY_CIPHERTEXT_MAX];
     uint16_t length;
     uint8_t done;
     uint8_t control;
+    uint8_t legacy;
     ninlil_traffic_class traffic;
 } ninlil_relay_record;
 
@@ -70,6 +72,9 @@ int ninlil_relay_receive(ninlil_relay *r, uint16_t authenticated_sender,
                          const ninlil_relay_record *record, uint64_t now_ms);
 int ninlil_relay_next(ninlil_relay *r, uint64_t now_ms, uint16_t *next_hop,
                       ninlil_relay_record *record);
+/* Re-read the committed opaque copy before transmitting a staged frame. */
+int ninlil_relay_frame_current(ninlil_relay *r,
+                               const ninlil_relay_record *record);
 int ninlil_relay_ack(ninlil_relay *r, uint16_t authenticated_sender,
                      const uint8_t packet_id[16], uint64_t route_epoch);
 /* Drain rejects new custody but keeps retries and ACK processing alive.

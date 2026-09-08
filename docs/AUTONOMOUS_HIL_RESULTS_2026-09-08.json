@@ -1,0 +1,633 @@
+{
+  "date": "2026-09-08",
+  "scope": "powered fixed-PHY small-message autonomous MCU integration",
+  "hardware": "3 x XIAO ESP32-S3 + Wio SX1262 B2B; integrated antennas; USB-only power",
+  "rf": {
+    "frequency_hz": 921400000,
+    "tx_dbm": -9,
+    "sf": 7,
+    "bandwidth_hz": 125000,
+    "coding_rate": "4/5",
+    "preamble": 8,
+    "mtu": 240,
+    "application_bytes": 64
+  },
+  "field_coverage_claim": false,
+  "controlled_power_cut_run": false,
+  "hosted_ci_run": false,
+  "new_device_backups": false,
+  "campaigns": [
+    {
+      "campaign": "oss-node-run18",
+      "message_id": "f41b0d31bb8df378df9e43531998d30f",
+      "result": "PASS",
+      "duration_seconds": 260.285,
+      "application_records": [
+        1,
+        2
+      ],
+      "application_record_growth": 1,
+      "mcu_resets": [],
+      "relay_removal_ready": false,
+      "source_evidence": "0105",
+      "console_sha256": "1a0763322e124c6ba0256968670e49f3494c75fd71b7ebfe4edac40a364b9db8",
+      "result_sha256": "690a68e9943c78fa2a4062f8e0b1d2c92097826c03c720d11bc86f65bd7e6bac",
+      "console_records": 368,
+      "firmware_phase": "cipherwindow",
+      "source_inputs_sha256": "593dd54d4de6fe8e45066c547342e46f86baea25658e46f5b03cf732172f6d39",
+      "boards": [
+        {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "app_sha256": "2cd8b41880be1c478eab1abd3bb1163ac9a11ddc5b1f623b9db8047277cbb7f4",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D8:3E:74",
+          "app_sha256": "90916b55d407e52b66f42cc5cc8c70be93724d8b501e8a762d76ae05ff691384",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D7:77:28",
+          "app_sha256": "8d0bdca8b41b05fb4696814b3c181c77fcfdd061baf24f3a9ef7ffbb94e2fc7b",
+          "before": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "after": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        }
+      ],
+      "console": "evidence/2026-09-08-autonomous/run18.jsonl"
+    },
+    {
+      "campaign": "oss-node-run19",
+      "message_id": "773f809983726535975efa497dc51c7b",
+      "result": "PASS",
+      "duration_seconds": 430.494,
+      "application_records": [
+        2,
+        3
+      ],
+      "application_record_growth": 1,
+      "mcu_resets": [
+        2,
+        3
+      ],
+      "relay_removal_ready": false,
+      "source_evidence": "0105",
+      "console_sha256": "8496c6655caa9ecb07fdc9417af4cc8096639d63adc68bcbb7c7a69405cbf5b1",
+      "result_sha256": "6c37d7a5961ff1ba121d6417c9c1cbfc08a46d43dc33870ea8ce267ace46b005",
+      "console_records": 608,
+      "firmware_phase": "cipherwindow",
+      "source_inputs_sha256": "593dd54d4de6fe8e45066c547342e46f86baea25658e46f5b03cf732172f6d39",
+      "boards": [
+        {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "app_sha256": "2cd8b41880be1c478eab1abd3bb1163ac9a11ddc5b1f623b9db8047277cbb7f4",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D8:3E:74",
+          "app_sha256": "90916b55d407e52b66f42cc5cc8c70be93724d8b501e8a762d76ae05ff691384",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D7:77:28",
+          "app_sha256": "8d0bdca8b41b05fb4696814b3c181c77fcfdd061baf24f3a9ef7ffbb94e2fc7b",
+          "before": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "after": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        }
+      ],
+      "console": "evidence/2026-09-08-autonomous/run19.jsonl"
+    },
+    {
+      "campaign": "oss-node-run20",
+      "message_id": "736020a90c6d83322204d6398b606ec3",
+      "result": "PASS",
+      "duration_seconds": 174.435,
+      "application_records": [
+        3,
+        4
+      ],
+      "application_record_growth": 1,
+      "mcu_resets": [],
+      "relay_removal_ready": true,
+      "source_evidence": "0105",
+      "console_sha256": "70564553035931984ee9c3ac3aca5ba725293a65622c9cd4dcb88474735e12e0",
+      "result_sha256": "fc8c1cb6364b8a9d449614906daf7605eea8b155b04beab65976d1e5d7b7a31a",
+      "console_records": 291,
+      "firmware_phase": "drain-recovery",
+      "source_inputs_sha256": "09aebbc2d97a326a384abb1fb923a7cee8dfaa91e4892d6ea2c977dc173fe255",
+      "boards": [
+        {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "app_sha256": "15fbb7a3afe1d9c0b01c9510520bd54a5069b975c04f16f9e8a46b8bd15c1bda",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D8:3E:74",
+          "app_sha256": "9e41c21f2ad6997dd808d55ee1b620fd094c454f8a0999fb93e0bc17c17820f0",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D7:77:28",
+          "app_sha256": "e2ebc7135e49750d30eb0d5f704faf9218357057580e16925cca7edb5fba91ed",
+          "before": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "after": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        }
+      ],
+      "console": "evidence/2026-09-08-autonomous/run20.jsonl"
+    },
+    {
+      "campaign": "oss-node-run24",
+      "message_id": "60e640d910a56454a316b8594bcf8651",
+      "result": "PASS",
+      "duration_seconds": 272.886,
+      "application_records": [
+        5,
+        5
+      ],
+      "application_record_growth": 0,
+      "mcu_resets": [],
+      "relay_removal_ready": false,
+      "source_evidence": "0105",
+      "console_sha256": "be2fc97e6ccf232ae0bd357eb377995882addc3f8bd3966e45a4d76d1b766d42",
+      "result_sha256": "5955ca133c3df78636cd19ff46005d255ce9e39f104553d90f104002a1acd111",
+      "console_records": 432,
+      "firmware_phase": "epoch-proof",
+      "source_inputs_sha256": "791bcbc6279eee8f8e81e2ceea2859262f0f999b162ae07aadc272adc0a73dc3",
+      "boards": [
+        {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "app_sha256": "7d5ccfd7084fa733cf22800ef71b4439061eabff4b7831100a0e2e5af762a65f",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D8:3E:74",
+          "app_sha256": "0ebf2ed738f1d203ebb5d2057924cd9615c4271d8ec8f3a4dc042ae69ea39d55",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D7:77:28",
+          "app_sha256": "d302bfd499b1fb1e23f6d14582fe072d056480e18d2749874415115bca6cfa9d",
+          "before": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "after": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        }
+      ],
+      "console": "evidence/2026-09-08-autonomous/run24.jsonl"
+    },
+    {
+      "campaign": "oss-node-run25",
+      "message_id": "58bd103d5cb31cfa5c9f273cac39a870",
+      "result": "PASS",
+      "duration_seconds": 278.76,
+      "application_records": [
+        5,
+        6
+      ],
+      "application_record_growth": 1,
+      "mcu_resets": [],
+      "relay_removal_ready": true,
+      "source_evidence": "0105",
+      "console_sha256": "c07041c607f02d1fcdd27900588d4ac40c364059c92d7dcfc2b12228067fc78a",
+      "result_sha256": "58e562e75a400113014b63c763fe057cab0a9163fc27b2753a5b09b262a8b4c4",
+      "console_records": 500,
+      "firmware_phase": "epoch-proof",
+      "source_inputs_sha256": "791bcbc6279eee8f8e81e2ceea2859262f0f999b162ae07aadc272adc0a73dc3",
+      "boards": [
+        {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "app_sha256": "7d5ccfd7084fa733cf22800ef71b4439061eabff4b7831100a0e2e5af762a65f",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D8:3E:74",
+          "app_sha256": "0ebf2ed738f1d203ebb5d2057924cd9615c4271d8ec8f3a4dc042ae69ea39d55",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D7:77:28",
+          "app_sha256": "d302bfd499b1fb1e23f6d14582fe072d056480e18d2749874415115bca6cfa9d",
+          "before": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "after": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        }
+      ],
+      "console": "evidence/2026-09-08-autonomous/run25.jsonl"
+    },
+    {
+      "campaign": "oss-node-run26",
+      "message_id": "0ec5e9293de97439ece1f01bb96b1a04",
+      "result": "PASS",
+      "duration_seconds": 542.92,
+      "application_records": [
+        6,
+        7
+      ],
+      "application_record_growth": 1,
+      "mcu_resets": [
+        1
+      ],
+      "relay_removal_ready": false,
+      "source_evidence": "0105",
+      "console_sha256": "75ea966bb4de82b2c1cb23a47aeeff8ee2e23f60817b624806b6aac8b727f335",
+      "result_sha256": "0bf3be83e062fca735e563abf6f32bb781bbfffc2fd858a0b9cb2bf465153e10",
+      "console_records": 838,
+      "firmware_phase": "proof-isolation",
+      "source_inputs_sha256": "d66f1fde960175244601f4ed1c175cf8004c3ee7b56febe0645f88aa3bd7f653",
+      "boards": [
+        {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "app_sha256": "5a9ccc9e928efc346c64afd0c2d1f46b75686549597f6dbe500e0af2b651192c",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D8:3E:74",
+          "app_sha256": "663d16a2b595fd992efd7d8d79e7fde5ff325f9812b628d5eb86998894885b3c",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D7:77:28",
+          "app_sha256": "95f02c7a437426342fda855df186e3a679e085b126a7eeacc529d64d31cf4e4e",
+          "before": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "after": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        }
+      ],
+      "console": "evidence/2026-09-08-autonomous/run26.jsonl"
+    }
+  ],
+  "failed_campaigns": [
+    {
+      "campaign": "oss-node-run21",
+      "result": "FAIL",
+      "error": "RuntimeError('Autonomous delivery deadline')",
+      "duration_seconds": 505.062,
+      "message_id": "60e640d910a56454a316b8594bcf8651",
+      "final_source_evidence": "0000",
+      "application_records": [
+        4,
+        4
+      ],
+      "mcu_resets": [],
+      "owners_stopped": true,
+      "firmware_phase": "drain-recovery",
+      "source_inputs_sha256": "09aebbc2d97a326a384abb1fb923a7cee8dfaa91e4892d6ea2c977dc173fe255",
+      "boards": [
+        {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "app_sha256": "15fbb7a3afe1d9c0b01c9510520bd54a5069b975c04f16f9e8a46b8bd15c1bda",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D8:3E:74",
+          "app_sha256": "9e41c21f2ad6997dd808d55ee1b620fd094c454f8a0999fb93e0bc17c17820f0",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D7:77:28",
+          "app_sha256": "e2ebc7135e49750d30eb0d5f704faf9218357057580e16925cca7edb5fba91ed",
+          "before": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "after": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        }
+      ],
+      "console": "evidence/2026-09-08-autonomous/run21.jsonl",
+      "console_records": 694,
+      "console_sha256": "0260f63e409555a75edcc50dcb20a3632e0f172a68f91953323804029bbda340",
+      "result_sha256": "3ac2423c14a6a26d059e26f35f355dca55cd06b8f44f2bbefce420e323baa382"
+    },
+    {
+      "campaign": "oss-node-run22",
+      "result": "FAIL",
+      "error": "RuntimeError('Autonomous delivery deadline')",
+      "duration_seconds": 505.015,
+      "message_id": "60e640d910a56454a316b8594bcf8651",
+      "final_source_evidence": "0000",
+      "application_records": [
+        4,
+        5
+      ],
+      "mcu_resets": [
+        1
+      ],
+      "owners_stopped": true,
+      "firmware_phase": "lifecycle-ack",
+      "source_inputs_sha256": "e0c5e37c812b2d1fb8119b8ffc6975816a4102aae612b872dac27ac5910d360d",
+      "boards": [
+        {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "app_sha256": "06f2edc1ae0e5e371d2c41f296fbb1152cac61bd1781c701eb4b88cf6f3765be",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D8:3E:74",
+          "app_sha256": "0a45f7713ac5f2bc32dcee4f535d21fdded1c77132acbaf0060a61a9eaf10684",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D7:77:28",
+          "app_sha256": "63c7940e5e54105e3e05f8710e8b9f0d268549e6c747046c12a3562b3836b26b",
+          "before": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "after": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        }
+      ],
+      "console": "evidence/2026-09-08-autonomous/run22.jsonl",
+      "console_records": 704,
+      "console_sha256": "6fe7efdcdf6566358c93e03854bfbdb4535899d044862331dc7daa1d952ce14b",
+      "result_sha256": "379aeb192a1368e373b01592ced4b867713c5fda8c1d414b75ebd92f77a95560"
+    },
+    {
+      "campaign": "oss-node-run23",
+      "result": "FAIL",
+      "error": "RuntimeError('Autonomous delivery deadline')",
+      "duration_seconds": 301.448,
+      "message_id": "60e640d910a56454a316b8594bcf8651",
+      "final_source_evidence": "0000",
+      "application_records": [
+        5,
+        5
+      ],
+      "mcu_resets": [],
+      "owners_stopped": true,
+      "firmware_phase": "lifecycle-ack",
+      "source_inputs_sha256": "e0c5e37c812b2d1fb8119b8ffc6975816a4102aae612b872dac27ac5910d360d",
+      "boards": [
+        {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "app_sha256": "06f2edc1ae0e5e371d2c41f296fbb1152cac61bd1781c701eb4b88cf6f3765be",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D8:3E:74",
+          "app_sha256": "0a45f7713ac5f2bc32dcee4f535d21fdded1c77132acbaf0060a61a9eaf10684",
+          "before": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "after": {
+            "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+            "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        },
+        {
+          "serial": "E0:72:A1:D7:77:28",
+          "app_sha256": "63c7940e5e54105e3e05f8710e8b9f0d268549e6c747046c12a3562b3836b26b",
+          "before": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "after": {
+            "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+            "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad"
+          },
+          "preserved": true,
+          "device_image_verified": true,
+          "backups_created": false
+        }
+      ],
+      "console": "evidence/2026-09-08-autonomous/run23.jsonl",
+      "console_records": 424,
+      "console_sha256": "d81a7b14170d9150362ae47735d1768fd289fa3cdc75de81ac224c09cbe0a3ae",
+      "result_sha256": "684f94d1f22a559d88cadf0983e504be863d8673a1865f5ab1df40523275e4b4"
+    }
+  ]
+}

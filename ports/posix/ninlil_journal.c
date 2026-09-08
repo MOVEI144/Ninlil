@@ -15,7 +15,7 @@
 #define JRN_HEADER 10u
 #define JRN_CRC 4u
 #define JRN_MAX_PAYLOAD 320u
-#define JRN_MAX_TYPE 9u
+#define JRN_MAX_TYPE 10u
 
 struct ninlil_journal {
     int fd;

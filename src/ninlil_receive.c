@@ -11,13 +11,11 @@ static int payload_matches(ninlil_runtime *runtime,
     int rc;
 
     *matches = 1;
-    if (payload_len == 0u)
-        return NINLIL_OK;
     rc = ninlil_read_payload(runtime, reference, payload_offset, stored,
                              payload_len);
     if (rc != NINLIL_OK)
         return rc;
-    *matches = memcmp(stored, payload, payload_len) == 0;
+    *matches = payload_len == 0u || memcmp(stored, payload, payload_len) == 0;
     return NINLIL_OK;
 }
 

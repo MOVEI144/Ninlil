@@ -1,0 +1,130 @@
+{
+  "date": "2026-09-08",
+  "result": "LOCALLY_VERIFIED",
+  "hosted_ci_run": false,
+  "git_base": "b42e989",
+  "compiled_input_manifest": "evidence/2026-09-08-autonomous/proof-isolation-inputs.json",
+  "compiled_input_manifest_sha256": "5a736a5067c98d2bb06333637bd3176157ee664f9e3ac1b86e4f15cad377e406",
+  "platform": "Ubuntu 24.04 container on Windows/WSL2 Linux 6.6.87.2",
+  "toolchain": {
+    "gcc": "13.3.0",
+    "clang": "18.1.3",
+    "clang_format": "18.1.3",
+    "cmake": "3.28.3",
+    "ninja": "1.11.1",
+    "python_linux": "3.12.3",
+    "python_usb": "3.12.10",
+    "pyserial": "3.5",
+    "esptool": "5.3.0"
+  },
+  "native": {
+    "command": "docker exec ninlil-static-star-verify bash -lc \"cd /work && NINLIL_BUILD_ROOT=/tmp/ninlil-oss-final NINLIL_CLEAN_BUILD=0 NINLIL_JOBS=8 bash scripts/ci.sh\"",
+    "cache": "Separate reconfigured compiler/backend build directories reused; all checks executed",
+    "configurations": [
+      "gcc",
+      "clang",
+      "gcc ASan+UBSan",
+      "clang ASan+UBSan"
+    ],
+    "ctest_per_configuration": 45,
+    "ctest_total": 180,
+    "adapted_vendor_tests": 711,
+    "manifest_fuzz_executions": 10000,
+    "control_fuzz_executions": 10000,
+    "other_gates": [
+      "simulator reproducibility",
+      "format",
+      "static analysis",
+      "vendor pins",
+      "strict ESP syntax",
+      "relocated POSIX/NOR package consumers",
+      "Core-only package consumer",
+      "source budgets",
+      "diff whitespace",
+      "shell syntax"
+    ],
+    "log": ".verify-m1-evidence/oss-20260908-proof-isolation-final-verification.log",
+    "log_sha256": "51f04cf7f61cde5e1502196b5476061368f36c7fd299153d74718435dc609db0",
+    "ctest_seconds": [
+      "51.04",
+      "94.09",
+      "108.05",
+      "122.84"
+    ]
+  },
+  "esp_idf": {
+    "version": "6.0.2",
+    "commit": "7101770dc6db2667b3c477cc31365dd1acd6db4e",
+    "compiler": "Xtensa GCC 15.2.0 esp-15.2.0_20251204",
+    "mbedtls": "4.1.0",
+    "psa": "1.1.0",
+    "trusted_build_command": "python /work/tools/node_hil/build.py /work/.verify-m1-evidence/oss-20260908-autonomous-target/sdkconfig /work/.verify-m1-evidence/oss-node-roster.h /work/.verify-m1-evidence/oss-node-proof-isolation --build-directory /tmp/ninlil-node-builds",
+    "default_build_command": "idf.py -B /tmp/ninlil-oss-default-build -D SDKCONFIG=/tmp/ninlil-oss-default-sdkconfig -D NINLIL_NODE_ROSTER_HEADER= reconfigure build",
+    "default_log_sha256": "eeb8e345f7e1ec4c175e55d402e5439c0bedd6943d5945951662d2c18615e6f3",
+    "default_app_sha256": "e4f5d2bef6250dd6695c9b98980ce610a566dbe4a7f67abcb6d37d32bcfba5a1",
+    "default_sdkconfig_sha256": "c9c7d73ffe744a73c620bd2a7b1e7bf1bf71cdd8dd0b012e23dbb0275ce9fa52",
+    "default_sdkconfig_header_sha256": "8b3f369cb30e43673815b570def44388ec1489a4bdf60744964a8c4c14591d12",
+    "default_tx_enabled": false,
+    "images": {
+      "1": {
+        "app.bin": "5a9ccc9e928efc346c64afd0c2d1f46b75686549597f6dbe500e0af2b651192c",
+        "app.elf": "c08bf9cb2d2c6d75a6b899d55651662c60dcf3aab61b622f20e4a431e52823c9",
+        "bootloader.bin": "aa41edb03f56d2195572b0e91acc0a3938208d4f50d95c2ee549be98805486a0",
+        "partitions.bin": "af786fb1e7952a3c23b816131c8a93ffb83e4af70d658c3efa7235dc4902de78",
+        "sdkconfig": "a747649523724a7bedb227793ec7ec1995dcfc046587fb71b2608d0f9ba70f4c",
+        "sdkconfig.h": "7924635f72201ca2fa888b90de82fb09450842828c4ba014a309c96a60533594"
+      },
+      "2": {
+        "app.bin": "663d16a2b595fd992efd7d8d79e7fde5ff325f9812b628d5eb86998894885b3c",
+        "app.elf": "f8e45a6e3ff54be7487457b44c2d8c95e5389687a13c97b9c28242d4638e2d91",
+        "bootloader.bin": "f86c3ebf012522fac32c024c667a74857990df787062145c74d67245620dd70f",
+        "partitions.bin": "af786fb1e7952a3c23b816131c8a93ffb83e4af70d658c3efa7235dc4902de78",
+        "sdkconfig": "a14d656dfb883a6d9f602298c0902a5ed07ed109121b803e3c829d004eb14764",
+        "sdkconfig.h": "ba28f93e1cf5f9934909db2ac9e9c1e13de1770668a20cfaee826d81b55480aa"
+      },
+      "3": {
+        "app.bin": "95f02c7a437426342fda855df186e3a679e085b126a7eeacc529d64d31cf4e4e",
+        "app.elf": "8c5544f89a0c2a940fb312edbba28429d32c23538e908e9735bfa8c3ccdcde67",
+        "bootloader.bin": "0fd56faee4fd5eec2e806313c5dbbd0a8f59be5a52c6c8b224d7015054a9a185",
+        "partitions.bin": "af786fb1e7952a3c23b816131c8a93ffb83e4af70d658c3efa7235dc4902de78",
+        "sdkconfig": "a6718e8c1d306aef92664833e2b9b602af523451a7e42dd8f3c2e0fadc47aae8",
+        "sdkconfig.h": "b2198ed98fc7b5db2d4f51bcc1dac5cc358d8920b439939611cf5da5114d7027"
+      }
+    }
+  },
+  "hardware_results": "AUTONOMOUS_HIL_RESULTS_2026-09-08.json",
+  "unrun": [
+    "Controlled power removal during Flash programming",
+    "Outdoor range/environment",
+    "Long-duration/endurance qualification",
+    "Battery sleep qualification",
+    "Production security qualification"
+  ],
+  "publication": "No hosted CI, push or release publication",
+  "final_hardware_status": [
+    {
+      "node": 1,
+      "command": "H",
+      "result": 0,
+      "response": "00000001000000000000000000000123000002d1000000040004feac00020d4400002f2c000000000000000000000000000000000000002c00000000000000010000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "node": 2,
+      "command": "H",
+      "result": 0,
+      "response": "000000010000000000000000000002c80000030b000000320004feac000395e400002ebc000000000000000000000000000000000000005e00000003000000050000000300000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "node": 3,
+      "command": "H",
+      "result": 0,
+      "response": "000000010000000000000000000001d3000003f6000000070004feac0003b74800002f6c000000000000000000000000000000000000004900000006000000090000000400000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "post_matrix_checks": [
+    "git diff HEAD --check: PASS, includes staged and unstaged source",
+    "bash -n scripts/ci.sh: PASS after broadening the diff check",
+    "All 9 staged public capture files byte-match the original captures; CRLF retained",
+    "Bounded 259-byte console reads: Python syntax and actual stopped H status on all three boards PASS"
+  ]
+}

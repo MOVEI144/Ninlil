@@ -77,6 +77,22 @@ int ninlil_airtime_enqueue(ninlil_airtime_scheduler *s, uint64_t token,
     return NINLIL_OK;
 }
 
+static int take_selected(ninlil_airtime_scheduler *s, uint64_t now,
+                         const ninlil_airtime_job **out)
+{
+    ninlil_airtime_job *job = &s->jobs[s->active];
+    if (job->airtime_us > s->credit_us)
+        return NINLIL_ERR_EMPTY;
+    if (now > UINT64_MAX - job->airtime_us - s->pause_us)
+        return NINLIL_ERR_STATE;
+    s->credit_us -= job->airtime_us;
+    s->not_before_us = now + job->airtime_us + s->pause_us;
+    s->waiting = 0u;
+    s->busy = 1u;
+    *out = job;
+    return NINLIL_OK;
+}
+
 int ninlil_airtime_next(ninlil_airtime_scheduler *s, uint64_t now,
                         const ninlil_airtime_job **out)
 {
@@ -100,6 +116,8 @@ int ninlil_airtime_next(ninlil_airtime_scheduler *s, uint64_t now,
     if (credit >= s->budget_us)
         s->credit_remainder = 0u;
     s->last_refill_us = now;
+    if (s->waiting)
+        return take_selected(s, now, out);
     for (phase = 0u; phase < 16u; phase++) {
         uint8_t cls = schedule[s->phase];
         s->phase = (uint8_t)((s->phase + 1u) % 16u);
@@ -108,17 +126,11 @@ int ninlil_airtime_next(ninlil_airtime_scheduler *s, uint64_t now,
             ninlil_airtime_job *j = &s->jobs[index];
             s->cursor[cls] =
                 (uint16_t)((index + 1u) % NINLIL_AIRTIME_QUEUE_MAX);
-            if (!j->used || (unsigned int)j->traffic != cls ||
-                j->airtime_us > s->credit_us)
+            if (!j->used || (unsigned int)j->traffic != cls)
                 continue;
-            if (now > UINT64_MAX - j->airtime_us - s->pause_us)
-                return NINLIL_ERR_STATE;
-            s->credit_us -= j->airtime_us;
-            s->not_before_us = now + j->airtime_us + s->pause_us;
             s->active = (uint8_t)index;
-            s->busy = 1u;
-            *out = j;
-            return NINLIL_OK;
+            s->waiting = 1u;
+            return take_selected(s, now, out);
         }
     }
     return NINLIL_ERR_EMPTY;

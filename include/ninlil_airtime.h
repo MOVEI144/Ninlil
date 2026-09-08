@@ -28,12 +28,17 @@ typedef struct ninlil_airtime_scheduler {
     uint8_t phase;
     uint8_t active;
     uint8_t busy;
+    uint8_t waiting;
 } ninlil_airtime_scheduler;
 
 /* Explicit one-radio queue; all jobs are derived from owners above this layer.
  * Not a replacement for regional CCA/LBT enforcement in the physical driver.
  * Starts without credit after boot. Fixed one-second accounting window, no
- * packet preemption, 4/4 global and 2/2 per-peer CRITICAL/CONTROL reserves. */
+ * packet preemption, 4/4 global and 2/2 per-peer CRITICAL/CONTROL reserves.
+ *
+ * A selected job retains its turn while credit accumulates (at most one
+ *
+ * second of refill). Smaller later jobs cannot consume that reservation. */
 int ninlil_airtime_open(ninlil_airtime_scheduler *s, uint64_t now_us,
                         uint32_t budget_us_per_second, uint32_t pause_us);
 int ninlil_airtime_enqueue(ninlil_airtime_scheduler *s, uint64_t token,

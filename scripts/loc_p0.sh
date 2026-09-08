@@ -31,6 +31,8 @@ paths=(
   "$root/ports/flash/ninlil_flash_journal_file.c"
   "$root/ports/esp32s3/ninlil_flash_journal.c"
   "$root/tests/test_core.c"
+  "$root/tests/test_quota_retry.c"
+  "$root/tests/test_store_binding.c"
   "$root/tests/test_delivery_state.c"
   "$root/tests/test_flash.c"
   "$root/tests/test_operations.c"
@@ -41,6 +43,11 @@ paths=(
   "$root/docs/P0_OPERATIONAL_PROFILES_V1.md"
   "$root/docs/P0_IMPLEMENTATION.md"
   "$root/scripts/loc_p0.sh"
+  "$root/scripts/count_sources.py"
+  "$root/cmake/package.cmake"
+  "$root/cmake/NinlilConfig.cmake.in"
+  "$root/tests/consumer/CMakeLists.txt"
+  "$root/tests/consumer/main.c"
 )
 
 physical=0

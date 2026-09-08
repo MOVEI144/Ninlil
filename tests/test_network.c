@@ -185,8 +185,22 @@ int main(void)
     packet.length = 100u;
     memset(packet.ciphertext, 0xA5, packet.length);
     n = ninlil_relay_encode(&packet, wire, sizeof(wire));
-    CHECK(n == 148u);
+    CHECK(n == 156u);
+    CHECK(wire[2] == 2u);
     CHECK(ninlil_relay_decode(wire, n, &decoded) == NINLIL_OK);
+    CHECK(decoded.absolute_deadline_ms == 0u && !decoded.legacy);
+    packet.legacy = 1u;
+    n = ninlil_relay_encode(&packet, wire, sizeof(wire));
+    CHECK(n == 148u && wire[2] == 1u);
+    CHECK(ninlil_relay_decode(wire, n, &decoded) == NINLIL_OK &&
+          decoded.legacy);
+    packet.absolute_deadline_ms = 70000u;
+    CHECK(ninlil_relay_encode(&packet, wire, sizeof(wire)) == 0u);
+    packet.legacy = 0u;
+    n = ninlil_relay_encode(&packet, wire, sizeof(wire));
+    CHECK(n == 156u);
+    CHECK(ninlil_relay_decode(wire, n, &decoded) == NINLIL_OK &&
+          decoded.absolute_deadline_ms == 70000u);
     CHECK(ninlil_relay_receive(&r, 4u, &decoded, 110u) ==
           NINLIL_ERR_UNAUTHORIZED);
     CHECK(ninlil_relay_receive(&r, 1u, &decoded, 110u) == NINLIL_OK &&

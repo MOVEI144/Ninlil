@@ -15,15 +15,18 @@ static int valid(const ninlil_relay_record *p)
 {
     uint8_t nonzero = 0u;
     unsigned int i;
-    if (p && p->control == 1u) {
+    if (!p || p->legacy > 1u || (p->legacy && p->absolute_deadline_ms != 0u))
+        return 0;
+    if (p->control == 1u) {
         for (i = 0u; i < 16u; i++)
             if (p->packet_id[i])
                 return 0;
         for (i = 0u; i < NINLIL_NETWORK_PATH_MAX; i++)
             if (p->path.nodes[i])
                 return 0;
-        return p->route_epoch != 0u && p->length == 0u && p->path.count == 0u &&
-               p->done <= 1u && p->traffic == NINLIL_TRAFFIC_CRITICAL;
+        return p->route_epoch != 0u && p->absolute_deadline_ms == 0u &&
+               p->length == 0u && p->path.count == 0u && p->done <= 1u &&
+               p->traffic == NINLIL_TRAFFIC_CRITICAL;
     }
     if (!p || p->control != 0u || !ninlil_network_path_valid(&p->path) ||
         p->route_epoch == 0u || p->length == 0u ||
@@ -39,7 +42,8 @@ static int valid(const ninlil_relay_record *p)
 static int equal(const ninlil_relay_record *a, const ninlil_relay_record *b)
 {
     return a->traffic == b->traffic && a->route_epoch == b->route_epoch &&
-           a->path.count == b->path.count &&
+           a->absolute_deadline_ms == b->absolute_deadline_ms &&
+           a->legacy == b->legacy && a->path.count == b->path.count &&
            memcmp(a->path.nodes, b->path.nodes,
                   (size_t)a->path.count * sizeof(uint16_t)) == 0 &&
            a->length == b->length &&
@@ -106,6 +110,16 @@ static int verify_owned(ninlil_relay *r, const ninlil_relay_record *record)
     return rc;
 }
 
+int ninlil_relay_frame_current(ninlil_relay *r, const ninlil_relay_record *p)
+{
+    ninlil_relay_slot *s;
+    if (!r || r->poisoned || !valid(p) || p->done || p->control)
+        return NINLIL_ERR_STATE;
+    s = find(r, p->packet_id);
+    return !s || !equal(&s->record, p) ? NINLIL_ERR_STATE
+                                       : verify_owned(r, &s->record);
+}
+
 int ninlil_relay_restore(ninlil_relay *r, const ninlil_relay_record *p)
 {
     ninlil_relay_slot *s;
@@ -127,7 +141,8 @@ int ninlil_relay_restore(ninlil_relay *r, const ninlil_relay_record *p)
     if (s && !equal(&s->record, p)) {
         const ninlil_relay_record *old = &s->record;
         if (p->done || p->route_epoch <= old->route_epoch ||
-            p->length != old->length ||
+            p->absolute_deadline_ms != old->absolute_deadline_ms ||
+            p->legacy != old->legacy || p->length != old->length ||
             memcmp(p->ciphertext, old->ciphertext, p->length) != 0 ||
             p->path.nodes[0] != old->path.nodes[0] ||
             p->path.nodes[p->path.count - 1u] !=
@@ -339,15 +354,17 @@ int ninlil_relay_ready_remove(const ninlil_relay *r)
 size_t ninlil_relay_encode(const ninlil_relay_record *r, uint8_t *out,
                            size_t capacity)
 {
-    size_t i, size;
+    size_t i, size, header;
     uint8_t bytes[NINLIL_RELAY_FRAME_MAX];
     if (!valid(r) || !out)
         return 0u;
-    size = NINLIL_RELAY_HEADER + r->length;
+    header = r->legacy ? 48u : NINLIL_RELAY_HEADER;
+    size = header + r->length;
     if (capacity < size)
         return 0u;
     memset(bytes, 0, NINLIL_RELAY_HEADER);
-    memcpy(bytes, "NR\001", 3u);
+    memcpy(bytes, "NR\002", 3u);
+    bytes[2] = r->legacy ? 1u : 2u;
     bytes[3] = (uint8_t)(r->done | (r->control ? 0x80u : 0u));
     bytes[4] = r->path.count;
     bytes[5] = (uint8_t)r->traffic;
@@ -360,7 +377,9 @@ size_t ninlil_relay_encode(const ninlil_relay_record *r, uint8_t *out,
     for (i = 0u; i < 8u; i++)
         bytes[25u - i] = (uint8_t)(r->route_epoch >> (8u * i));
     memcpy(bytes + 26, r->packet_id, 16u);
-    memcpy(bytes + NINLIL_RELAY_HEADER, r->ciphertext, r->length);
+    for (i = 0u; i < 8u; i++)
+        bytes[55u - i] = (uint8_t)(r->absolute_deadline_ms >> (8u * i));
+    memcpy(bytes + header, r->ciphertext, r->length);
     memcpy(out, bytes, size);
     return size;
 }
@@ -368,18 +387,20 @@ size_t ninlil_relay_encode(const ninlil_relay_record *r, uint8_t *out,
 int ninlil_relay_decode(const uint8_t *p, size_t size, ninlil_relay_record *out)
 {
     ninlil_relay_record r;
-    size_t i;
-    if (!p || !out || size < NINLIL_RELAY_HEADER ||
-        size > NINLIL_RELAY_FRAME_MAX || memcmp(p, "NR\001", 3u) != 0 ||
+    size_t i, header;
+    if (!p || !out || size < 48u || size > NINLIL_RELAY_FRAME_MAX ||
+        memcmp(p, "NR", 2u) != 0 || (p[2] != 1u && p[2] != 2u) ||
         p[5] > NINLIL_TRAFFIC_BULK || p[4] > NINLIL_NETWORK_PATH_MAX)
         return NINLIL_ERR_INVALID;
+    header = p[2] == 1u ? 48u : NINLIL_RELAY_HEADER;
     memset(&r, 0, sizeof(r));
+    r.legacy = p[2] == 1u ? 1u : 0u;
     r.done = (uint8_t)(p[3] & 0x7Fu);
     r.control = (p[3] & 0x80u) != 0u ? 1u : 0u;
     r.path.count = p[4];
     r.traffic = (ninlil_traffic_class)p[5];
     r.length = (uint16_t)(((uint16_t)p[6] << 8) | p[7]);
-    if (size != NINLIL_RELAY_HEADER + r.length)
+    if (r.length > NINLIL_RELAY_CIPHERTEXT_MAX || size != header + r.length)
         return NINLIL_ERR_INVALID;
     for (i = 0u; i < NINLIL_NETWORK_PATH_MAX; i++) {
         uint16_t n =
@@ -391,11 +412,14 @@ int ninlil_relay_decode(const uint8_t *p, size_t size, ninlil_relay_record *out)
     }
     for (i = 18u; i < 26u; i++)
         r.route_epoch = (r.route_epoch << 8) | p[i];
-    for (i = 42u; i < NINLIL_RELAY_HEADER; i++)
+    for (i = 42u; i < 48u; i++)
         if (p[i] != 0u)
             return NINLIL_ERR_INVALID;
+    if (header == NINLIL_RELAY_HEADER)
+        for (i = 48u; i < 56u; i++)
+            r.absolute_deadline_ms = (r.absolute_deadline_ms << 8) | p[i];
     memcpy(r.packet_id, p + 26, 16u);
-    memcpy(r.ciphertext, p + NINLIL_RELAY_HEADER, r.length);
+    memcpy(r.ciphertext, p + header, r.length);
     if (!valid(&r))
         return NINLIL_ERR_INVALID;
     *out = r;

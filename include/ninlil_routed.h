@@ -5,6 +5,8 @@
 #include "ninlil_secure.h"
 
 #define NINLIL_ROUTED_ACK_CACHE 64u
+#define NINLIL_ROUTED_TX_CACHE 64u
+#define NINLIL_ROUTED_RETRY_WINDOW_MS 30000u
 
 typedef ninlil_secure_session *(*ninlil_session_lookup_fn)(void *ctx,
                                                            uint16_t peer,
@@ -38,6 +40,19 @@ typedef struct ninlil_routed {
     uint64_t now_ms;
     uint8_t ack_cache[NINLIL_ROUTED_ACK_CACHE][16];
     uint16_t ack_cursor;
+    /* Volatile ciphertext memoization, not another custody owner. A repeated
+     * Core packet keeps its opaque Relay identity for a bounded retry window.
+     * Expiry, eviction or a fresh context renews the envelope so a packet
+     * cannot remain behind the replay window forever. Core ownership is
+     * unchanged.
+     */
+    struct {
+        uint64_t created_ms;
+        uint8_t packet_key[16];
+        uint8_t ciphertext[NINLIL_RELAY_CIPHERTEXT_MAX];
+        uint16_t length;
+    } tx_cache[NINLIL_ROUTED_TX_CACHE];
+    uint16_t tx_cursor;
     uint32_t rejected;
 } ninlil_routed;
 

@@ -230,8 +230,34 @@ int ninlil_step(ninlil_runtime *runtime);
  * parsing/admission. A hop ACK may follow OK. Same execution owner as step. */
 int ninlil_ingest(ninlil_runtime *runtime, const uint8_t *packet,
                   size_t length);
+/* Revalidate a transport's queued DATA against current durable ownership,
+ *
+ * bytes and deadline immediately before transmission. No evidence changes. */
+int ninlil_transmit_check(ninlil_runtime *runtime, const uint8_t *packet,
+                          size_t length);
+/* Uses the application's restart-safe absolute clock, never route lease time.
+
+ * Zero means no deadline. Unavailable time fails closed. No retirement. */
+int ninlil_deadline_check(ninlil_runtime *runtime, uint64_t deadline_ms);
 /* Boot-local scheduling only; never alters ownership, deadlines or evidence. */
 int ninlil_set_retry_interval(ninlil_runtime *runtime, uint32_t steps);
+/* Optional persistent store binding for an integrated device owner. A normal
+ *
+ * resume passes initialize=0 and fails if the store is missing/unbound.
+ * Explicit
+ * provisioning passes 1; only an empty or already matching store is
+ * accepted.
+ * Legacy unbound journals remain usable through the original Core
+ * API. */
+int ninlil_bind_storage(ninlil_runtime *runtime, const uint8_t identity[32],
+                        int initialize);
+int ninlil_health(const ninlil_runtime *runtime);
+/* Re-read CRCs of retained ownership/deduplication records before returning
+ *
+ * obsolete relay copies to this Core. Bounded by the configured table sizes;
+ *
+ * no allocation, ownership change, or full historical-journal audit. */
+int ninlil_verify_retained(ninlil_runtime *runtime);
 /* receive offers each stored message at most once per boot until explicit
  * acceptance. A crash before acceptance makes it eligible again. */
 int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out);

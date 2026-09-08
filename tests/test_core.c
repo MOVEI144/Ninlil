@@ -592,8 +592,7 @@ static int test_service_direction_payload_class_and_quota(void)
     request.traffic_class = NINLIL_TRAFFIC_NORMAL;
     CHECK(ninlil_submit(runtime, &request, &message_id) == NINLIL_OK);
     test_fill_id(&request.idempotency_key, UINT8_C(0x7A));
-    CHECK(ninlil_submit(runtime, &request, &message_id) ==
-          NINLIL_ERR_UNAUTHORIZED);
+    CHECK(ninlil_submit(runtime, &request, &message_id) == NINLIL_ERR_CAPACITY);
     policy.session_membership_epoch = 0u;
     test_fill_id(&request.idempotency_key, UINT8_C(0x7B));
     CHECK(ninlil_submit(runtime, &request, &message_id) == NINLIL_ERR_STATE);

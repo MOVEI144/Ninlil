@@ -10,11 +10,37 @@ typedef int sx126x_status_t;
 #define SX126X_CAL_ALL 0x7F
 #define SX126X_FALLBACK_STDBY_RC 0x20
 #define SX126X_PKT_TYPE_LORA 1
+#define SX126X_PKT_TYPE_GFSK 0
+#define SX126X_GFSK_PULSE_SHAPE_OFF 0
+#define SX126X_GFSK_BW_234300 0x0A
+#define SX126X_GFSK_PREAMBLE_DETECTOR_OFF 0
+#define SX126X_GFSK_ADDRESS_FILTERING_DISABLE 0
+#define SX126X_GFSK_PKT_VAR_LEN 1
+#define SX126X_GFSK_CRC_OFF 1
+#define SX126X_GFSK_DC_FREE_OFF 0
+typedef struct sx126x_mod_params_gfsk_s {
+    uint32_t br_in_bps, fdev_in_hz;
+    int pulse_shape, bw_dsb_param;
+} sx126x_mod_params_gfsk_t;
+typedef struct sx126x_pkt_params_gfsk_s {
+    uint16_t preamble_len_in_bits;
+    int preamble_detector;
+    uint8_t sync_word_len_in_bits;
+    int address_filtering, header_type;
+    uint8_t pld_len_in_bytes;
+    int crc_type, dc_free;
+} sx126x_pkt_params_gfsk_t;
+sx126x_status_t sx126x_set_gfsk_mod_params(const void *,
+                                           const sx126x_mod_params_gfsk_t *);
+sx126x_status_t sx126x_set_gfsk_pkt_params(const void *,
+                                           const sx126x_pkt_params_gfsk_t *);
 #define SX126X_RAMP_200_US 4
 #define SX126X_RX_CONTINUOUS 0x00FFFFFFu
 #define SX126X_IRQ_NONE 0u
 #define SX126X_IRQ_TX_DONE (1u << 0)
 #define SX126X_IRQ_RX_DONE (1u << 1)
+#define SX126X_IRQ_PREAMBLE_DETECTED (1u << 2)
+#define SX126X_IRQ_HEADER_VALID (1u << 4)
 #define SX126X_IRQ_HEADER_ERROR (1u << 5)
 #define SX126X_IRQ_CRC_ERROR (1u << 6)
 #define SX126X_IRQ_TIMEOUT (1u << 9)

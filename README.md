@@ -8,14 +8,14 @@ This repository, `MOVEI144/Ninlil`, is the canonical project repository from 202
 
 | Area | State |
 |---|---|
-| P0 delivery evidence, bounded profiles, and Host operational contracts | Implementation candidate; acceptance gates pending |
-| POSIX durable delivery core | P0 host-test candidate |
-| SX1262 direct-radio software | Software candidate; physical RF acceptance pending |
-| ESP32 raw-flash delivery journal | Software candidate; hard-power acceptance pending |
-| Persistent security counter and membership stores | Software candidate; physical power-cut acceptance pending |
-| Secure-link encryption, EDHOC, Join, Relay, fragmentation | Not part of the imported official baseline |
+| P0 delivery evidence, bounded profiles, and Host operational contracts | Local software gates pass; full acceptance remains open |
+| POSIX durable delivery core | Local restart and fault-injection tests pass |
+| SX1262 direct-radio software | Bench RF verified; field qualification remains open |
+| ESP32 raw-flash delivery journal | Bench persistence/reset verified; controlled power cuts remain open |
+| Persistent security counter and membership stores | Local corruption/restart tests pass; physical power cuts remain open |
+| EDHOC, Join, Relay and autonomous node owner | Implemented; three-board delivery, restart and drain evidence recorded |
 
-No production release has been declared. In particular, passing host simulation is not evidence of RF performance or power-loss safety on physical flash.
+No production release has been declared. The [current integration record](docs/OSS_COMPLETION_2026-09-08.md) distinguishes locally verified software, exact firmware-specific bench results and unrun gates.
 
 ## Design boundary
 
@@ -23,9 +23,9 @@ Ninlil owns communication mechanics:
 
 - durable submit, retry, deduplication, receipts, and restart recovery;
 - bounded radio and storage adapters;
-- authenticated session, Join, Relay, and fragmentation layers as later milestones.
+- authenticated sessions, committed membership, encrypted relaying and route recovery.
 
-Ninlil does not own product policy, cloud APIs, dashboards, building or equipment models, safety-rule decisions, or tenant authorization. Product integrations such as KG consume Ninlil through a narrow transport adapter.
+Ninlil does not own product policy, cloud APIs, dashboards, building or equipment models, safety-rule decisions, or tenant authorization. Product integrations such as KG consume Ninlil at an explicit application-level delivery boundary.
 
 The authoritative responsibility boundary and delivery semantics are defined in [`docs/FOUNDATIONS.md`](docs/FOUNDATIONS.md). The implemented P0 API, format versions, and non-claims are summarized in [`docs/P0_IMPLEMENTATION.md`](docs/P0_IMPLEMENTATION.md).
 
@@ -36,10 +36,11 @@ candidate evidence only.
 
 ## Build and test
 
-Host CI requires CMake, Ninja, GCC, Clang, and clang-format.
+Local verification requires CMake, Ninja, GCC, Clang, Python and clang-format 18.
 
 ```sh
-./scripts/ci.sh
+bash scripts/fetch_edhoc.sh
+bash scripts/ci.sh
 ```
 
 The ESP32-S3 build requires ESP-IDF v6.0.2 and the exact pinned Semtech driver subset:
@@ -77,10 +78,19 @@ Apache License 2.0. See [`LICENSE`](LICENSE).
 
 ## Secure many-peer and adaptive Relay profile
 
-Conversation steps 4-6 are implemented in the [2026-09-07 profile](docs/SECURE_NETWORK_PROFILE_2026-09-07.md).
-Run `bash scripts/fetch_edhoc.sh` before configuring the host build. The runnable
-examples are `ninlil_secure_network star` and `ninlil_secure_network compare`.
-They use real crypto/Core/control with a deterministic model radio; see the
-[local evidence](docs/SECURE_NETWORK_LOCAL_EVIDENCE_2026-09-07.md) for results and
-unrun physical gates. ESP32-S3 components and the bounded radio pump are included;
-no production credentials or deployment authorization are supplied by the examples.
+Conversation steps 4-6 are implemented in the [autonomous profile](docs/OSS_COMPLETION_2026-09-08.md).
+The new `ninlil_node` owner runs authentication, participation, observation,
+route application, recovery and removal from explicit receive/step calls.
+See the [integration checkpoint](docs/OSS_COMPLETION_2026-09-08.md) for the
+current verification boundary. The older USB-owned examples and their HIL
+results remain dated evidence; their recoverable sources are listed in the
+[historical index](docs/HISTORICAL_CONTROLLERS.md).
+
+For a Core-only installation without vendor crypto, configure with
+`-DNINLIL_BUILD_SECURE=OFF`. `-DNINLIL_BUILD_TESTS=OFF` omits validation
+executables. `cmake --install build --prefix /chosen/prefix` installs a static
+package; consumers use `find_package(Ninlil 0.1 CONFIG REQUIRED COMPONENTS core)`
+and `Ninlil::posix`, or request `secure` and link `Ninlil::node`.
+The installed package defaults to the POSIX journal; set
+`Ninlil_JOURNAL_BACKEND=flash_runtime` before finding it to select the NOR file model.
+The host crypto snapshot is a pinned reference fixture; the ESP port uses SDK PSA.

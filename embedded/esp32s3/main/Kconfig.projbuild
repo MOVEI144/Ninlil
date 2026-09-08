@@ -9,9 +9,14 @@ config NINLIL_M1_MODE_DIAGNOSTIC
 
 config NINLIL_M1_MODE_DELIVERY
     bool "M1.2/M1.3 durable direct delivery"
-config NINLIL_M1_MODE_SECURE_BENCH
-    bool "USB-controlled secure two-board laboratory bench (not product firmware)"
+config NINLIL_MODE_AUTONOMOUS
+    bool "Autonomous secure small-message reference node"
 endchoice
+
+config NINLIL_NODE_HIL_ENABLE
+    bool "Enable explicit USB-controlled RX loss injection for node HIL"
+    default n
+    depends on NINLIL_MODE_AUTONOMOUS
 
 config NINLIL_NODE_ID
     int "Local node id"

@@ -58,8 +58,6 @@ int ninlil_open(ninlil_runtime **out, const ninlil_config *config)
     *out = NULL;
     if (!config_valid(config))
         return NINLIL_ERR_INVALID;
-    if (config->profile.role == NINLIL_ROLE_POWERED_RELAY_CANDIDATE)
-        return NINLIL_ERR_STATE;
     if (config->link.max_packet_size != 0u &&
         config->link.max_packet_size < NINLIL_WIRE_RECEIPT_SIZE)
         return NINLIL_ERR_INVALID;
@@ -610,4 +608,39 @@ int ninlil_set_retry_interval(ninlil_runtime *runtime, uint32_t steps)
         return runtime->fatal_error;
     runtime->config.retry_interval_steps = steps;
     return NINLIL_OK;
+}
+
+int ninlil_health(const ninlil_runtime *runtime)
+{
+    return runtime ? runtime->fatal_error : NINLIL_ERR_INVALID;
+}
+int ninlil_bind_storage(ninlil_runtime *r, const uint8_t identity[32],
+                        int initialize)
+{
+    uint8_t record[33], checked[33];
+    ninlil_journal_ref ref;
+    int rc;
+    if (!r || !identity || memcmp(identity, (uint8_t[32]){0}, 32u) == 0)
+        return NINLIL_ERR_INVALID;
+    if (r->fatal_error != NINLIL_OK)
+        return r->fatal_error;
+    if (r->storage_bound)
+        return memcmp(identity, r->storage_identity, 32u) == 0
+                   ? NINLIL_OK
+                   : NINLIL_ERR_CONFLICT;
+    if (!initialize || r->has_records)
+        return NINLIL_ERR_CORRUPT;
+    record[0] = 1u;
+    memcpy(record + 1, identity, 32u);
+    rc = ninlil_append_record(r, NINLIL_JRN_STORAGE_BINDING, record,
+                              sizeof(record), &ref);
+    if (rc == NINLIL_OK)
+        rc = ninlil_read_payload(r, &ref, 0u, checked, sizeof(checked));
+    if (rc == NINLIL_OK && memcmp(record, checked, sizeof(record)) != 0)
+        rc = NINLIL_ERR_CORRUPT;
+    if (rc == NINLIL_OK) {
+        memcpy(r->storage_identity, identity, 32u);
+        r->storage_bound = 1u;
+    }
+    return rc;
 }

@@ -81,7 +81,7 @@ fi
 # The M1 glob predates M2-M5. Keep those separately measured modules out of
 # the direct-radio milestone, while the project-wide 50,000 ceiling covers all.
 network_files=()
-mapfile -t network_files < "$root/scripts/secure_network_files.txt"
+mapfile -t network_files < <(sed 's/\r$//' "$root/scripts/secure_network_files.txt")
 physical=0
 nonblank=0
 for file in "${files[@]}"; do

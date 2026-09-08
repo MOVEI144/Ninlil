@@ -49,7 +49,7 @@ int ninlil_psa_packet_digest(const uint8_t *data, size_t length, uint8_t id[16])
     uint8_t hash[32];
     size_t size = 0u;
     psa_status_t rc;
-    if (!data || !id || length == 0u || length > NINLIL_RELAY_CIPHERTEXT_MAX)
+    if ((!data && length) || !id || length > NINLIL_SECURE_FRAME_MAX)
         return NINLIL_ERR_INVALID;
     rc = psa_hash_compute(PSA_ALG_SHA_256, data, length, hash, sizeof(hash),
                           &size);

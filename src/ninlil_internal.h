@@ -14,6 +14,7 @@
 #define NINLIL_JRN_IN_RECEIPT_HANDOFF 7u
 #define NINLIL_JRN_IN_REJECTION 8u
 #define NINLIL_JRN_IN_EXPIRED 9u
+#define NINLIL_JRN_STORAGE_BINDING 10u
 #define NINLIL_JRN_RECORD_VERSION 5u
 #define NINLIL_JRN_OUT_HEADER 52u
 #define NINLIL_JRN_IN_HEADER 36u
@@ -130,6 +131,9 @@ struct ninlil_runtime {
     uint64_t step_count;
     uint64_t last_rejection_step;
     int fatal_error;
+    uint8_t storage_identity[32];
+    uint8_t storage_bound;
+    uint8_t has_records;
 };
 
 int ninlil_id_equal(const ninlil_id *left, const ninlil_id *right);

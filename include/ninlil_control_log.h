@@ -22,6 +22,8 @@ int ninlil_control_log_open(ninlil_control_log **log, const char *location,
                             uint64_t maximum_bytes,
                             ninlil_control_replay replay);
 void ninlil_control_log_close(ninlil_control_log *log);
+int ninlil_control_log_bind(ninlil_control_log *log, const uint8_t identity[32],
+                            int initialize);
 int ninlil_control_log_join(void *ctx, const ninlil_join_record *record);
 int ninlil_control_log_plan(void *ctx, const ninlil_network_plan *record);
 int ninlil_control_log_relay(void *ctx, const ninlil_relay_record *record);
