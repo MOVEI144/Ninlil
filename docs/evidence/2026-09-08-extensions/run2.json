@@ -1,0 +1,99 @@
+{
+  "run": 2,
+  "reported_pass": false,
+  "error": "RuntimeError('Bulk campaign timed out; partial progress retained')",
+  "image_set": "extensions-node-v3",
+  "analysis": {
+    "console_sha256": "e007a88a351c4b64b60b90d63e44b949e5b97e37dd419f01c41047793c9d11c1",
+    "console_bytes": 298157,
+    "records": 1448,
+    "elapsed_seconds": 573.3748073577881,
+    "manifest": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+    },
+    "source": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+      "stored": 512,
+      "acknowledged": 3,
+      "sending": 1,
+      "ready": 1,
+      "remote_stored": 0,
+      "last_result": 0
+    },
+    "receiver": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+      "stored": 120,
+      "acknowledged": 0,
+      "sending": 0,
+      "ready": 0,
+      "remote_stored": 0,
+      "last_result": 0
+    },
+    "source_bytes_match": true,
+    "readback_matches": false,
+    "complete": false,
+    "restarts": [
+      {
+        "before": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 80,
+          "acknowledged": 0,
+          "sending": 0,
+          "ready": 0,
+          "remote_stored": 0,
+          "last_result": 0
+        },
+        "after": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 80,
+          "acknowledged": 0,
+          "sending": 0,
+          "ready": 0,
+          "remote_stored": 0,
+          "last_result": 0
+        },
+        "retained": true
+      }
+    ],
+    "collection": [
+      {
+        "record": 3,
+        "node": 1,
+        "kind": "K"
+      },
+      {
+        "record": 7,
+        "node": 2,
+        "kind": "K"
+      },
+      {
+        "record": 11,
+        "node": 3,
+        "kind": "K"
+      },
+      {
+        "record": 789,
+        "node": 3,
+        "kind": "K"
+      }
+    ],
+    "power_pairs": [
+      [
+        -3,
+        -3
+      ]
+    ],
+    "power_decrease_observed": false,
+    "all_stopped": true
+  }
+}

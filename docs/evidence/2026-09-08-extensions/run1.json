@@ -1,0 +1,43 @@
+{
+  "run": 1,
+  "reported_pass": false,
+  "error": "RuntimeError({'time': 1788859623.2309754, 'node': 1, 'command': 'J', 'request': '', 'result': -14, 'response': ''})",
+  "image_set": "extensions-node-v2",
+  "analysis": {
+    "console_sha256": "4a961149a831863f5428a488e654fa9079aa1951f7557bf93f777cae0b4be509",
+    "console_bytes": 5473,
+    "records": 36,
+    "elapsed_seconds": 5.3434224128723145,
+    "manifest": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+    },
+    "source": {},
+    "receiver": {},
+    "source_bytes_match": true,
+    "readback_matches": false,
+    "complete": false,
+    "restarts": [],
+    "collection": [
+      {
+        "record": 3,
+        "node": 1,
+        "kind": "K"
+      },
+      {
+        "record": 7,
+        "node": 2,
+        "kind": "K"
+      },
+      {
+        "record": 11,
+        "node": 3,
+        "kind": "K"
+      }
+    ],
+    "power_pairs": [],
+    "power_decrease_observed": false,
+    "all_stopped": true
+  }
+}

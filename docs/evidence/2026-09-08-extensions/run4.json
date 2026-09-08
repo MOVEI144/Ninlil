@@ -1,0 +1,72 @@
+{
+  "run": 4,
+  "reported_pass": false,
+  "error": "RuntimeError('Bulk campaign timed out; partial progress retained')",
+  "image_set": "extensions-node-v3",
+  "analysis": {
+    "console_sha256": "ad4a15545203696e21f30011fe90fc7708b2ded27c12505ef9ce791aa437c2d3",
+    "console_bytes": 343709,
+    "records": 1682,
+    "elapsed_seconds": 574.5719742774963,
+    "manifest": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+    },
+    "source": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+      "stored": 512,
+      "acknowledged": 11,
+      "sending": 1,
+      "ready": 1,
+      "remote_stored": 0,
+      "last_result": 0
+    },
+    "receiver": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+      "stored": 440,
+      "acknowledged": 0,
+      "sending": 0,
+      "ready": 0,
+      "remote_stored": 0,
+      "last_result": 0
+    },
+    "source_bytes_match": true,
+    "readback_matches": false,
+    "complete": false,
+    "restarts": [],
+    "collection": [
+      {
+        "record": 3,
+        "node": 1,
+        "kind": "K"
+      },
+      {
+        "record": 7,
+        "node": 2,
+        "kind": "K"
+      },
+      {
+        "record": 11,
+        "node": 3,
+        "kind": "K"
+      }
+    ],
+    "power_pairs": [
+      [
+        -6,
+        -6
+      ],
+      [
+        -3,
+        -3
+      ]
+    ],
+    "power_decrease_observed": true,
+    "all_stopped": true
+  }
+}

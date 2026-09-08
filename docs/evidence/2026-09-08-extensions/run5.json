@@ -1,0 +1,78 @@
+{
+  "run": 5,
+  "reported_pass": true,
+  "error": null,
+  "image_set": "extensions-node-v3",
+  "analysis": {
+    "console_sha256": "5f62d6c6acff03e922a66c516eaed78385a147751bac325755f75b6f638eb572",
+    "console_bytes": 312333,
+    "records": 1527,
+    "elapsed_seconds": 517.5095698833466,
+    "manifest": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+    },
+    "source": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+      "stored": 512,
+      "acknowledged": 15,
+      "sending": 1,
+      "ready": 1,
+      "remote_stored": 1,
+      "last_result": 0
+    },
+    "receiver": {
+      "id": "f867ce4d8eadfb4058c870285faac6d8",
+      "length": 512,
+      "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+      "stored": 512,
+      "acknowledged": 0,
+      "sending": 0,
+      "ready": 1,
+      "remote_stored": 0,
+      "last_result": 0
+    },
+    "source_bytes_match": true,
+    "readback_matches": true,
+    "complete": true,
+    "restarts": [],
+    "collection": [
+      {
+        "record": 3,
+        "node": 1,
+        "kind": "K"
+      },
+      {
+        "record": 7,
+        "node": 2,
+        "kind": "K"
+      },
+      {
+        "record": 11,
+        "node": 3,
+        "kind": "K"
+      },
+      {
+        "record": 1516,
+        "node": 1,
+        "kind": "C"
+      },
+      {
+        "record": 1517,
+        "node": 3,
+        "kind": "C"
+      }
+    ],
+    "power_pairs": [
+      [
+        -3,
+        -3
+      ]
+    ],
+    "power_decrease_observed": false,
+    "all_stopped": true
+  }
+}
