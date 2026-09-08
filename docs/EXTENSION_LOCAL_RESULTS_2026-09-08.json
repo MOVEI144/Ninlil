@@ -1,0 +1,212 @@
+{
+  "date": "2026-09-08",
+  "software_result": "LOCALLY_VERIFIED",
+  "hosted_ci_run": false,
+  "base_commit": "6307d02709efed0f8334b7828c8142d4738dc705",
+  "toolchain": {
+    "host": "Ubuntu 24.04 Docker on Windows/WSL2",
+    "gcc": "13.3.0",
+    "clang": "18.1.3",
+    "clang_format": "18.1.3",
+    "cmake": "3.28.3",
+    "ninja": "1.11.1",
+    "python_host": "3.12.3",
+    "python_usb": "3.12.10",
+    "esptool": "5.3.0",
+    "pyserial": "3.5",
+    "esp_idf": "6.0.2",
+    "xtensa_gcc": "15.2 esp-15.2.0_20251204"
+  },
+  "matrix": {
+    "distinct_current_ctests_per_configuration": 54,
+    "configurations": [
+      "gcc",
+      "clang",
+      "gcc-sanitize",
+      "clang-sanitize"
+    ],
+    "current_test_configuration_pairs": 216,
+    "full_ci_counts": [
+      51,
+      51,
+      52,
+      54
+    ],
+    "explanation": "The full matrix passed while additional review regressions were being added. Final POSIX publication and bulk cold-session/digest cases ran in all four builds afterward, as did the updated authenticated slow-radio receiver-restart integration. Earlier counts are not relabeled.",
+    "vendor_tests": 711,
+    "fuzz_iterations": 20000,
+    "encrypted_integration": "Actual EDHOC/Core/Relay modules, bounded 500 ms transmission opportunities, receiver restart before the acceptance receipt, same object completion under all four builds"
+  },
+  "commands": {
+    "full": "docker exec ninlil-static-star-verify bash -lc \"cd /work && NINLIL_BUILD_ROOT=/tmp/ninlil-oss-final NINLIL_CLEAN_BUILD=0 NINLIL_JOBS=8 bash scripts/ci.sh\"",
+    "added": "cmake --build /tmp/ninlil-oss-final/<variant> --target test_bulk_application_posix test_bulk_application_flash_runtime test_posix_collection -j8; ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ctest --test-dir /tmp/ninlil-oss-final/<variant> --output-on-failure -R \"bulk_cold_session|posix_collection_publication\"",
+    "encrypted_restart": "cmake --build /tmp/ninlil-oss-final/<variant> --target test_node_posix test_node_flash_runtime -j8; ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ctest --test-dir /tmp/ninlil-oss-final/<variant> --output-on-failure -R \"^autonomous_node_\"",
+    "package": "bash scripts/verify_package.sh /tmp/ninlil-oss-final/gcc",
+    "target": "python3 tools/node_hil/build.py .verify-m1-evidence/extensions-sdkconfig .verify-m1-evidence/oss-node-roster.h .verify-m1-evidence/extensions-node-v3 --build-directory /tmp/ninlil-node-builds"
+  },
+  "default_target": {
+    "tx_enabled": false,
+    "frequency_hz": 0,
+    "sha256": "6821afe5f99b782703ef228c1d341e1ad059b80b583aeeb523c6e11d1ad2bdbf"
+  },
+  "firmware": {
+    "1": {
+      "hashes": {
+        "app.bin": "519df06d82452672203613879596cf535aaee5137a8d41f7161d0bfdacbeb98b",
+        "app.elf": "259b012dc454c6e83d048d17306ee96e06329602116187e9b207ace4fa1efb86",
+        "bootloader.bin": "aa41edb03f56d2195572b0e91acc0a3938208d4f50d95c2ee549be98805486a0",
+        "partitions.bin": "d508372c4d6ba986dbca2b7384b27c385a570d3c2e3cc2b7366a24f6df65eba4",
+        "sdkconfig": "a0848f5473e9a2a2397333eec70b59d2a01b944e80a3227f543ea53c6445144e",
+        "sdkconfig.h": "d65f18ee0c781091a1fc4226ac3de2097ca0304350a9abca21d81d2ff0f5cdec"
+      },
+      "device_verification": {
+        "serial": "E0:72:A1:F7:FF:0C",
+        "app_sha256": "519df06d82452672203613879596cf535aaee5137a8d41f7161d0bfdacbeb98b",
+        "before": {
+          "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+          "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008",
+          "existing_node_stores": "d40d5dd4fc27bf59a98a41316ef2e3a1"
+        },
+        "after": {
+          "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+          "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008",
+          "existing_node_stores": "d40d5dd4fc27bf59a98a41316ef2e3a1"
+        },
+        "preserved": true,
+        "device_image_verified": true,
+        "backups_created": false
+      }
+    },
+    "2": {
+      "hashes": {
+        "app.bin": "1a25579a4ed713f9a642b77bd9d8e299558e7c7574138ad0986929c5347b9282",
+        "app.elf": "988021c9dad8050e194207b07b89ad97c5c4a547700ee484b16734a34c7b0ef8",
+        "bootloader.bin": "f86c3ebf012522fac32c024c667a74857990df787062145c74d67245620dd70f",
+        "partitions.bin": "d508372c4d6ba986dbca2b7384b27c385a570d3c2e3cc2b7366a24f6df65eba4",
+        "sdkconfig": "2ad3fcc63949826356dc8bd96f43eccf04afaec6f48f8167942d107fd863c70c",
+        "sdkconfig.h": "3f42f0423cd957f045f17cf4c47194dd94b42b55381a12af2cfdef69f838c8bd"
+      },
+      "device_verification": {
+        "serial": "E0:72:A1:D8:3E:74",
+        "app_sha256": "1a25579a4ed713f9a642b77bd9d8e299558e7c7574138ad0986929c5347b9282",
+        "before": {
+          "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+          "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b",
+          "existing_node_stores": "af79912b8dcfe3c035f1c90acf0321f6"
+        },
+        "after": {
+          "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+          "prior_stores": "9c2609dd789c2c49d7ddd9b330e6113b",
+          "existing_node_stores": "af79912b8dcfe3c035f1c90acf0321f6"
+        },
+        "preserved": true,
+        "device_image_verified": true,
+        "backups_created": false
+      }
+    },
+    "3": {
+      "hashes": {
+        "app.bin": "40bb99e1eddf5203367e86a2cb10caa19202f40e395db44989b72d8e4777df15",
+        "app.elf": "8564a34b02c63c2640af6098a29500d1c35226fa417c3a033ea1fe37fb345ee8",
+        "bootloader.bin": "0fd56faee4fd5eec2e806313c5dbbd0a8f59be5a52c6c8b224d7015054a9a185",
+        "partitions.bin": "d508372c4d6ba986dbca2b7384b27c385a570d3c2e3cc2b7366a24f6df65eba4",
+        "sdkconfig": "b7878619b02dcbb9b9cd28b9fbf7c468934541b15b5666a249166e28206dec7d",
+        "sdkconfig.h": "856782c8c9264b5a72c8cc37c963b659088aba29ab695114551e5889184b3ed6"
+      },
+      "device_verification": {
+        "serial": "E0:72:A1:D7:77:28",
+        "app_sha256": "40bb99e1eddf5203367e86a2cb10caa19202f40e395db44989b72d8e4777df15",
+        "before": {
+          "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+          "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad",
+          "existing_node_stores": "afb3ecead5f1f505c3fce36403336ecb"
+        },
+        "after": {
+          "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+          "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad",
+          "existing_node_stores": "afb3ecead5f1f505c3fce36403336ecb"
+        },
+        "preserved": true,
+        "device_image_verified": true,
+        "backups_created": false
+      }
+    }
+  },
+  "local_logs": {
+    "extensions-ci.log": {
+      "sha256": "c8863e4b01a3654f37b5d843edde8aa4391145b31e572841bb37e4a1398cc1c6",
+      "bytes": 122701,
+      "location": ".verify-m1-evidence/extensions-ci.log"
+    },
+    "extensions-final-regressions.log": {
+      "sha256": "2a2da393fb4327b02b8092969c1040db9a65bbe16e387b7e290d018dd01fba06",
+      "bytes": 3508,
+      "location": ".verify-m1-evidence/extensions-final-regressions.log"
+    },
+    "extensions-slow-restart-bulk.log": {
+      "sha256": "2666b4ebd820e95cc367340e515ba81571cf8675ffde13b764eb59192a931702",
+      "bytes": 826,
+      "location": ".verify-m1-evidence/extensions-slow-restart-bulk.log"
+    },
+    "extensions-slow-restart-bulk-matrix.log": {
+      "sha256": "73e904b4aea26d8fd1395ebe8957f0e135b54967bb00ff3719b93b19e5a4662c",
+      "bytes": 3030,
+      "location": ".verify-m1-evidence/extensions-slow-restart-bulk-matrix.log"
+    },
+    "extensions-package-component.log": {
+      "sha256": "30eb6ac790de3441565b5c09fd53c4ee66684a0cb9b6b4ebe1249d27f39e985a",
+      "bytes": 5316,
+      "location": ".verify-m1-evidence/extensions-package-component.log"
+    },
+    "extensions-review-static.log": {
+      "sha256": "5880b4481c9093560bc3267e64a86d8c814f0a5968b7340014fb15a57adaf204",
+      "bytes": 28,
+      "location": ".verify-m1-evidence/extensions-review-static.log"
+    },
+    "extensions-default-target.log": {
+      "sha256": "a5c7df451cfbc5631bafbc0e84ec1c88144c6fa421ceaf35b055fb8640c5246b",
+      "bytes": 21595,
+      "location": ".verify-m1-evidence/extensions-default-target.log"
+    }
+  },
+  "unrun": [
+    "hosted CI",
+    "64 KiB full object over physical RF",
+    "electrical power cut during active Flash programming",
+    "long-duration wear/endurance and field/environment qualification",
+    "system/antenna certification"
+  ],
+  "partition_review": {
+    "previous_revision": "6307d02",
+    "all_existing_regions_unchanged": true,
+    "addition": {
+      "node_core_gc": [
+        "data",
+        "0x40",
+        7094272,
+        139264
+      ],
+      "node_control_gc": [
+        "data",
+        "0x40",
+        7233536,
+        139264
+      ],
+      "node_bulk": [
+        "data",
+        "0x40",
+        7372800,
+        262144
+      ],
+      "node_bulk_gc": [
+        "data",
+        "0x40",
+        7634944,
+        270336
+      ]
+    },
+    "last_end": "0x78a000",
+    "partition_sha256": "d508372c4d6ba986dbca2b7384b27c385a570d3c2e3cc2b7366a24f6df65eba4"
+  },
+  "compiled_input_manifest": "evidence/2026-09-08-extensions/firmware-inputs.json"
+}

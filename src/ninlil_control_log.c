@@ -1,31 +1,7 @@
-#include "ninlil_control_log.h"
-#include "ninlil_journal.h"
+#include "ninlil_control_internal.h"
 
 #include <stdlib.h>
 #include <string.h>
-
-// Record numbers are local to this separate journal; typed payload magics
-// prevent confusing it with a delivery journal. Existing envelopes stay v4/v5.
-#define JOIN_RECORD 1u
-#define PLAN_RECORD 2u
-#define RELAY_RECORD 3u
-#define STORAGE_BINDING 4u
-
-typedef struct packet_reference {
-    uint8_t id[16];
-    ninlil_journal_ref reference;
-    uint8_t used;
-} packet_reference;
-
-struct ninlil_control_log {
-    ninlil_journal *journal;
-    ninlil_control_replay replay;
-    packet_reference packets[NINLIL_RELAY_PACKETS_MAX];
-    uint8_t poisoned;
-    uint8_t identity[32];
-    uint8_t bound;
-    uint8_t has_records;
-};
 
 static int index_record(ninlil_control_log *log, const ninlil_relay_record *r,
                         const ninlil_journal_ref *ref)
@@ -70,6 +46,16 @@ static int replay_record(void *ctx, uint8_t type, const uint8_t *data,
         return NINLIL_OK;
     }
     log->has_records = 1u;
+    if (type == EPOCH_FENCE) {
+        uint64_t epoch = 0u;
+        if (length != 12u || memcmp(data, "NEF\001", 4u) != 0 ||
+            !log->replay.epoch)
+            return NINLIL_ERR_CORRUPT;
+        for (unsigned int i = 4u; i < 12u; i++)
+            epoch = (epoch << 8) | data[i];
+        return epoch ? log->replay.epoch(log->replay.ctx, epoch)
+                     : NINLIL_ERR_CORRUPT;
+    }
     if (type == JOIN_RECORD) {
         ninlil_join_record r;
         if (ninlil_join_decode(data, length, &r) != NINLIL_OK ||
@@ -147,6 +133,17 @@ static int append(ninlil_control_log *log, uint8_t type, const uint8_t *data,
     if (rc != NINLIL_OK)
         log->poisoned = 1u;
     return rc;
+}
+
+int ninlil_control_log_epoch(ninlil_control_log *log, uint64_t epoch)
+{
+    uint8_t data[12] = {'N', 'E', 'F', 1u};
+    ninlil_journal_ref ref;
+    if (!epoch)
+        return NINLIL_ERR_INVALID;
+    for (unsigned int i = 0u; i < 8u; i++)
+        data[11u - i] = (uint8_t)(epoch >> (i * 8u));
+    return append(log, EPOCH_FENCE, data, sizeof(data), &ref);
 }
 
 int ninlil_control_log_bind(ninlil_control_log *log, const uint8_t identity[32],

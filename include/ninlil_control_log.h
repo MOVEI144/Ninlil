@@ -12,6 +12,7 @@ typedef struct ninlil_control_replay {
     int (*plan)(void *ctx, const ninlil_network_plan *record);
     int (*relay)(void *ctx, const ninlil_relay_record *record);
     void *ctx;
+    int (*epoch)(void *ctx, uint64_t minimum_epoch);
 } ninlil_control_replay;
 
 /* Separate from the delivery journal. Uses the existing POSIX or raw-Flash
@@ -27,6 +28,15 @@ int ninlil_control_log_bind(ninlil_control_log *log, const uint8_t identity[32],
 int ninlil_control_log_join(void *ctx, const ninlil_join_record *record);
 int ninlil_control_log_plan(void *ctx, const ninlil_network_plan *record);
 int ninlil_control_log_relay(void *ctx, const ninlil_relay_record *record);
+/* Snapshot emits current committed state only. Collection retains every owned
+ * Relay packet and never restores volatile live proofs. Epoch fences are a new
+ * record kind; older readers fail closed rather than accepting stale plans. */
+typedef int (*ninlil_control_snapshot)(void *ctx,
+                                       ninlil_control_log *replacement);
+int ninlil_control_log_collect(ninlil_control_log *log,
+                               ninlil_control_snapshot snapshot, void *ctx,
+                               int force);
+int ninlil_control_log_epoch(ninlil_control_log *log, uint64_t minimum_epoch);
 /* Revalidate the committed envelope/checksum before exposing an owned packet.
  */
 int ninlil_control_log_verify_relay(void *ctx,

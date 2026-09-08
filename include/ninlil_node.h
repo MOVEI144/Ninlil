@@ -120,5 +120,13 @@ int ninlil_node_drain(ninlil_node *node);
  * or opaque custody; it makes no claim about application/physical work. */
 int ninlil_node_relay_drain(ninlil_node *node, int draining);
 int ninlil_node_ready_remove(ninlil_node *node);
+/* Collect Core/control state between owner calls. References and current
+ * sessions remain valid; persistent plans still need fresh proofs after reboot.
+ */
+int ninlil_node_collect(ninlil_node *node);
+/* Completed authenticated eight-probe window, boot-local monotonic time.
+ * EMPTY during a current probe/rekey; observations never imply delivery. */
+int ninlil_node_link_quality(ninlil_node *node, uint16_t peer, uint64_t now_ms,
+                             uint64_t *observed_ms, uint16_t *delivered);
 
 #endif

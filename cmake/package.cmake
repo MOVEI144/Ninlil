@@ -27,7 +27,7 @@ endfunction()
 
 set(package_roots ninlil_posix ninlil_flash_runtime ninlil_security_state ninlil_radio_model)
 if(TARGET ninlil_node)
-  list(APPEND package_roots ninlil_node ninlil_identity_file ninlil_identity_flash)
+  list(APPEND package_roots ninlil_node ninlil_identity_file ninlil_identity_flash ninlil_bulk)
 endif()
 foreach(target IN LISTS package_roots)
   ninlil_package_visit(${target})

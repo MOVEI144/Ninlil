@@ -225,6 +225,7 @@ static int apply_profile(ninlil_sx1262_radio *radio)
                                            radio->profile.tx_power_dbm,
                                            SX126X_RAMP_200_US)) != NINLIL_OK)
             return NINLIL_ERR_IO;
+        radio->applied_power_dbm = radio->profile.tx_power_dbm;
     }
     return NINLIL_OK;
 }
@@ -444,6 +445,8 @@ int ninlil_sx1262_radio_init(ninlil_sx1262_radio *radio,
         return NINLIL_ERR_INVALID;
     memset(radio, 0, sizeof(*radio));
     radio->profile = *profile;
+    radio->requested_power_dbm = radio->applied_power_dbm =
+        profile->tx_power_dbm;
     radio->owner_task = xTaskGetCurrentTaskHandle();
     radio->rx_gate_active_high = rx_gate_active_high;
     if (uses_jp_cca(radio)) {
@@ -506,6 +509,15 @@ int ninlil_sx1262_radio_airtime(const ninlil_sx1262_radio *radio,
     if (!ms || ms > 400u)
         return NINLIL_ERR_TOO_LARGE;
     *airtime_us = ms * 1000u;
+    return NINLIL_OK;
+}
+
+int ninlil_sx1262_radio_power(ninlil_sx1262_radio *radio, int8_t power)
+{
+    if (!caller_is_owner(radio) || !radio->configured || power < -9 ||
+        power > radio->profile.tx_power_dbm)
+        return NINLIL_ERR_INVALID;
+    radio->requested_power_dbm = power;
     return NINLIL_OK;
 }
 
@@ -574,6 +586,12 @@ int ninlil_sx1262_radio_send(ninlil_sx1262_radio *radio, const uint8_t *data,
         radio->io_errors++;
         return resume_rx(radio, NINLIL_ERR_IO);
     }
+    if (status_ok(sx126x_set_tx_params(&radio->hal, radio->requested_power_dbm,
+                                       SX126X_RAMP_200_US)) != NINLIL_OK) {
+        radio->io_errors++;
+        return resume_rx(radio, NINLIL_ERR_IO);
+    }
+    radio->applied_power_dbm = radio->requested_power_dbm;
     if (status_ok(sx126x_set_lora_pkt_params(&radio->hal, &packet)) !=
             NINLIL_OK ||
         status_ok(sx126x_write_buffer(&radio->hal, 0u, data,

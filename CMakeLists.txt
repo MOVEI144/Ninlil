@@ -50,6 +50,7 @@ target_include_directories(ninlil_contract PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 ninlil_strict_target(ninlil_contract)
 
 set(NINLIL_DELIVERY_SOURCES
+  src/ninlil_collect.c
   src/ninlil.c
   src/ninlil_custody.c
   src/ninlil_group.c
@@ -86,6 +87,7 @@ target_include_directories(ninlil_radio_model
 ninlil_strict_target(ninlil_radio_model)
 
 add_library(ninlil_flash_store STATIC
+  ports/flash/ninlil_flash_bank.c
   ports/flash/ninlil_flash_store.c
 )
 target_include_directories(ninlil_flash_store
@@ -149,6 +151,13 @@ target_include_directories(test_quota_retry PRIVATE tests)
 target_link_libraries(test_quota_retry PRIVATE ninlil_posix)
 ninlil_strict_target(test_quota_retry)
 add_test(NAME core_quota_retry COMMAND test_quota_retry)
+foreach(backend posix flash_runtime)
+  add_executable(test_collection_${backend} tests/test_collection.c tests/test_support.c)
+  target_include_directories(test_collection_${backend} PRIVATE tests src)
+  target_link_libraries(test_collection_${backend} PRIVATE ninlil_${backend})
+  ninlil_strict_target(test_collection_${backend})
+  add_test(NAME collection_${backend} COMMAND test_collection_${backend})
+endforeach()
 
 add_executable(test_delivery_state
   tests/test_delivery_state.c
@@ -161,6 +170,12 @@ target_include_directories(test_delivery_state PRIVATE
 target_link_libraries(test_delivery_state PRIVATE ninlil_posix)
 ninlil_strict_target(test_delivery_state)
 add_test(NAME p0_delivery_state COMMAND test_delivery_state)
+add_executable(test_posix_collection tests/test_posix_collection.c tests/test_support.c)
+target_include_directories(test_posix_collection PRIVATE src tests)
+target_link_libraries(test_posix_collection PRIVATE ninlil_posix)
+target_link_options(test_posix_collection PRIVATE -Wl,--wrap=rename -Wl,--wrap=fsync)
+ninlil_strict_target(test_posix_collection)
+add_test(NAME posix_collection_publication COMMAND test_posix_collection)
 
 add_executable(test_operations
   tests/test_operations.c
@@ -180,6 +195,10 @@ add_executable(test_flash tests/test_flash.c)
 target_link_libraries(test_flash PRIVATE ninlil_flash_store)
 ninlil_strict_target(test_flash)
 add_test(NAME m1_flash COMMAND test_flash)
+add_executable(test_flash_bank tests/test_flash_bank.c)
+target_link_libraries(test_flash_bank PRIVATE ninlil_flash_store)
+ninlil_strict_target(test_flash_bank)
+add_test(NAME flash_collection_cuts COMMAND test_flash_bank)
 
 add_executable(test_radio_delivery
   tests/test_radio_delivery.c

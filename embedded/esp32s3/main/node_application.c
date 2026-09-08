@@ -69,7 +69,7 @@ int node_application_step(ninlil_runtime *core)
     int rc;
     if (!ledger || !bound)
         return NINLIL_ERR_STATE;
-    rc = ninlil_receive(core, &message);
+    rc = ninlil_receive_class(core, 256u, NINLIL_TRAFFIC_NORMAL, &message);
     if (rc != NINLIL_OK)
         return rc == NINLIL_ERR_EMPTY ? NINLIL_OK : rc;
     memcpy(record, message.message_id.bytes, 16u);

@@ -2,6 +2,7 @@
 #include "ninlil_identity_file.h"
 #include "ninlil_node_internal.h"
 #include "security_test_io.h"
+#include "test_node_bulk.h"
 #include "test_support.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -290,6 +291,7 @@ static void show(void)
 static void restart(unsigned int index)
 {
     device *d = &devices[index];
+    CHECK(ninlil_node_collect(d->node) == NINLIL_OK);
     ninlil_node_close(d->node);
     d->node = NULL;
     ninlil_identity_close(&d->identity);
@@ -298,6 +300,10 @@ static void restart(unsigned int index)
     d->boot_at = now;
     CHECK(ninlil_node_open(&d->node, &d->config, 0u) == NINLIL_OK);
     CHECK(!d->node->peers[index ? 0u : 1u].sessions[0].ready);
+}
+static void restart_bulk_receiver(void)
+{
+    restart(2u);
 }
 static int owned_delivery(const ninlil_id *id)
 {
@@ -658,6 +664,12 @@ int main(int argc, char **argv)
     }
     delivery(1u, 0u);
     delayed_apply_preserves_effective();
+    if (argc == 1) {
+        slow_radio = 1;
+        test_node_bulk(devices[0].node, &devices[2].node, tick,
+                       restart_bulk_receiver);
+        slow_radio = 0;
+    }
     delivery(2u, 1u);
     delivery(3u, 2u);
     lifecycle();

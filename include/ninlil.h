@@ -225,6 +225,15 @@ void ninlil_close(ninlil_runtime *runtime);
 int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
                   ninlil_id *message_id);
 int ninlil_step(ninlil_runtime *runtime);
+/* Synchronous bounded maintenance; no concurrent/reentrant API calls. Preserves
+ * all currently retained contracts and payloads. Step automatically collects
+ * at 75% journal occupancy. Caller-owned application records are not expired.
+ * Core uses bounded stack scratch; filesystem ports may allocate path buffers.
+ * Unsupported legacy backends return NOT_FOUND without changing ownership. */
+int ninlil_collect(ninlil_runtime *runtime);
+/* Boot-local scheduling preference, default automatic=1. With 0 the caller
+ * schedules collect explicitly, e.g. outside a latency-sensitive RX window. */
+int ninlil_set_collection(ninlil_runtime *runtime, int automatic);
 /* Authenticated transport ingress, one synchronous packet. OK proves a
  * matching durable inbound contract or outbound receipt state, not merely
  * parsing/admission. A hop ACK may follow OK. Same execution owner as step. */
@@ -261,6 +270,11 @@ int ninlil_verify_retained(ninlil_runtime *runtime);
 /* receive offers each stored message at most once per boot until explicit
  * acceptance. A crash before acceptance makes it eligible again. */
 int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out);
+/* Offer only this application's service; does not consume other services. */
+int ninlil_receive_service(ninlil_runtime *runtime, uint16_t service,
+                           ninlil_inbound *out);
+int ninlil_receive_class(ninlil_runtime *runtime, uint16_t service,
+                         ninlil_traffic_class traffic, ninlil_inbound *out);
 /* The Application calls this only after durable adoption or an idempotent
  * commit. It is acceptance evidence, never business-execution success. */
 int ninlil_application_accept(ninlil_runtime *runtime,

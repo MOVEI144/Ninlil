@@ -51,6 +51,46 @@ static int control_frame(const uint8_t *frame, size_t length)
            memcmp(frame, "NS\001", 3u) == 0 && frame[31] == 1u;
 }
 
+int ninlil_esp_node_adaptive_power(ninlil_esp_network_pump *p, int8_t minimum)
+{
+    ninlil_radio_adapt initial;
+    if (!p || !p->node || !p->radio ||
+        ninlil_radio_adapt_open(&initial, minimum,
+                                p->radio->profile.tx_power_dbm) != NINLIL_OK)
+        return NINLIL_ERR_INVALID;
+    memset(p->power_peer, 0, sizeof(p->power_peer));
+    for (unsigned int i = 0u; i < 16u; i++)
+        p->power[i] = initial;
+    p->adaptive_power = 1u;
+    return NINLIL_OK;
+}
+static int power_for(ninlil_esp_network_pump *p, uint16_t peer, uint64_t now)
+{
+    uint64_t observed = 0u;
+    uint16_t delivered = 0u;
+    int8_t power = p->radio->profile.tx_power_dbm;
+    unsigned int slot;
+    int rc;
+    if (!p->adaptive_power)
+        return NINLIL_OK;
+    for (slot = 0u;
+         slot < 16u && p->power_peer[slot] && p->power_peer[slot] != peer;
+         slot++) {
+    }
+    if (!peer || slot == 16u)
+        return ninlil_sx1262_radio_power(p->radio, power);
+    p->power_peer[slot] = peer;
+    rc = ninlil_node_link_quality(p->node, peer, now, &observed, &delivered);
+    if (rc == NINLIL_ERR_EMPTY) {
+        observed = p->power[slot].observed_ms;
+        delivered = 7u;
+    } else if (rc != NINLIL_OK)
+        observed = 0u;
+    rc = ninlil_radio_adapt_observe(&p->power[slot], now, observed, 8u,
+                                    delivered, &power);
+    return rc == NINLIL_OK ? ninlil_sx1262_radio_power(p->radio, power) : rc;
+}
+
 static int receive(ninlil_esp_network_pump *p)
 {
     unsigned int work;
@@ -154,6 +194,9 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
         return rc;
     }
     /* This driver returns OK only after TX_DONE and restoring reception. */
+    rc = power_for(p, job->peer, (uint64_t)now / 1000u);
+    if (rc != NINLIL_OK)
+        return rc;
     rc = ninlil_sx1262_radio_send(p->radio, job->frame, job->length);
     if (rc == NINLIL_OK && p->transmitted != UINT32_MAX)
         p->transmitted++;

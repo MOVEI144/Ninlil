@@ -46,6 +46,13 @@ int64_t esp_timer_get_time(void)
 {
     return now_us;
 }
+int ninlil_sx1262_radio_power(ninlil_sx1262_radio *r, int8_t power)
+{
+    if (power > r->profile.tx_power_dbm)
+        return NINLIL_ERR_INVALID;
+    r->requested_power_dbm = power;
+    return NINLIL_OK;
+}
 int ninlil_sx1262_radio_airtime(const ninlil_sx1262_radio *r, uint16_t length,
                                 uint32_t *out)
 {

@@ -212,5 +212,7 @@ int ninlil_node_lifecycle_receive(ninlil_node *node, uint16_t peer,
                                   node_control_kind kind, const uint8_t *data,
                                   size_t length);
 int ninlil_node_expire_plans(ninlil_node *node, uint64_t lease);
+int ninlil_node_epoch_restore(void *ctx, uint64_t epoch);
+int ninlil_node_collection_step(ninlil_node *node);
 
 #endif

@@ -70,6 +70,8 @@ static sx126x_lora_bw_t fake_bandwidth;
 static int fake_packet_type;
 static bool fake_sync_restored;
 static unsigned int fake_modem_failure;
+static int8_t fake_power;
+static bool fake_power_failure;
 
 int64_t esp_timer_get_time(void)
 {
@@ -446,8 +448,10 @@ sx126x_status_t sx126x_set_tx_params(const void *context, int8_t power,
                                      int ramp)
 {
     (void)context;
-    (void)power;
     (void)ramp;
+    if (fake_power_failure)
+        return -1;
+    fake_power = power;
     return SX126X_STATUS_OK;
 }
 
@@ -921,6 +925,32 @@ static int test_receive_in_progress_precedes_transmit(void)
     return 0;
 }
 
+static int test_adaptive_power_boundary(void)
+{
+    ninlil_sx1262_radio radio;
+    ninlil_rf_profile p = make_profile(true);
+    uint8_t data = 1u;
+    reset_fakes();
+    fake_tx_notifies = true;
+    fake_tx_completion_irq = SX126X_IRQ_TX_DONE;
+    p.tx_power_dbm = -3;
+    CHECK(ninlil_sx1262_radio_init(&radio, &p, true) == NINLIL_OK);
+    CHECK(ninlil_sx1262_radio_power(&radio, -10) == NINLIL_ERR_INVALID);
+    CHECK(ninlil_sx1262_radio_power(&radio, 0) == NINLIL_ERR_INVALID);
+    CHECK(ninlil_sx1262_radio_power(&radio, -6) == NINLIL_OK);
+    CHECK(fake_power == -3 && radio.applied_power_dbm == -3);
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_OK);
+    CHECK(fake_power == -6 && radio.applied_power_dbm == -6);
+    CHECK(ninlil_sx1262_radio_power(&radio, -9) == NINLIL_OK);
+    fake_power_failure = true;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_ERR_IO);
+    CHECK(fake_set_tx_calls == 1u && radio.applied_power_dbm == -6);
+    fake_power_failure = false;
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_OK);
+    CHECK(fake_power == -9 && radio.applied_power_dbm == -9);
+    ninlil_sx1262_radio_deinit(&radio);
+    return 0;
+}
 static int (*const tests[])(void) = {
     test_init_profile_and_owner,
     test_tx_completion_timeout_and_rx_race,
@@ -929,6 +959,7 @@ static int (*const tests[])(void) = {
     test_jp_channel_and_pause,
     test_jp_fail_closed,
     test_receive_in_progress_precedes_transmit,
+    test_adaptive_power_boundary,
 };
 
 int main(void)

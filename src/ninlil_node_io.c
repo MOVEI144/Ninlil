@@ -15,6 +15,9 @@ int ninlil_node_step(ninlil_node *n, uint64_t now)
     int rc = enter(n, now);
     if (rc != NINLIL_OK)
         return rc;
+    rc = ninlil_node_result(n, ninlil_node_collection_step(n));
+    if (rc != NINLIL_OK)
+        return rc;
     if (n->config.local == n->config.root &&
         now - n->clock.began_ms >= UINT32_MAX - 61000u) {
         rc = ninlil_lease_root_open(&n->clock, n->config.root_eras, now);

@@ -14,8 +14,9 @@ This repository, `MOVEI144/Ninlil`, is the canonical project repository from 202
 | ESP32 raw-flash delivery journal | Bench persistence/reset verified; controlled power cuts remain open |
 | Persistent security counter and membership stores | Local corruption/restart tests pass; physical power cuts remain open |
 | EDHOC, Join, Relay and autonomous node owner | Implemented; three-board delivery, restart and drain evidence recorded |
+| Storage collection, bulk transfer and TX power adaptation | Implemented as a bounded extension; see its verification scope |
 
-No production release has been declared. The [current integration record](docs/OSS_COMPLETION_2026-09-08.md) distinguishes locally verified software, exact firmware-specific bench results and unrun gates.
+No production release has been declared. The [storage/bulk/radio extension](docs/STORAGE_BULK_RADIO_2026-09-08.md) and [earlier small-message integration](docs/OSS_COMPLETION_2026-09-08.md) distinguish locally verified software, exact firmware-specific bench results and unrun gates.
 
 ## Design boundary
 
@@ -54,6 +55,12 @@ The ESP32-S3 build requires ESP-IDF v6.0.2 and the exact pinned Semtech driver s
 Neither command flashes hardware or enables RF transmission. Repository defaults keep TX disabled until an explicit, reviewed RF profile is supplied.
 
 ## Documentation
+
+Storage collection and the optional 64 KiB bulk profile are documented in
+[`STORAGE_BULK_RADIO_2026-09-08.md`](docs/STORAGE_BULK_RADIO_2026-09-08.md).
+Installed consumers can require the `bulk` CMake component and link `Ninlil::bulk`.
+The profile retains incomplete objects and distinguishes local complete storage,
+remote adoption and the caller's application effects. OTA installation is excluded.
 
 Read in this order:
 

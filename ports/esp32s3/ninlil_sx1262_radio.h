@@ -31,6 +31,8 @@ typedef struct ninlil_sx1262_radio {
     uint8_t cca_chip_mode;
     uint8_t cca_cmd_status;
     int16_t cca_rssi_dbm;
+    int8_t requested_power_dbm;
+    int8_t applied_power_dbm;
     bool configured;
     bool rx_active;
     bool isr_installed;
@@ -50,5 +52,7 @@ int ninlil_sx1262_radio_receive(ninlil_sx1262_radio *radio, uint8_t *data,
                                 ninlil_sx1262_rx_info *info,
                                 TickType_t wait_ticks);
 int ninlil_sx1262_radio_recover(ninlil_sx1262_radio *radio);
+/* Stages power for the next TX standby boundary; never exceeds profile max. */
+int ninlil_sx1262_radio_power(ninlil_sx1262_radio *radio, int8_t power_dbm);
 
 #endif

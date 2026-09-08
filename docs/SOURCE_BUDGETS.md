@@ -32,3 +32,13 @@ all listed files are charged once to one of these two responsibilities.
 The September 7 specification remains dated historical context and is counted
 in historical evidence and the project total. Current behavior and release
 limitations belong to [the integration record](OSS_COMPLETION_2026-09-08.md).
+
+The subsequent storage/bulk/radio request adds a 4,000-line extension ledger,
+`scripts/storage_bulk_radio_files.txt`, including its implementation, tests,
+documentation and tools. Existing edited owner/protocol files stay charged to
+their original scope. The now-historical small-message integration report moves
+from the owner ledger to historical evidence; its contents are unchanged.
+The combined union checks disjoint membership; the 50,000-line ceiling remains.
+Nine duplicate raw console captures were retired from the checkout only after
+byte/hash verification against their committed Git destination, recorded in
+`docs/evidence/2026-09-08-autonomous/INDEX.json`. Their results and failures remain.

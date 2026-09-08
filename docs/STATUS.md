@@ -2,6 +2,29 @@
 
 Updated: 2026-09-08
 
+## Latest extension: storage, bulk and transmit power
+
+The subsequent user request adds automatic journal collection, a resumable
+64 KiB bulk profile and bounded automatic TX power adjustment; OTA installation
+and automatic firmware updates are excluded. See
+[the extension contract and integration guide](STORAGE_BULK_RADIO_2026-09-08.md).
+Core/control/Relay ownership survives collection, with POSIX publication and
+NOR bank selection fault tests. Bulk adopts complete SHA-256-verified bytes,
+preserves progress, and shares the existing priority scheduler. Power changes
+use authenticated measurements, hysteresis and the provisioned maximum.
+
+Local compiler/sanitizer, static, fuzz, package and target-build gates pass.
+The added application regression covers authentication not being ready: it
+pauses the transfer while the node continues its control work. The actual
+three-board transfer retained 80 bytes across a receiver MCU reset and completed
+the same 512-byte object across resumed campaigns, including full readback,
+SHA-256, sender completion and collection after completion. Earlier deadlines
+failed at 120/240/440 bytes and remain failures. Measured RF power stayed at
+-3 dBm; automatic downward adjustment was not observed under these conditions.
+See [local checks](EXTENSION_LOCAL_RESULTS_2026-09-08.json) and
+[hardware results](EXTENSION_HIL_RESULTS_2026-09-08.json). Slow physical transfer,
+full-size RF, electrical write-interruption and field qualification remain open.
+
 ## Canonical repository
 
 `MOVEI144/Ninlil` is the implementation authority. Earlier repositories and generated delivery archives are provenance inputs only.

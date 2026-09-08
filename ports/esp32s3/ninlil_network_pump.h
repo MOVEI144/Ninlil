@@ -1,6 +1,7 @@
 #ifndef NINLIL_NETWORK_PUMP_H
 #define NINLIL_NETWORK_PUMP_H
 #include "ninlil_airtime.h"
+#include "ninlil_radio_adapt.h"
 #include "ninlil_routed.h"
 #include "ninlil_sx1262_radio.h"
 typedef struct ninlil_node ninlil_node;
@@ -15,6 +16,9 @@ typedef struct ninlil_esp_network_pump {
     uint32_t received;
     uint32_t discarded;
     int last_receive_result;
+    ninlil_radio_adapt power[16];
+    uint16_t power_peer[16];
+    uint8_t adaptive_power;
     int (*control_receive)(void *ctx, const uint8_t *frame, size_t length,
                            uint64_t now_ms);
     /* Revalidate a queued fragment or channel-1 frame against the current
@@ -41,4 +45,6 @@ int ninlil_esp_network_emit(void *ctx, uint16_t next,
 /* <=4 receives, one bounded Core step, one Relay opportunity, <=1 physical TX.
  * The existing SX1262 driver retains CCA/pause/profile enforcement. */
 int ninlil_esp_network_step(ninlil_esp_network_pump *p);
+int ninlil_esp_node_adaptive_power(ninlil_esp_network_pump *p,
+                                   int8_t minimum_dbm);
 #endif

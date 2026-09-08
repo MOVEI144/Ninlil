@@ -97,6 +97,7 @@ static void stop(void)
     ninlil_node_close(node);
     node = NULL;
     node_application_close();
+    node_bulk_close();
     if (radio.configured)
         ninlil_sx1262_radio_deinit(&radio);
     expires = 0u;
@@ -120,6 +121,9 @@ static int start(uint64_t duration)
         rc = ninlil_sx1262_radio_init(&radio, &p, high);
     if (rc == NINLIL_OK)
         rc = ninlil_esp_node_open(&pump, &radio, node, 800000u);
+    if (rc == NINLIL_OK && p.tx_power_dbm >= -9 &&
+        (p.tx_power_dbm + 9) % 3 == 0)
+        rc = ninlil_esp_node_adaptive_power(&pump, -9);
     if (rc != NINLIL_OK) {
         stop();
         return rc;
@@ -201,6 +205,17 @@ static int execute(char command, const uint8_t *data, size_t size,
     }
     if (!node)
         return NINLIL_ERR_STATE;
+    if (strchr("OMWJYC", command) || (command == 'V' && !size))
+        return node_bulk_command(command, data, size, output, written);
+    if (command == 'K' && !size)
+        return ninlil_node_collect(node);
+    if (command == 'T' && !size) {
+        output[0] = (uint8_t)radio.requested_power_dbm;
+        output[1] = (uint8_t)radio.applied_power_dbm;
+        output[2] = pump.adaptive_power;
+        *written = 3u;
+        return NINLIL_OK;
+    }
     if (command == 'B' && size == 2u) {
         ninlil_node_peer_status status;
         int rc =
@@ -366,6 +381,8 @@ void app_main(void)
             }
             if (node) {
                 rc = node_application_step(ninlil_node_core(node));
+                if (rc == NINLIL_OK)
+                    rc = node_bulk_step(ninlil_node_core(node));
                 if (rc != NINLIL_OK) {
                     fault = rc;
                     stop();

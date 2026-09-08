@@ -223,7 +223,7 @@ static int open_layers(ninlil_node *n, int initialize)
     const ninlil_join_grant *local = &n->members[n->local_index].grant;
     ninlil_routed_config routed = {0};
     ninlil_control_replay replay = {replay_join, ninlil_node_plan_restore,
-                                    replay_relay, n};
+                                    replay_relay, n, ninlil_node_epoch_restore};
     ninlil_config core = {0};
     int rc = ninlil_join_open(&n->authority, n->join_peers,
                               n->config.member_count, local->authority,

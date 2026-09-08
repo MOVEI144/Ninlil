@@ -134,7 +134,11 @@ struct ninlil_runtime {
     uint8_t storage_identity[32];
     uint8_t storage_bound;
     uint8_t has_records;
+    uint64_t collected_bytes;
+    uint8_t manual_collection;
 };
+
+int ninlil_collect_if_needed(ninlil_runtime *runtime);
 
 int ninlil_id_equal(const ninlil_id *left, const ninlil_id *right);
 int ninlil_evidence_satisfies(ninlil_evidence required, ninlil_evidence actual);

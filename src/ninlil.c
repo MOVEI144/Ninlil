@@ -323,6 +323,9 @@ int ninlil_step(ninlil_runtime *runtime)
         return runtime->fatal_error;
     if (runtime->step_count == UINT64_MAX)
         return NINLIL_ERR_FAULT;
+    result = ninlil_collect_if_needed(runtime);
+    if (result != NINLIL_OK)
+        return result;
     runtime->step_count++;
     while (work < runtime->config.max_work_per_step) {
         uint8_t offset;
@@ -357,7 +360,8 @@ int ninlil_step(ninlil_runtime *runtime)
     return result;
 }
 
-int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
+static int receive_filtered(ninlil_runtime *runtime, uint16_t service,
+                            uint8_t classes, ninlil_inbound *out)
 {
     int blocked = NINLIL_ERR_EMPTY;
     int expired_one = 0;
@@ -371,7 +375,9 @@ int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
         ninlil_inbound_entry *entry = &runtime->inbound[index];
         int rc;
 
-        if (!entry->used || entry->handed)
+        if (!entry->used || entry->handed ||
+            (service && entry->service != service) ||
+            !(classes & NINLIL_TRAFFIC_MASK(entry->traffic_class)))
             continue;
         if (entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED &&
             entry->absolute_deadline_ms != 0u) {
@@ -415,6 +421,23 @@ int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
         return NINLIL_OK;
     }
     return blocked;
+}
+
+int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
+{
+    return ninlil_receive_service(runtime, 0u, out);
+}
+int ninlil_receive_service(ninlil_runtime *runtime, uint16_t service,
+                           ninlil_inbound *out)
+{
+    return receive_filtered(runtime, service, 15u, out);
+}
+int ninlil_receive_class(ninlil_runtime *runtime, uint16_t service,
+                         ninlil_traffic_class traffic, ninlil_inbound *out)
+{
+    uint8_t mask = NINLIL_TRAFFIC_MASK(traffic);
+    return mask ? receive_filtered(runtime, service, mask, out)
+                : NINLIL_ERR_INVALID;
 }
 
 int ninlil_application_accept(ninlil_runtime *runtime,

@@ -1159,6 +1159,8 @@ static int test_handoff_marker_capacity_suppresses_resend(void)
     link.send_result = NINLIL_ERR_CAPACITY;
     CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
                        &profile) == NINLIL_OK);
+    /* This fault case deliberately leaves collection under caller control. */
+    CHECK(ninlil_set_collection(runtime, 0) == NINLIL_OK);
 
     for (index = 0u; index < 2620u; index++) {
         ninlil_id key;
@@ -1214,6 +1216,8 @@ static int test_handoff_marker_capacity_suppresses_resend(void)
     link.send_calls = 0u;
     CHECK(open_runtime(&runtime, path, &link, &random_state, &policy,
                        &profile) == NINLIL_OK);
+    /* This fault case deliberately leaves collection under caller control. */
+    CHECK(ninlil_set_collection(runtime, 0) == NINLIL_OK);
     CHECK(ninlil_query(runtime, &inbound_id, &info) == NINLIL_OK);
     CHECK(info.outcome == NINLIL_OUTCOME_SATISFIED);
     CHECK(ninlil_application_accept(runtime, &inbound_id) == NINLIL_OK);
