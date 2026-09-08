@@ -42,7 +42,7 @@ v18→v19の入力差分はUSB未設定状態の2行とnative test登録だけ�
 
 hostはUbuntu 24.04/WSL2 Linux 6.6.87.2、GCC13.3、Clang18.1.3、CMake3.28.3、Ninja1.11.1。
 targetはESP-IDF6.0.2、Xtensa GCC15.2.0（esp-15.2.0_20251204）。
-USB操作はWindows、Python3.12、pyserial3.5、esptool5.3。toolchain変更は行っていない。
+USB操作はWindows、Python3.12.10、pyserial3.5、esptool5.3。toolchain変更は行っていない。
 すべてローカル検証。hosted CIを実行・再実行していない。
 
 Docker `ninlil-static-star-verify` 内の `/work` で、各variantの構成はDebug、
@@ -53,11 +53,13 @@ cmake --build /tmp/ninlil-oss-final/<variant> -j4
 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 ctest --test-dir /tmp/ninlil-oss-final/<variant> --no-tests=error --output-on-failure
 ```
 
-最終logは `local/unconfigured-final-<variant>.log`、CTest詳細は同名の `LastTest.log`。
+最終logは `local/unconfigured-final-<variant>.log`。
+CTest詳細は `local/unconfigured-<variant>-LastTest.log`。
 GCC/Clangの通常版とASan/UBSan版を区別する。新規USBケースは修正前の失敗も残す。
 `python tests/test_manage.py` は新品認可と、Root更新前の変更拒否を確認する。
 format/static/ESP syntax/package/各scopeと全体行数の結果は `local/unconfigured-extra-v2.log`。
 最初のextra実行はClang解析にGCC構成を指定した操作誤りで失敗し、Clang構成で再実行した。
+最終索引を含む行数も再照合済み: 全体49,778/50,000、owner5,494/5,500、field2,986/3,000。
 制御parserとsimulatorの各10,000 fuzz、711 vendor tests、simulatorの再現性は
 今回の変更中に実行した `remaining-gates.log` と `control-admission-extra.log` に保持する。
 v18で確認した12 scheduling seedsは、無線処理が変わらないv19で再実行したとは記載しない。
