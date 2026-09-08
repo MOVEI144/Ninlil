@@ -12,6 +12,11 @@
         }                                                                      \
     } while (0)
 static flash identity_flash_fixture, era_flash_fixture;
+int node_deployment_open(void)
+{
+    return NINLIL_OK; /* This test isolates loss of the existing Root era store.
+                       */
+}
 int ninlil_esp_security_region(ninlil_esp_security_partition *context,
                                ninlil_security_io *io, const char *label,
                                size_t offset, size_t size)

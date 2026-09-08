@@ -41,6 +41,7 @@ typedef struct ninlil_node_config {
     void *counter_ctx;
     ninlil_route_emit_fn emit;
     void *emit_ctx;
+    uint8_t dynamic_enrollment; /* Opt-in to signed-credential discovery. */
 } ninlil_node_config;
 
 typedef struct ninlil_node ninlil_node;
@@ -93,6 +94,11 @@ int ninlil_node_receive(ninlil_node *node, const uint8_t *frame, size_t length,
                         uint64_t monotonic_ms);
 int ninlil_node_frame_current(ninlil_node *node, const uint8_t *frame,
                               size_t length, uint64_t monotonic_ms);
+/* Read-only equality of queued content; does not authorize TX or retire
+ * custody. Own encrypted frames require successful inspection in the current
+ * session. */
+int ninlil_node_frame_equal(ninlil_node *node, const uint8_t *a,
+                            const uint8_t *b, size_t length);
 /* Report the actual driver result, not scheduler admission. Only TX_DONE
  * counts as a transmitted neighbor probe; a later authenticated reply is
  * separate link evidence. No application delivery outcome changes here. */

@@ -9,6 +9,9 @@
 #define RELAY_RECORD 3u
 #define STORAGE_BINDING 4u
 #define EPOCH_FENCE 5u
+#define MEMBER_RECORD 6u
+
+int ninlil_control_member_valid(const uint8_t *record, uint16_t length);
 
 typedef struct packet_reference {
     uint8_t id[16];

@@ -43,9 +43,10 @@ int ninlil_node_control_send(ninlil_node *n, uint16_t peer,
     size_t written = 0u;
     int index = ninlil_node_index(n, peer), rc;
     if (index < 0 || length >= sizeof(plain) || (!data && length) ||
-        kind < NODE_JOIN_REQUEST || kind > NODE_REMOVE_READY_ACK)
+        kind < NODE_JOIN_REQUEST || kind > NODE_CORE_RECEIPT)
         return NINLIL_ERR_INVALID;
-    if (!n->peers[index].sessions[0].ready)
+    if (!n->peers[index].sessions[0].ready ||
+        n->now_ms < n->peers[index].control_emit_at)
         return NINLIL_ERR_BUSY;
     plain[0] = (uint8_t)kind;
     if (length)
@@ -57,6 +58,8 @@ int ninlil_node_control_send(ninlil_node *n, uint16_t peer,
         rc = ninlil_node_bootstrap_send(
             n, peer, 5u, ninlil_node_get(frame + 24, 5u) + 1u, frame, written);
     ninlil_secret_clear(plain, sizeof(plain));
+    if (rc == NINLIL_ERR_BUSY || rc == NINLIL_ERR_CAPACITY)
+        n->peers[index].control_emit_at = n->now_ms + NODE_CONTROL_MS;
     return rc;
 }
 static int send_record(ninlil_node *n, uint16_t index, node_control_kind kind,
@@ -199,9 +202,9 @@ static int member(ninlil_node *n, const uint8_t *data, size_t length)
                                     sizeof(ack));
 }
 
-int ninlil_node_control_receive(ninlil_node *n, uint16_t peer,
-                                const uint8_t *data, size_t length,
-                                int neighbor)
+int ninlil_node_control_dispatch(ninlil_node *n, uint16_t peer,
+                                 const uint8_t *data, size_t length,
+                                 int neighbor)
 {
     int index = ninlil_node_index(n, peer);
     node_control_kind kind;
@@ -226,6 +229,8 @@ int ninlil_node_control_receive(ninlil_node *n, uint16_t peer,
     }
     if (!n->joined || !n->peers[index].member_active)
         return NINLIL_ERR_STATE;
+    if (kind == NODE_CORE_RECEIPT)
+        return ninlil_node_core_receipt(n, peer, data, length);
     if (kind == NODE_JOIN_READY && !length &&
         n->config.local == n->config.root) {
         ninlil_join_peer *p = ninlil_node_authority_peer(n, (uint16_t)index);
@@ -250,8 +255,11 @@ int ninlil_node_control_receive(ninlil_node *n, uint16_t peer,
     if (kind == NODE_CLOCK_REPLY && peer == n->config.root && length == 24u) {
         int rc = ninlil_lease_accept(&n->clock, ninlil_node_get(data, 8u),
                                      ninlil_node_get(data + 8, 8u), n->now_ms);
-        if (rc == NINLIL_OK)
+        if (rc == NINLIL_OK) {
             generation(n, ninlil_node_get(data + 16, 8u));
+            n->peers[n->root_index].control_at =
+                n->now_ms + NINLIL_LEASE_SYNC_MAX_AGE_MS / 2u;
+        }
         return rc;
     }
     if (kind == NODE_MEMBER && peer == n->config.root)
@@ -268,43 +276,6 @@ int ninlil_node_control_receive(ninlil_node *n, uint16_t peer,
         return NINLIL_OK;
     }
     return ninlil_node_plan_receive(n, peer, kind, data, length);
-}
-
-static int broadcast_members(ninlil_node *n)
-{
-    unsigned int i;
-    uint16_t total =
-        (uint16_t)(n->config.member_count * n->config.member_count);
-    for (i = 0u; i < total; i++) {
-        uint16_t slot = n->broadcast_cursor;
-        uint16_t target = (uint16_t)(slot / n->config.member_count);
-        uint16_t described = (uint16_t)(slot % n->config.member_count);
-        ninlil_join_peer *p;
-        uint8_t bytes[9u + NINLIL_JOIN_RECORD_MAX];
-        size_t size;
-        n->broadcast_cursor = (uint16_t)((slot + 1u) % total);
-        if (target == n->local_index || described == n->local_index ||
-            target == described || !n->peers[target].member_active ||
-            !n->peers[target].member_ready ||
-            n->now_ms < n->peers[target].control_at ||
-            !n->peers[target].sessions[0].ready ||
-            (n->peers[target].member_acks & (uint16_t)(1u << described)))
-            continue;
-        p = ninlil_node_authority_peer(n, described);
-        if (!p || !p->persisted)
-            continue;
-        ninlil_node_put(bytes, n->membership_generation, 8u);
-        bytes[8] = p->record.state == NINLIL_JOIN_REVOKED ? 2u
-                   : p->session_ready                     ? 1u
-                                                          : 0u;
-        size = ninlil_join_encode(&p->record, bytes + 9, sizeof(bytes) - 9u);
-        if (!size)
-            return NINLIL_ERR_CORRUPT;
-        n->peers[target].control_at = n->now_ms + 2000u;
-        return ninlil_node_control_send(n, n->members[target].grant.node,
-                                        NODE_MEMBER, bytes, size + 9u);
-    }
-    return NINLIL_OK;
 }
 
 int ninlil_node_control_step(ninlil_node *n)
@@ -324,7 +295,7 @@ int ninlil_node_control_step(ninlil_node *n)
                 return send_record(n, i, NODE_JOIN_ACTIVE, &j->record);
             }
         }
-        return broadcast_members(n);
+        return ninlil_node_membership_step(n);
     }
     if (!root->sessions[0].ready)
         return NINLIL_OK;
@@ -341,20 +312,5 @@ int ninlil_node_control_step(ninlil_node *n)
                    : ninlil_node_control_send(n, n->config.root,
                                               NODE_JOIN_REQUEST, NULL, 0u);
     }
-    if (n->now_ms >= root->control_at) {
-        uint8_t request[8];
-        uint64_t token;
-        int rc = n->config.random.fill(n->config.random.ctx, request,
-                                       sizeof(request));
-        if (rc != NINLIL_OK)
-            return rc;
-        token = ninlil_node_get(request, sizeof(request));
-        rc = ninlil_lease_request(&n->clock, token, n->now_ms);
-        if (rc == NINLIL_OK)
-            rc = ninlil_node_control_send(n, n->config.root, NODE_CLOCK_REQUEST,
-                                          request, sizeof(request));
-        root->control_at = n->now_ms + NINLIL_LEASE_SYNC_MAX_RTT_MS;
-        return rc;
-    }
-    return NINLIL_OK;
+    return ninlil_node_sync_step(n);
 }

@@ -6,6 +6,8 @@ third_party/adapted/cbor/* text eol=lf
 scripts/secure_network_files.txt text eol=lf
 scripts/autonomous_node_files.txt text eol=lf
 scripts/secure_network_historical_files.txt text eol=lf
+scripts/storage_bulk_radio_files.txt text eol=lf
+scripts/field_deployment_files.txt text eol=lf
 # Preserve exact captured console bytes and their evidence hashes.
 docs/evidence/**/*.jsonl -text whitespace=trailing-space,space-before-tab,cr-at-eol
 # Unified vendor patches preserve context prefixes and original whitespace.

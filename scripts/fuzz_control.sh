@@ -20,6 +20,7 @@ struct.pack_into('>HHHBB', j, 92, 256, 64, 16, 3, 15); (root/'join').write_bytes
 p = bytearray(98); p[:7] = b'NP\x01\x03\x02\x03\x03'
 struct.pack_into('>QQIIQ', p, 8, 1, 50000, 1, 100, 1000)
 struct.pack_into('>HQHQ', p, 48, 1, 1, 2, 1); (root/'plan').write_bytes(p)
+p[2] = 2; struct.pack_into('>Q', p, 40, 40000); (root/'plan-v2').write_bytes(p)
 r = bytearray(88); r[:6] = b'NR\x01\x00\x03\x02'
 struct.pack_into('>HHHHQ', r, 6, 40, 1, 3, 2, 0); struct.pack_into('>Q', r, 18, 1)
 r[26:42] = bytes([4])*16; (root/'relay').write_bytes(r)

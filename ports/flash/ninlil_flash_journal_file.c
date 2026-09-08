@@ -189,10 +189,11 @@ int ninlil_journal_open(ninlil_journal **out, const char *location,
     int rc;
 
     if (!out || !location || location[0] == '\0' || !on_record ||
-        maximum_bytes < FILE_FLASH_SIZE)
+        maximum_bytes < 32768u)
         return NINLIL_ERR_INVALID;
     *out = NULL;
-    size_t logical = maximum_bytes >= 2u * FILE_FLASH_SIZE
+    size_t logical = maximum_bytes < FILE_FLASH_SIZE ? 32768u
+                     : maximum_bytes >= 2u * FILE_FLASH_SIZE
                          ? 2u * FILE_FLASH_SIZE
                          : FILE_FLASH_SIZE;
     size_t physical = 2u * logical + NINLIL_FLASH_SELECT_BYTES;

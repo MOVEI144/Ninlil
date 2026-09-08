@@ -60,13 +60,20 @@ static int respond(char command, int result, const uint8_t *data, size_t size)
 static int accept_rx(void *ctx, const uint8_t *frame, size_t length)
 {
     (void)ctx;
+    if ((faults & 4u) && node_config.local != 2u && length > 16u &&
+        !memcmp(frame, "NB\001", 3u) &&
+        (frame[3] >> 5) == NINLIL_NETWORK_HOPS_MAX &&
+        ((get(frame + 4, 2u) == 1u && get(frame + 6, 2u) == 3u) ||
+         (get(frame + 4, 2u) == 3u && get(frame + 6, 2u) == 1u)))
+        return 0; /* HIL: block direct bootstrap too, retain forwarded copies.
+                   */
     if (length <= NINLIL_SECURE_OVERHEAD || memcmp(frame, "NS\001", 3u) != 0)
         return 1;
     if ((faults & 1u) &&
         ((get(frame + 4, 2u) == 1u && get(frame + 6, 2u) == 3u) ||
          (get(frame + 4, 2u) == 3u && get(frame + 6, 2u) == 1u)))
         return 0;
-    return !((faults & 2u) && CONFIG_NINLIL_NODE_ID == 3 && frame[31] == 0u);
+    return !((faults & 2u) && node_config.local == 3u && frame[31] == 0u);
 }
 static ninlil_rf_profile profile(void)
 {
@@ -110,11 +117,13 @@ static int start(uint64_t duration)
 #ifdef CONFIG_NINLIL_RF_GATE_RX_ACTIVE_HIGH
     high = true;
 #endif
-    if (node || !duration || duration > 600000u || !p.tx_enabled ||
-        !p.frequency_hz || !node_identity.signing_key ||
-        !node_config.member_count)
+    if (node || (!duration && !node_deployment_autorun()) ||
+        duration > 600000u || !p.tx_enabled || !p.frequency_hz ||
+        !node_identity.signing_key || !node_config.member_count)
         return NINLIL_ERR_STATE;
     rc = ninlil_node_open(&node, &node_config, milliseconds());
+    if (rc == NINLIL_OK)
+        rc = node_deployment_start(node);
     if (rc == NINLIL_OK)
         rc = node_application_open("node_app", 0);
     if (rc == NINLIL_OK)
@@ -129,7 +138,7 @@ static int start(uint64_t duration)
         return rc;
     }
     pump.accept_rx = accept_rx;
-    expires = milliseconds() + duration;
+    expires = duration ? milliseconds() + duration : UINT64_MAX;
     fault = 0;
     return NINLIL_OK;
 }
@@ -137,6 +146,8 @@ static int execute(char command, const uint8_t *data, size_t size,
                    uint8_t *output, size_t *written)
 {
     *written = 0u;
+    if (command == 'U')
+        return node_management(node, data, size, output, written);
     if (command == 'I' && !size) {
         if (!node_identity.signing_key)
             return NINLIL_ERR_EMPTY;
@@ -150,8 +161,9 @@ static int execute(char command, const uint8_t *data, size_t size,
     if (command == 'G' && size == 4u)
         return start(get(data, 4u));
     if (command == 'X' && !size) {
+        int rc = node_deployment_disarm();
         stop();
-        return NINLIL_OK;
+        return rc;
     }
     if (command == 'H' && !size) {
         ninlil_node_status status = {0};
@@ -195,7 +207,7 @@ static int execute(char command, const uint8_t *data, size_t size,
         *written = 96u;
         return NINLIL_OK;
     }
-    if (command == 'F' && size == 1u && data[0] <= 3u) {
+    if (command == 'F' && size == 1u && data[0] <= 7u) {
 #ifdef CONFIG_NINLIL_NODE_HIL_ENABLE
         faults = data[0];
         return NINLIL_OK;
@@ -352,8 +364,13 @@ void app_main(void)
      * It does not start Wi-Fi, Bluetooth, ADC or I2S application drivers. */
     bootloader_random_enable();
     rc = node_storage_open();
+    fault = rc == NINLIL_ERR_NOT_FOUND || rc == NINLIL_ERR_EMPTY ? 0 : rc;
     node_config.emit_ctx = &pump;
     (void)respond('!', rc, NULL, 0u);
+    if (rc == NINLIL_OK && node_deployment_autorun()) {
+        rc = start(0u);
+        (void)respond('G', rc, NULL, 0u);
+    }
     for (;;) {
         console();
         if (node && milliseconds() >= expires)

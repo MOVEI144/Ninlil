@@ -1,5 +1,6 @@
 /* Actual Core + routed + secure + pump, with bounded clock/radio/NOR fixtures.
  */
+#include "../src/ninlil_node_internal.h"
 #include "../src/ninlil_wire.h"
 #include "esp_random.h"
 #include "esp_timer.h"
@@ -384,6 +385,55 @@ static void cached_final_requires_current_durable_evidence(void)
     cleanup(&f);
     puts("cached final ACK requires current crypto and durable CRC PASS");
 }
+static void staged_retry_coalescing(void)
+{
+    fixture f;
+    ninlil_node *n = calloc(1u, sizeof(*n));
+    ninlil_airtime_job saved = {0};
+    const ninlil_airtime_job *selected;
+    unsigned int count = 0u;
+    uint64_t token;
+    REQUIRE(n);
+    setup(&f);
+    /* Borrow the fixture's real secure session only for read-only inspection.
+     */
+    n->config.local = 1u;
+    n->config.member_count = 2u;
+    n->members[0].grant.node = 1u;
+    n->members[1].grant.node = 2u;
+    n->peers[1].sessions[1] = f.sessions[0][1];
+    f.pump.node = n;
+    submit(&f, 2u, 0u);
+    REQUIRE(ninlil_set_retry_interval(f.core, 1u) == NINLIL_OK);
+    for (unsigned int i = 0u; i < 12u; i++)
+        REQUIRE(ninlil_step(f.core) == NINLIL_OK);
+    for (unsigned int i = 0u; i < NINLIL_AIRTIME_QUEUE_MAX; i++)
+        if (f.pump.scheduler.jobs[i].used) {
+            saved = f.pump.scheduler.jobs[i];
+            count++;
+        }
+    REQUIRE(count == 1u && saved.length > 40u);
+    token = f.pump.token;
+    REQUIRE(ninlil_node_frame_equal(n, saved.frame, saved.frame, saved.length));
+    saved.frame[saved.length - 1u] ^= 1u;
+    REQUIRE(
+        !ninlil_node_frame_equal(n, saved.frame, saved.frame, saved.length));
+    saved.frame[saved.length - 1u] ^= 1u;
+    n->peers[1].sessions[1].ready = 0u;
+    REQUIRE(
+        !ninlil_node_frame_equal(n, saved.frame, saved.frame, saved.length));
+    n->peers[1].sessions[1].ready = 1u;
+    REQUIRE(ninlil_airtime_next(&f.pump.scheduler, 200000u, &selected) ==
+            NINLIL_OK);
+    REQUIRE(ninlil_airtime_complete(&f.pump.scheduler, NINLIL_OK) == NINLIL_OK);
+    REQUIRE(ninlil_step(f.core) == NINLIL_OK && f.pump.token > token);
+    REQUIRE(n->peers[1].sessions[1].rx_bitmap == 0u);
+    f.pump.node = NULL;
+    free(n);
+    cleanup(&f);
+    puts("Queued retries coalesce without retiring Core or consuming RX state "
+         "PASS");
+}
 static void source_retries_keep_custody_identity(void)
 {
     fixture f;
@@ -460,5 +510,6 @@ int main(void)
     backoff_preserves_receive_and_validation();
     cached_final_requires_current_durable_evidence();
     source_retries_keep_custody_identity();
+    staged_retry_coalescing();
     return 0;
 }

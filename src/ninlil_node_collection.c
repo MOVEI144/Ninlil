@@ -22,7 +22,7 @@ static int snapshot(void *ctx, ninlil_control_log *out)
 {
     ninlil_node *n = ctx;
     uint64_t last = 0u, fence = n->local_plan_epoch;
-    int rc = NINLIL_OK;
+    int rc = ninlil_node_member_snapshot(n, out);
     if (n->config.local == n->config.root) {
         for (unsigned int i = 0u; rc == NINLIL_OK && i < n->authority.capacity;
              i++)

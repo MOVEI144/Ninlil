@@ -56,8 +56,11 @@ int main(void)
           NINLIL_ERR_UNAUTHORIZED);
     CHECK(ninlil_lease_now(&peer, 1200u + NINLIL_LEASE_SYNC_MAX_AGE_MS,
                            &peer_time) == NINLIL_OK);
+    CHECK(ninlil_lease_request(&peer, 23u, 31200u) == NINLIL_OK);
     CHECK(ninlil_lease_now(&peer, 1201u + NINLIL_LEASE_SYNC_MAX_AGE_MS,
                            &peer_time) == NINLIL_ERR_STATE);
+    CHECK(peer.challenge == 23u && peer.request_ms == 31200u);
+    CHECK(ninlil_lease_accept(&peer, 23u, after + 31000u, 31202u) == NINLIL_OK);
     CHECK(ninlil_lease_request(&peer, 20u, 40000u) == NINLIL_OK);
     CHECK(ninlil_lease_accept(&peer, 20u, before, 41000u) ==
           NINLIL_ERR_UNAUTHORIZED);
@@ -65,7 +68,9 @@ int main(void)
     CHECK(ninlil_lease_now(&peer, 80000u, &peer_time) == NINLIL_OK);
     CHECK(peer_time >= after + 80000u &&
           peer_time <= after + 80000u + NINLIL_LEASE_SYNC_ERROR_BOUND_MS);
+    CHECK(ninlil_lease_request(&peer, 24u, 80000u) == NINLIL_OK);
     ninlil_lease_invalidate(&peer);
+    CHECK(!peer.challenge);
     CHECK(ninlil_lease_now(&peer, 80001u, &peer_time) == NINLIL_ERR_STATE);
     CHECK(ninlil_lease_now(&root, 1u, &after) == NINLIL_ERR_STATE);
     CHECK(ninlil_lease_now(&root, 70000u, &after) == NINLIL_ERR_STATE);

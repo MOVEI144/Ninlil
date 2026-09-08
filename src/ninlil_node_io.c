@@ -16,6 +16,8 @@ int ninlil_node_step(ninlil_node *n, uint64_t now)
     if (rc != NINLIL_OK)
         return rc;
     rc = ninlil_node_result(n, ninlil_node_collection_step(n));
+    if (rc == NINLIL_OK)
+        rc = ninlil_node_result(n, ninlil_node_discovery_step(n));
     if (rc != NINLIL_OK)
         return rc;
     if (n->config.local == n->config.root &&

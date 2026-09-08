@@ -13,6 +13,7 @@ typedef struct ninlil_control_replay {
     int (*relay)(void *ctx, const ninlil_relay_record *record);
     void *ctx;
     int (*epoch)(void *ctx, uint64_t minimum_epoch);
+    int (*member)(void *ctx, const uint8_t *record, uint16_t length);
 } ninlil_control_replay;
 
 /* Separate from the delivery journal. Uses the existing POSIX or raw-Flash
@@ -37,6 +38,12 @@ int ninlil_control_log_collect(ninlil_control_log *log,
                                ninlil_control_snapshot snapshot, void *ctx,
                                int force);
 int ninlil_control_log_epoch(ninlil_control_log *log, uint64_t minimum_epoch);
+/* Revalidate persisted control records before publishing derived authority. */
+int ninlil_control_log_verify(ninlil_control_log *log);
+/* NM1 public trust record; callers authenticate/authorize before committing.
+ * Older readers reject this additive record kind. */
+int ninlil_control_log_member(ninlil_control_log *log, const uint8_t *record,
+                              uint16_t length);
 /* Revalidate the committed envelope/checksum before exposing an owned packet.
  */
 int ninlil_control_log_verify_relay(void *ctx,

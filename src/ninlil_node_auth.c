@@ -17,52 +17,6 @@ void ninlil_node_put(uint8_t *p, uint64_t value, size_t length)
     }
 }
 
-static int frame_digest(const uint8_t *frame, size_t length, uint8_t digest[16])
-{
-    uint8_t canonical[NINLIL_SECURE_FRAME_MAX];
-    if (length < NINLIL_NODE_BOOTSTRAP_HEADER || length > sizeof(canonical))
-        return NINLIL_ERR_INVALID;
-    memcpy(canonical, frame, length);
-    canonical[3] &=
-        31u; /* Mutable hop limit is not part of duplicate identity. */
-    return ninlil_psa_packet_digest(canonical, length, digest);
-}
-
-int ninlil_node_forward(ninlil_node *n, const uint8_t *frame, size_t length)
-{
-    uint8_t digest[16], forwarded[NINLIL_SECURE_FRAME_MAX];
-    unsigned int i;
-    uint8_t hops = (uint8_t)(frame[3] >> 5);
-    const ninlil_join_grant *local = &n->members[n->local_index].grant;
-    int rc;
-    if (n->peers[n->local_index].revoked || hops <= 1u ||
-        !(local->capabilities & NINLIL_CAP_RELAY_CUSTODY) ||
-        local->role == NINLIL_ROLE_BATTERY_LEAF)
-        return NINLIL_OK;
-    rc = frame_digest(frame, length, digest);
-    if (rc != NINLIL_OK)
-        return rc;
-    for (i = 0u; i < NODE_FORWARD_MAX; i++)
-        if (n->now_ms < n->forwarded[i].until_ms &&
-            memcmp(digest, n->forwarded[i].digest, 16u) == 0)
-            return NINLIL_OK;
-    memcpy(forwarded, frame, length);
-    forwarded[3] = (uint8_t)(((hops - 1u) << 5) | (frame[3] & 31u));
-    /* Flooded copies must not occupy capacity reserved for local protocol
-     * replies. The originating owner retries lost bootstrap/control traffic. */
-    rc = n->config.emit(n->config.emit_ctx,
-                        (uint16_t)ninlil_node_get(frame + 6, 2u),
-                        NINLIL_TRAFFIC_NORMAL, forwarded, length);
-    if (rc == NINLIL_OK) {
-        node_forward *entry = &n->forwarded[n->forward_cursor];
-        memcpy(entry->digest, digest, 16u);
-        entry->until_ms = n->now_ms + NINLIL_EDHOC_DEADLINE_MS;
-        n->forward_cursor =
-            (uint8_t)((n->forward_cursor + 1u) % NODE_FORWARD_MAX);
-    }
-    return rc;
-}
-
 int ninlil_node_bootstrap_send(ninlil_node *n, uint16_t peer, uint8_t kind,
                                uint64_t token, const uint8_t *data,
                                size_t length)
@@ -248,6 +202,9 @@ static int auth_allowed(ninlil_node *n, uint16_t index)
 int ninlil_node_auth_step(ninlil_node *n)
 {
     unsigned int i;
+    int forwarded = ninlil_node_forward_step(n);
+    if (forwarded != NINLIL_OK)
+        return forwarded;
     if (n->handshake.opened) {
         if (n->now_ms < n->handshake_retry_at)
             return NINLIL_OK;
@@ -292,6 +249,8 @@ int ninlil_node_bootstrap(ninlil_node *n, const uint8_t *frame, size_t length)
         length > NINLIL_SECURE_FRAME_MAX || memcmp(frame, "NB\001", 3u) != 0)
         return NINLIL_ERR_INVALID;
     kind = (uint8_t)(frame[3] & 31u);
+    if (kind == 6u)
+        return ninlil_node_discovery_receive(n, frame, length);
     hops = (uint8_t)(frame[3] >> 5);
     source = (uint16_t)ninlil_node_get(frame + 4, 2u);
     target = (uint16_t)ninlil_node_get(frame + 6, 2u);
@@ -388,7 +347,8 @@ static int control_current(ninlil_node *n, uint16_t index, const uint8_t *plain,
                    ? NINLIL_OK
                    : NINLIL_ERR_STATE;
     }
-    return NINLIL_OK;
+    return ninlil_node_plan_frame_current(n, n->members[index].grant.node,
+                                          plain, size);
 }
 
 int ninlil_node_auth_current(ninlil_node *n, const uint8_t *frame,
@@ -399,22 +359,12 @@ int ninlil_node_auth_current(ninlil_node *n, const uint8_t *frame,
     if (!frame || length <= 16u || length > NINLIL_SECURE_FRAME_MAX ||
         memcmp(frame, "NB\001", 3u) != 0)
         return NINLIL_ERR_INVALID;
+    if ((frame[3] & 31u) == 6u)
+        return ninlil_node_discovery_current(n, frame, length);
     source = (uint16_t)ninlil_node_get(frame + 4, 2u);
     target = (uint16_t)ninlil_node_get(frame + 6, 2u);
-    if (source != n->config.local) {
-        uint8_t digest[16];
-        unsigned int i;
-        int rc = frame_digest(frame, length, digest);
-        if (n->peers[n->local_index].revoked)
-            return NINLIL_ERR_UNAUTHORIZED;
-        if (rc != NINLIL_OK)
-            return rc;
-        for (i = 0u; i < NODE_FORWARD_MAX; i++)
-            if (n->now_ms < n->forwarded[i].until_ms &&
-                memcmp(digest, n->forwarded[i].digest, 16u) == 0)
-                return NINLIL_OK;
-        return NINLIL_ERR_STATE;
-    }
+    if (source != n->config.local)
+        return ninlil_node_forward_current(n, frame, length);
     index = ninlil_node_index(n, target);
     if (index < 0)
         return NINLIL_ERR_UNAUTHORIZED;

@@ -196,11 +196,9 @@ static int report(ninlil_node *n, unsigned int index)
 }
 int ninlil_node_links_step(ninlil_node *n)
 {
-    uint64_t lease;
     unsigned int i;
     int rc = ninlil_node_recovery_step(n);
-    if (rc != NINLIL_OK || !n->joined ||
-        ninlil_node_lease(n, &lease) != NINLIL_OK)
+    if (rc != NINLIL_OK || !n->joined)
         return rc;
     for (i = 0u; i < n->config.member_count; i++) {
         node_peer *p = &n->peers[i];

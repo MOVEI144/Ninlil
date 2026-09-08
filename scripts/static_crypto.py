@@ -16,6 +16,8 @@ expected = {(root / "ports/crypto/ninlil_edhoc.c").resolve(),
             (root / "ports/flash/ninlil_identity_flash.c").resolve()}
 expected.update(path.resolve() for path in (root / "src").glob("ninlil_node*.c"))
 expected.update(path.resolve() for path in (root / "src").glob("ninlil_bulk*.c"))
+expected.update((root / "src" / name).resolve()
+                for name in ("ninlil_admission.c", "ninlil_setup.c", "ninlil_field_plan.c"))
 seen = set()
 for entry in json.loads((build / "compile_commands.json").read_text()):
     path = pathlib.Path(entry["file"]).resolve()

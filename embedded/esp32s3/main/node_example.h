@@ -3,6 +3,7 @@
 #include "ninlil_identity.h"
 #include "ninlil_journal.h"
 #include "ninlil_node.h"
+#include "node_management.h"
 #define NODE_EXAMPLE_APP_MAX 64u
 extern ninlil_identity node_identity;
 extern ninlil_node_config node_config;

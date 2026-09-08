@@ -17,3 +17,4 @@ embedded/esp32s3/hil_local.h
 /.verify-*/
 /third_party/libedhoc/
 /third_party/sx126x_driver/
+__pycache__/

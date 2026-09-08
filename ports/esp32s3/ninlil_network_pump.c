@@ -26,6 +26,16 @@ int ninlil_esp_network_emit(void *ctx, uint16_t next,
     int rc;
     if (!p || !p->radio || p->token == UINT64_MAX || length > 240u)
         return NINLIL_ERR_INVALID;
+    /* Coalesce only still-staged equivalent jobs. After TX completion the
+     * owner's next retry is admitted normally, with a fresh nonce. */
+    if (p->node)
+        for (unsigned int i = 0u; i < NINLIL_AIRTIME_QUEUE_MAX; i++) {
+            const ninlil_airtime_job *j = &p->scheduler.jobs[i];
+            if (j->used && j->peer == next && j->traffic == traffic &&
+                j->length == length &&
+                ninlil_node_frame_equal(p->node, j->frame, frame, length))
+                return NINLIL_OK;
+        }
     rc = ninlil_sx1262_radio_airtime(p->radio, (uint16_t)length, &airtime);
     if (rc != NINLIL_OK)
         return rc;

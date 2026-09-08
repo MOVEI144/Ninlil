@@ -123,7 +123,8 @@ int ninlil_coordinator_stage(ninlil_coordinator *c,
     ninlil_network_plan p;
     uint64_t cost;
     int rc;
-    if (!c || c->poisoned || !c->enabled || !ninlil_network_path_valid(path) ||
+    if (!c || c->poisoned || !c->enabled || c->separate_prepare_lease > 1u ||
+        !ninlil_network_path_valid(path) ||
         quality != NINLIL_TIME_RESTART_SAFE || until <= now ||
         until - now > NINLIL_NETWORK_LEASE_MAX_MS ||
         c->last_epoch == UINT64_MAX || c->pending.epoch != 0u ||
@@ -150,6 +151,7 @@ int ninlil_coordinator_stage(ninlil_coordinator *c,
     p.path.cost_us = cost;
     p.epoch = c->last_epoch + 1u;
     p.valid_until_ms = until;
+    p.prepare_until_ms = c->separate_prepare_lease ? until : 0u;
     p.profile = c->permitted_profile;
     p.rto_ms = (uint32_t)(cost / 500u > 30000u ? 30000u : cost / 500u);
     if (p.rto_ms < 100u)
@@ -270,6 +272,11 @@ int ninlil_coordinator_activate(ninlil_coordinator *c, uint64_t now,
             return NINLIL_ERR_UNAUTHORIZED;
     p = c->pending;
     p.phase = NINLIL_PLAN_COMMITTED;
+    if (p.prepare_until_ms) {
+        if (now > UINT64_MAX - NINLIL_NETWORK_LEASE_MAX_MS)
+            return NINLIL_ERR_STATE;
+        p.valid_until_ms = now + NINLIL_NETWORK_LEASE_MAX_MS;
+    }
     rc = persist(c, &p);
     if (rc == NINLIL_OK) {
         c->pending = p;
@@ -329,8 +336,12 @@ int ninlil_coordinator_restore(ninlil_coordinator *c,
         return NINLIL_ERR_CORRUPT;
     if (p->epoch == c->last_epoch && c->last_epoch != 0u) {
         const ninlil_network_plan *old = &c->last_record;
+        int activating = old->prepare_until_ms &&
+                         old->phase == NINLIL_PLAN_STAGED &&
+                         p->phase == NINLIL_PLAN_COMMITTED;
         if (old->path.count != p->path.count ||
-            old->valid_until_ms != p->valid_until_ms ||
+            old->prepare_until_ms != p->prepare_until_ms ||
+            (!activating && old->valid_until_ms != p->valid_until_ms) ||
             old->rto_ms != p->rto_ms || old->path.cost_us != p->path.cost_us ||
             memcmp(old->path.nodes, p->path.nodes, sizeof(p->path.nodes)) !=
                 0 ||

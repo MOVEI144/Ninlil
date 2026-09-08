@@ -116,7 +116,7 @@ int ninlil_lease_now(ninlil_lease_clock *c, uint64_t now, uint64_t *out)
             return NINLIL_ERR_STATE;
         rc = peer_time(c, now, &value);
         if (rc != NINLIL_OK) {
-            ninlil_lease_invalidate(c);
+            c->synchronized = 0u; /* Keep a fresh renewal already in flight. */
             return rc;
         }
     }

@@ -12,8 +12,8 @@ IDENTITIES = {1: 'E0:72:A1:F7:FF:0C', 2: 'E0:72:A1:D8:3E:74',
               3: 'E0:72:A1:D7:77:28'}
 PROTECTED = {'nvs_phy': (0x9000, 0x7000),
              'prior_stores': (0x190000, 0x424000),
-             'existing_node_stores': (0x620000, 0xa4000)}
-PARTITION_SHA256 = 'd508372c4d6ba986dbca2b7384b27c385a570d3c2e3cc2b7366a24f6df65eba4'
+             'existing_node_stores': (0x620000, 0x17c000)}
+PARTITION_SHA256 = 'f46dace73eaa0a69d56f4ceae9db6fa72f22086c4db88c9e8fb961ec52d48a1a'
 
 
 def require(condition, message):
@@ -75,8 +75,9 @@ def main():
     try:
         before = hashes(esp)
         if args.initial:
-            require(esp.flash_md5sum(0x620000, 0xa4000).lower() == hashlib.md5(
-                b'\xff' * 0xa4000).hexdigest(), 'New storage is not erased; preserve and inspect')
+            start, size = PROTECTED['existing_node_stores']
+            require(esp.flash_md5sum(start, size).lower() == hashlib.md5(
+                b'\xff' * size).hexdigest(), 'New storage is not erased; preserve and inspect')
         esp = esptool.run_stub(esp)
         attach_flash(esp)
         write_flash(esp, images, flash_freq='80m', flash_mode='dio',

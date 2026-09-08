@@ -11,7 +11,10 @@ int ninlil_node_recovery_receive(ninlil_node *n, uint16_t peer,
     const uint8_t *fresh;
     if (kind != NODE_RECOVER_REQUEST && kind != NODE_RECOVER_CONFIRMED)
         return ninlil_node_lifecycle_receive(n, peer, kind, data, length);
-    if (index < 0 || length != (kind == NODE_RECOVER_REQUEST ? 18u : 34u))
+    if (index < 0 ||
+        (kind == NODE_RECOVER_REQUEST ? (length != 18u && length != 19u)
+                                      : length != 34u) ||
+        (length == 19u && data[18] > 1u))
         return NINLIL_ERR_INVALID;
     target = (uint16_t)ninlil_node_get(data, 2u);
     target_index = ninlil_node_index(n, target);
@@ -29,6 +32,8 @@ int ninlil_node_recovery_receive(ninlil_node *n, uint16_t peer,
         return NINLIL_ERR_BUSY;
     fresh = n->peers[target_index].sessions[0].material.fingerprint;
     if (memcmp(fresh, data + 2, 16u) == 0) {
+        if (length == 19u && !data[18])
+            return NINLIL_ERR_BUSY;
         /* End the obsolete envelope context, retaining the bound Core store.
          * The relay repeats its request after a fresh EDHOC exchange. */
         ninlil_node_disconnect(n, (uint16_t)target_index);
@@ -56,14 +61,10 @@ static int recover_copy(ninlil_node *n, ninlil_relay_record *record,
     int rc = n->relay.draining
                  ? NINLIL_ERR_BUSY
                  : ninlil_node_route(n, source, target, now, &plan);
-    /* Route loss or an outstanding EFFECTIVE notification is not proof of
-     * obsolete encryption. Route() requests reconciliation; keep custody and
-     * wait for the authority's current E2E binding before requesting a rekey.
-     */
-    if (!n->relay.draining &&
-        (rc != NINLIL_OK || slot < 0 || n->local_ready[slot] != 3u))
-        return NINLIL_ERR_BUSY;
-    if (!n->relay.draining && !record->legacy &&
+    int pending = !n->relay.draining &&
+                  (rc != NINLIL_OK || slot < 0 || n->local_ready[slot] != 3u);
+    if (!n->relay.draining && rc == NINLIL_OK && slot >= 0 &&
+        n->local_ready[slot] == 3u && !record->legacy &&
         memcmp(record->ciphertext + 8,
                n->plan_bindings[slot][plan.path.count - 1u], 16u) == 0) {
         if (record->route_epoch < plan.epoch)
@@ -72,16 +73,19 @@ static int recover_copy(ninlil_node *n, ninlil_relay_record *record,
         if (record->route_epoch == plan.epoch)
             return NINLIL_OK;
     }
-    /* A draining Relay cannot obtain a replacement route through itself.
-     * It may explicitly return custody even while the old context is current;
-     * the source ends that context and verifies durable Core retention first.
-     * Lease/session expiry alone never authorizes discarding ciphertext. */
+    /* Cold recovery must not depend on a new DATA route. Quiet probes never
+     * end a current context; draining may explicitly request that transition.
+     * Both modes require authenticated proof of retained Core and a different
+     * context before custody release; lease expiry alone is insufficient. */
     {
-        uint8_t request[18];
+        uint8_t request[19];
         ninlil_node_put(request, target, 2u);
         memcpy(request + 2, record->ciphertext + 8, 16u);
-        return ninlil_node_control_send(n, source, NODE_RECOVER_REQUEST,
-                                        request, sizeof(request));
+        request[18] = n->relay.draining;
+        n->recovery_at = n->now_ms + 4000u;
+        rc = ninlil_node_control_send(n, source, NODE_RECOVER_REQUEST, request,
+                                      sizeof(request));
+        return rc == NINLIL_OK && pending ? NINLIL_ERR_BUSY : rc;
     }
 }
 

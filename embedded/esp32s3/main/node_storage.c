@@ -94,6 +94,8 @@ int node_storage_open(void)
     if (rc == NINLIL_OK)
         rc = ninlil_identity_open(&node_identity, identity_io);
     if (rc == NINLIL_OK)
+        rc = node_deployment_open();
+    if (rc == NINLIL_OK)
         rc = eras(0);
     return rc;
 }

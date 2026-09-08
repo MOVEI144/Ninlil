@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 from console import Board
 from hardware import require
+from field_evidence import peer_status, flow_status
 
 
 def status(board):
@@ -29,32 +30,16 @@ def status(board):
     return result
 
 
-def peer_status(board, peer):
-    b = board.call('B', peer.to_bytes(2, 'big'))
-    require(len(b) in (41, 93), 'Malformed peer status')
-    return {'active': b[0], 'revoked': b[1], 'ready': b[2], 'authority_state': b[3],
-            'authority_phase': b[4], 'e2e': b[9:25].hex(),
-            'hop': b[25:41].hex(),
-            'probe_attempts': int.from_bytes(b[5:7], 'big'),
-            'probe_delivered': int.from_bytes(b[7:9], 'big')}
-
-
-def flow_status(board, source, target):
-    b = board.call('L', struct.pack('>HH', source, target))
-    require(len(b) == 66 and b[44] <= 5 and b[55] <= 5, 'Malformed flow status')
-    result = dict(zip(('lease_ms', 'local_epoch', 'local_until', 'authority_epoch',
-                       'authority_until', 'local_ready', 'authority_phase',
-                       'reconciled', 'notified'), struct.unpack('>5Q4B', b[:44])))
-    result['local_path'] = list(struct.unpack('>5H', b[45:55])[:b[44]])
-    result['authority_path'] = list(struct.unpack('>5H', b[56:66])[:b[55]])
-    return result
-
-
 def main():
+    from manage import control_status
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('evidence', type=Path)
     p.add_argument('--sequence', type=int, default=1)
+    p.add_argument('--count', type=int, default=1, help='One to three new messages without restarting owners')
     p.add_argument('--seconds', type=int, default=180)
+    p.add_argument('--block-bootstrap', action='store_true',
+                   help='Also discard direct 1<->3 bootstrap frames; relayed bootstrap remains available')
+    p.add_argument('--diagnostics', action='store_true', help='Read public control reception counters')
     p.add_argument('--restart-relay', action='store_true',
                    help='Reset relay and receiver after new custody, then recover the same message')
     p.add_argument('--restart-source', action='store_true',
@@ -64,17 +49,25 @@ def main():
     p.add_argument('--existing-message', type=bytes.fromhex,
                    help='Recover a pending source receipt for an already committed receiver record')
     args = p.parse_args()
+    require(1 <= args.count <= 3 and args.sequence + args.count <= 2**32, 'Invalid bounded message count')
+    require(args.count == 1 or not (args.existing_message or args.restart_relay or args.restart_source or args.drain), 'Burst requires new traffic')
     require(100 <= args.seconds <= 570 and 0 < args.sequence < 2**32,
             'Duration must be 100..570 seconds and sequence must be uint32 nonzero')
     require(args.existing_message is None or len(args.existing_message) == 16,
             'Existing message must be a 16-byte Core ID')
     require(sum(bool(x) for x in (args.existing_message, args.restart_relay, args.restart_source, args.drain)) <= 1,
             'Select one recovery/removal case')
+    require(not (args.block_bootstrap and args.drain), 'Bootstrap isolation cannot test direct-path drain')
+    def fault_mask(value, node):
+        return bytes((value | (4 if args.block_bootstrap and node in (1, 3) else 0),))
     args.evidence.mkdir(parents=True, exist_ok=True)
     boards = []
     result = {'scope': 'actual three-MCU autonomous Core/application/relay integration',
-              'software_rx_loss': 'none' if args.drain else 'direct 1<->3 NS frames only; NB control stays available',
-              'physical_range_claim': False, 'started': time.time(), 'snapshots': []}
+              'software_rx_loss': 'none' if args.drain else
+                  'direct 1<->3 NS and NB frames; relayed bootstrap available' if args.block_bootstrap else
+                  'direct 1<->3 NS frames only; NB control stays available',
+              'physical_range_claim': False, 'started': time.time(), 'snapshots': [],
+              'message_count': args.count, 'deliveries': []}
     with (args.evidence / 'console.jsonl').open('x', encoding='utf-8') as log:
         try:
             for i in (1, 2, 3):
@@ -82,8 +75,8 @@ def main():
             for board in boards:
                 board.call('X')
                 board.call('P')
-                board.call('F', b'\x00' if args.drain else
-                           b'\x03' if (args.restart_relay or args.restart_source) and board.node == 3 else b'\x01')
+                board.call('F', fault_mask(0 if args.drain else
+                           3 if (args.restart_relay or args.restart_source) and board.node == 3 else 1, board.node))
                 board.call('G', ((args.seconds+30)*1000).to_bytes(4, 'big'))
             deadline = time.monotonic() + args.seconds
             message = None
@@ -106,6 +99,8 @@ def main():
                         result['initial_source_evidence'] = prior.hex()
                 if len(result['snapshots']) % 5 == 0:
                     for board in boards:
+                        if args.diagnostics:
+                            snapshots[board.node-1]['controls'] = control_status(board)
                         for peer in (1,2,3):
                             if board.node != peer:
                                 snapshots[board.node-1][f'peer_{peer}'] = peer_status(board, peer)
@@ -117,7 +112,7 @@ def main():
                 removable = not args.drain or boards[1].call('D') == b'\x01'
                 if message is None and all(s['joined'] and s['clock'] and
                                            s['members'] == 3 for s in snapshots) and removable:
-                    message = boards[0].call('S', struct.pack('>HI', 3, args.sequence))
+                    message = boards[0].call('S', struct.pack('>HI', 3, args.sequence + len(result['deliveries'])))
                     require(len(message) == 16, 'Malformed application message ID')
                     require(args.existing_message is None or message == args.existing_message,
                             'Existing Core ID does not match this target, payload and sequence')
@@ -145,7 +140,7 @@ def main():
                                         raise
                                     boards[index].close()
                                     time.sleep(0.5)
-                            boards[index].call('F', b'\x03' if index == 2 else b'\x01')
+                            boards[index].call('F', fault_mask(3 if index == 2 else 1, index + 1))
                             boards[index].call('G', ((args.seconds+30)*1000).to_bytes(4, 'big'))
                         after = [status(b) for b in boards]
                         require(after[1]['relay_owned'] >= snapshots[1]['relay_owned'],
@@ -155,7 +150,7 @@ def main():
                         result['after_reset'] = after
                         result['source_after_reset'] = boards[0].call('Q', message).hex()
                         require(result['source_after_reset'] == '0000', 'Pending Core message changed across reset')
-                        boards[2].call('F', b'\x01')
+                        boards[2].call('F', fault_mask(1, 3))
                         restarted = True
                     if evidence == b'\x01\x05':
                         require(not (args.restart_relay or args.restart_source) or restarted, 'Required reset did not occur')
@@ -163,10 +158,14 @@ def main():
                             require(removable and snapshots[1]['relay_owned'] == 0,
                                     'Application completion did not preserve removal readiness')
                             result['relay_removal_ready'] = True
-                        growth = 0 if args.existing_message is not None else 1
+                        growth = 0 if args.existing_message is not None else len(result['deliveries']) + 1
                         require(snapshots[2]['application_records'] == result['initial_application_records'] + growth,
                             'Use a fresh sequence; an old completed message is not new delivery evidence')
                         result['application_record_growth'] = growth
+                        result['deliveries'].append({'id': message.hex(), 'accepted_at': time.time()})
+                        if len(result['deliveries']) < args.count:
+                            message = None
+                            continue
                         result['source_outcome'] = 'SATISFIED/APPLICATION_ACCEPTED'
                         result['result'] = 'PASS'
                         break

@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#include "ninlil_enrollment.h"
 #include "ninlil_identity_file.h"
 #include "ninlil_node_internal.h"
 #include "security_test_io.h"
@@ -15,7 +16,9 @@
             exit(1);                                                           \
         }                                                                      \
     } while (0)
+#ifndef NODES
 #define NODES 3u
+#endif
 #define QUEUE 64u
 typedef struct packet {
     uint8_t bytes[240];
@@ -49,8 +52,10 @@ static int root_relay;
 static int lose_join_ack;
 static int slow_radio;
 static int hold_final;
+static int drop_core_receipt = 1;
 static unsigned int lose_every;
 static uint32_t timing_seed = 1u;
+#include "test_node_enrollment.h"
 static int random_fill(void *ctx, uint8_t *bytes, size_t length)
 {
     (void)ctx;
@@ -142,6 +147,7 @@ static void setup(void)
         c->root = 1u;
         c->members = members;
         c->member_count = NODES;
+        enrollment_config(c, i);
         c->identity = &d->identity;
         c->journal_location = d->core_path;
         c->control_location = d->control_path;
@@ -191,6 +197,13 @@ static void tick(void)
                                          p.bytes + 16, p.length - 16u, plain,
                                          sizeof(plain), &size) == NINLIL_OK &&
                 size) {
+                if (plain[0] == NODE_CORE_RECEIPT && drop_core_receipt) {
+                    drop_core_receipt = 0;
+                    continue;
+                }
+                if (plain[0] == NODE_EFFECTIVE_ACK && i == 2u &&
+                    getenv("NINLIL_TEST_LOST_EFFECTIVE_ACK"))
+                    continue;
                 if (plain[0] == NODE_DRAIN)
                     drain_reports++;
                 if (plain[0] == NODE_REMOVE_READY)
@@ -230,6 +243,7 @@ static void wait_ms(uint64_t duration)
 static void show(void)
 {
     for (unsigned int i = 0u; i < NODES; i++) {
+        ninlil_node *n = devices[i].node;
         ninlil_node_status status;
         if (ninlil_node_inspect(devices[i].node, &status) != NINLIL_OK)
             continue;
@@ -251,7 +265,6 @@ static void show(void)
                 status.effective_routes, status.authority_routes,
                 status.local_routes);
         for (unsigned int j = 0u; j < NINLIL_NETWORK_FLOWS_MAX; j++) {
-            ninlil_node *n = devices[i].node;
             if (n->local_plans[j].epoch)
                 fprintf(stderr,
                         " flow=%u epoch=%llu retired=%llu ready=%u notice=%u "
@@ -264,13 +277,14 @@ static void show(void)
                         n->local_plans[j].phase,
                         (unsigned long long)n->local_plans[j].valid_until_ms);
         }
-        for (unsigned int j = 0u; j < NODES; j++) {
+        for (unsigned int j = 0u; j < n->config.member_count; j++) {
             node_peer *p = &devices[i].node->peers[j];
-            if (j != i)
+            if (j != n->local_index)
                 fprintf(stderr,
                         " peer=%u attempts=%u delivered=%u bits=%u age=%llu "
                         "active=%u secure=%u drain=%u\n",
-                        j + 1u, p->attempts, p->delivered, p->probe_window,
+                        n->members[j].grant.node, p->attempts, p->delivered,
+                        p->probe_window,
                         (unsigned long long)(devices[i].node->now_ms -
                                              p->observed_at),
                         p->member_active, p->sessions[0].ready, p->draining);
@@ -338,8 +352,7 @@ static void awaiting_effective_preserves_ciphertext(unsigned int custody)
     }
     ready = n->local_ready[slot];
     memcpy(saved, n->plan_bindings[slot], sizeof(saved));
-    /* A committed Relay can own DATA before the authority's EFFECTIVE
-     * notification arrives. Missing confirmation is not obsolete ciphertext. */
+    /* Missing EFFECTIVE confirmation does not make owned DATA obsolete. */
     n->local_ready[slot] = 1u;
     memset(n->plan_bindings[slot], 0, sizeof(saved));
     n->recovery_at = 0u;
@@ -392,7 +405,7 @@ static void delivery(unsigned int sequence, unsigned int restart_mode)
                     CHECK(status.relay_owned > 0u);
                     restart(2u);
                 } else
-                    restart(0u);
+                    enrollment_restart(restart_mode, &id);
                 restarted = 1;
                 hold_final = 0;
             }
@@ -627,8 +640,12 @@ int main(int argc, char **argv)
     direct_bootstrap = argc > 1;
     root_relay = argc > 2;
     lose_join_ack = argc > 3;
-    slow_radio = argc > 4;
+    slow_radio = argc > 4 || getenv("NINLIL_TEST_SLOW_RADIO") != NULL;
     setup();
+    if (getenv("NINLIL_TEST_ENROLLMENT")) {
+        enrollment_run();
+        return 0;
+    }
     if (root_relay) {
         CHECK(ninlil_node_drain(devices[0].node) == NINLIL_OK);
         restart(0u);

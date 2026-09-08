@@ -42,7 +42,8 @@ typedef enum node_control_kind {
     NODE_JOIN_READY = 27,
     NODE_OBSERVATION_ACK = 28,
     NODE_DRAIN_ACK = 29,
-    NODE_REMOVE_READY_ACK = 30
+    NODE_REMOVE_READY_ACK = 30,
+    NODE_CORE_RECEIPT = 31
 } node_control_kind;
 
 typedef struct node_peer {
@@ -50,6 +51,7 @@ typedef struct node_peer {
     ninlil_counter_store counters[2];
     uint64_t retry_at;
     uint64_t control_at;
+    uint64_t control_emit_at;
     uint64_t probe_at;
     uint64_t probe_token;
     uint64_t probe_sent_at;
@@ -61,6 +63,7 @@ typedef struct node_peer {
     uint16_t attempts;
     uint16_t delivered;
     uint16_t member_acks;
+    uint8_t membership_cursor;
     uint8_t probe_window;
     uint8_t probe_report;
     uint8_t probe_sent;
@@ -78,6 +81,7 @@ typedef struct node_forward {
 } node_forward;
 
 struct ninlil_node {
+    struct ninlil_discovery *discovery;
     ninlil_node_config config;
     ninlil_node_member members[NINLIL_NODE_MEMBERS_MAX];
     node_peer peers[NINLIL_NODE_MEMBERS_MAX];
@@ -102,6 +106,12 @@ struct ninlil_node {
     ninlil_edhoc handshake;
     ninlil_identity_peer credential;
     node_forward forwarded[NODE_FORWARD_MAX];
+    uint8_t forward_pending[NINLIL_SECURE_FRAME_MAX];
+    uint16_t forward_length;
+    uint64_t forward_at, forward_until;
+    uint16_t control_seen[32], control_ok[32];
+    int control_last[32];
+    ninlil_link data_link;
     ninlil_node_status status;
     uint64_t now_ms;
     uint64_t exchange_token;
@@ -126,10 +136,9 @@ struct ninlil_node {
     uint64_t request_seen[NINLIL_NETWORK_FLOWS_MAX][NINLIL_NETWORK_PATH_MAX];
     uint16_t local_index;
     uint16_t root_index;
+    uint16_t dynamic_members;
     uint16_t handshake_peer;
     uint16_t next_peer;
-    uint16_t wanted_source;
-    uint16_t wanted_target;
     uint16_t broadcast_cursor;
     uint16_t wanted[NINLIL_NETWORK_FLOWS_MAX][2];
     uint64_t wanted_token[NINLIL_NETWORK_FLOWS_MAX];
@@ -140,6 +149,7 @@ struct ninlil_node {
     uint8_t forward_cursor;
     uint8_t member_cursor;
     uint8_t plan_cursor;
+    uint8_t notify_cursor, notify_turn;
     uint8_t joined;
     uint8_t removal_ready;
     uint8_t planning;
@@ -153,6 +163,10 @@ int ninlil_node_bootstrap_send(ninlil_node *node, uint16_t peer, uint8_t kind,
                                uint64_t token, const uint8_t *data,
                                size_t length);
 int ninlil_node_forward(ninlil_node *node, const uint8_t *frame, size_t length);
+int ninlil_node_forward_step(ninlil_node *node);
+int ninlil_node_sync_step(ninlil_node *node);
+int ninlil_node_forward_current(ninlil_node *node, const uint8_t *frame,
+                                size_t length);
 int ninlil_node_auth_step(ninlil_node *node);
 int ninlil_node_bootstrap(ninlil_node *node, const uint8_t *frame,
                           size_t length);
@@ -165,7 +179,14 @@ int ninlil_node_control_send(ninlil_node *node, uint16_t peer,
 int ninlil_node_control_receive(ninlil_node *node, uint16_t peer,
                                 const uint8_t *data, size_t length,
                                 int neighbor);
+int ninlil_node_control_dispatch(ninlil_node *node, uint16_t peer,
+                                 const uint8_t *data, size_t length,
+                                 int neighbor);
+void ninlil_node_delivery_link(ninlil_node *node, ninlil_link *link);
+int ninlil_node_core_receipt(ninlil_node *node, uint16_t peer,
+                             const uint8_t *data, size_t length);
 int ninlil_node_control_step(ninlil_node *node);
+int ninlil_node_membership_step(ninlil_node *node);
 int ninlil_node_routes_step(ninlil_node *node);
 int ninlil_node_plan_receive(ninlil_node *node, uint16_t peer,
                              node_control_kind kind, const uint8_t *data,
@@ -181,6 +202,16 @@ void ninlil_node_membership_changed(ninlil_node *node);
 ninlil_join_peer *ninlil_node_authority_peer(ninlil_node *node, uint16_t index);
 int ninlil_node_record_matches(ninlil_node *node, uint16_t index,
                                const ninlil_join_record *record);
+int ninlil_node_same_plan(const ninlil_network_plan *a,
+                          const ninlil_network_plan *b);
+int ninlil_node_plan_in_progress(ninlil_node *node, uint16_t source,
+                                 uint16_t target, uint64_t now);
+int ninlil_node_next_notification(ninlil_node *node, uint64_t now);
+int ninlil_node_prepare_window(const ninlil_network_plan *plan, uint64_t now);
+void ninlil_node_plan_rejected(ninlil_node *node,
+                               const ninlil_network_plan *plan);
+int ninlil_node_plan_frame_current(ninlil_node *node, uint16_t peer,
+                                   const uint8_t *plain, size_t size);
 int ninlil_node_plan_position(const ninlil_network_plan *plan,
                               uint16_t address);
 int ninlil_node_local_plan(ninlil_node *node, uint16_t source, uint16_t target,
@@ -214,5 +245,16 @@ int ninlil_node_lifecycle_receive(ninlil_node *node, uint16_t peer,
 int ninlil_node_expire_plans(ninlil_node *node, uint64_t lease);
 int ninlil_node_epoch_restore(void *ctx, uint64_t epoch);
 int ninlil_node_collection_step(ninlil_node *node);
+int ninlil_node_member_check(ninlil_node *node,
+                             const ninlil_node_member *member, uint16_t count);
+int ninlil_node_member_restore(void *ctx, const uint8_t *data, uint16_t length);
+int ninlil_node_member_snapshot(ninlil_node *node, ninlil_control_log *out);
 
+int ninlil_node_discovery_open(ninlil_node *node);
+void ninlil_node_discovery_close(ninlil_node *node);
+int ninlil_node_discovery_step(ninlil_node *node);
+int ninlil_node_discovery_receive(ninlil_node *node, const uint8_t *frame,
+                                  size_t length);
+int ninlil_node_discovery_current(ninlil_node *node, const uint8_t *frame,
+                                  size_t length);
 #endif

@@ -1,5 +1,13 @@
 # Roadmap
 
+The September 8 [field-network design proposal](FIELD_NETWORK_EVOLUTION_2026-09-08.md)
+maps the user's incremental installation/removal scenarios to concrete gaps,
+implementation slices and proposed acceptance tests. It does not declare the
+milestones below complete or increase the current supported network size.
+The first [implementation slice](FIELD_DEPLOYMENT_2026-09-08.md) now provides
+live admission, relayed discovery and saved deployment settings. Its remaining
+Root replacement, battery and physical acceptance work stays explicit.
+
 The 2026-09-07 conversation steps 4-6 have a scoped [software implementation](SECURE_NETWORK_PROFILE_2026-09-07.md). Physical milestone acceptance remains separate; conversation step 6 is adaptive communication, not the M6 bulk/OTA milestone below.
 
 ## B0 — Canonical baseline import

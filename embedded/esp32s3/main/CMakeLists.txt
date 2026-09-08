@@ -1,6 +1,6 @@
 set(main_sources "app_main.c" "hil_delivery.c")
 if(CONFIG_NINLIL_MODE_AUTONOMOUS)
-    set(main_sources "node_main.c" "node_storage.c" "node_application.c" "node_bulk.c")
+    set(main_sources "node_main.c" "node_storage.c" "node_management.c" "node_application.c" "node_bulk.c")
 endif()
 idf_component_register(
     SRCS ${main_sources}

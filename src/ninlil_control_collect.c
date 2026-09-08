@@ -11,6 +11,8 @@ static int validate(void *ctx, uint8_t type, const uint8_t *data,
 {
     ninlil_control_log *log = ctx;
     (void)ref;
+    if (type == MEMBER_RECORD)
+        return ninlil_control_member_valid(data, length);
     if (type == JOIN_RECORD) {
         ninlil_join_record record;
         return ninlil_join_decode(data, length, &record);
@@ -35,10 +37,20 @@ static int validate(void *ctx, uint8_t type, const uint8_t *data,
                    : NINLIL_ERR_CORRUPT;
     return NINLIL_ERR_CORRUPT;
 }
+int ninlil_control_log_verify(ninlil_control_log *log)
+{
+    int rc;
+    if (!log || log->poisoned)
+        return NINLIL_ERR_STATE;
+    rc = ninlil_journal_visit(log->journal, validate, log);
+    if (rc != NINLIL_OK)
+        log->poisoned = 1u;
+    return rc == NINLIL_ERR_INVALID ? NINLIL_ERR_CORRUPT : rc;
+}
 static int snapshot(void *ctx, ninlil_journal *journal)
 {
     collection *c = ctx;
-    int rc = ninlil_journal_visit(c->original->journal, validate, c->original);
+    int rc = ninlil_control_log_verify(c->original);
     c->next->journal = journal;
     if (rc == NINLIL_OK && c->original->bound)
         rc = ninlil_control_log_bind(c->next, c->original->identity, 1);

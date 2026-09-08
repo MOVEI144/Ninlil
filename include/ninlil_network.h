@@ -55,6 +55,9 @@ typedef struct ninlil_network_plan {
     uint8_t prepared;
     uint8_t applied;
     ninlil_plan_phase phase;
+    /* Zero: NP1. Nonzero: NP2 preparation deadline, distinct from the
+     * committed lease. Both preparation and active use remain <= 60 seconds. */
+    uint64_t prepare_until_ms;
 } ninlil_network_plan;
 
 typedef int (*ninlil_plan_commit_fn)(void *ctx,
@@ -83,6 +86,7 @@ typedef struct ninlil_coordinator {
     uint64_t last_change_ms;
     uint32_t permitted_profile;
     uint8_t enabled;
+    uint8_t separate_prepare_lease; /* Opt in to NP2 before staging new work. */
     uint8_t poisoned;
     ninlil_network_flow flows[NINLIL_NETWORK_FLOWS_MAX];
     ninlil_network_plan last_record;

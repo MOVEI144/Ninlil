@@ -126,16 +126,17 @@ static ninlil_secure_session *session(void *ctx, uint16_t address, int hop)
 
 static int configuration(ninlil_node *n, const ninlil_node_config *c)
 {
-    unsigned int i, j;
+    unsigned int i;
     int local, root;
-    if (!c || !c->members || c->member_count < 2u ||
+    if (!c || !c->members || c->member_count < 1u ||
         c->member_count > NINLIL_NODE_MEMBERS_MAX || !c->identity ||
         !c->identity->signing_key || !c->counter_io || !c->emit ||
         !c->random.fill || !c->permitted_profile || !c->journal_location ||
         !c->control_location || c->control_max_bytes < 4096u ||
         c->control_max_bytes > NINLIL_CONTROL_LOG_MAX ||
         ninlil_role_profile_validate(&c->resources) != NINLIL_OK ||
-        c->member_count - 1u > c->resources.active_peers ||
+        (!c->dynamic_enrollment &&
+         c->member_count - 1u > c->resources.active_peers) ||
         (c->local == c->root && !c->root_eras))
         return NINLIL_ERR_INVALID;
     n->config = *c;
@@ -154,28 +155,9 @@ static int configuration(ninlil_node *n, const ninlil_node_config *c)
     n->local_index = (uint16_t)local;
     n->root_index = (uint16_t)root;
     for (i = 0u; i < c->member_count; i++) {
-        const ninlil_join_grant *g = &n->members[i].grant;
-        if (i != n->local_index) {
-            ninlil_identity_peer peer;
-            ninlil_edhoc_config handshake;
-            if (ninlil_identity_credentials(&peer, c->identity, c->local,
-                                            g->node, n->members[i].public_key,
-                                            g->identity, 1,
-                                            &handshake) != NINLIL_OK)
-                return NINLIL_ERR_INVALID;
-        }
-        if (ninlil_join_grant_valid(g) != NINLIL_OK ||
-            memcmp(g->authority, n->members[root].grant.authority, 16u) != 0)
-            return NINLIL_ERR_INVALID;
-        for (j = 0u; j < g->service_count; j++)
-            if (g->services[j].maximum_payload_bytes > 64u)
-                return NINLIL_ERR_TOO_LARGE;
-        for (j = 0u; j < i; j++)
-            if (g->node == n->members[j].grant.node ||
-                memcmp(g->identity, n->members[j].grant.identity, 32u) == 0 ||
-                memcmp(n->members[i].public_key, n->members[j].public_key,
-                       65u) == 0)
-                return NINLIL_ERR_CONFLICT;
+        int rc = ninlil_node_member_check(n, &n->members[i], (uint16_t)i);
+        if (rc != NINLIL_OK)
+            return rc;
     }
     return NINLIL_OK;
 }
@@ -222,11 +204,12 @@ static int open_layers(ninlil_node *n, int initialize)
 {
     const ninlil_join_grant *local = &n->members[n->local_index].grant;
     ninlil_routed_config routed = {0};
-    ninlil_control_replay replay = {replay_join, ninlil_node_plan_restore,
-                                    replay_relay, n, ninlil_node_epoch_restore};
+    ninlil_control_replay replay = {
+        replay_join, ninlil_node_plan_restore,  replay_relay,
+        n,           ninlil_node_epoch_restore, ninlil_node_member_restore};
     ninlil_config core = {0};
     int rc = ninlil_join_open(&n->authority, n->join_peers,
-                              n->config.member_count, local->authority,
+                              NINLIL_NODE_MEMBERS_MAX, local->authority,
                               ninlil_node_join_commit, n, approve, n);
     if (rc == NINLIL_OK)
         rc = ninlil_join_endpoint_open(&n->endpoint, local->identity,
@@ -234,9 +217,10 @@ static int open_layers(ninlil_node *n, int initialize)
                                        ninlil_node_join_commit, n);
     if (rc == NINLIL_OK)
         rc = ninlil_coordinator_open(
-            &n->coordinator, n->graph_nodes, n->config.member_count, n->edges,
+            &n->coordinator, n->graph_nodes, NINLIL_NODE_MEMBERS_MAX, n->edges,
             NODE_EDGES_MAX, n->config.permitted_profile, ninlil_node_policy, n,
             ninlil_node_plan_commit, n);
+    n->coordinator.separate_prepare_lease = n->config.dynamic_enrollment;
     if (rc == NINLIL_OK && (local->capabilities & NINLIL_CAP_RELAY_CUSTODY)) {
         rc = ninlil_relay_open(
             &n->relay, n->custody, NODE_RELAY_MAX, n->config.local, local->role,
@@ -275,6 +259,7 @@ static int open_layers(ninlil_node *n, int initialize)
     core.clock = n->config.utc;
     core.policy_lookup = ninlil_node_policy;
     core.policy_ctx = n;
+    ninlil_node_delivery_link(n, &core.link);
     rc = ninlil_open(&n->core, &core);
     if (rc == NINLIL_OK)
         rc = ninlil_bind_storage(n->core, n->config.identity->identity,
@@ -301,6 +286,8 @@ int ninlil_node_open(ninlil_node **out, const ninlil_node_config *c,
     n->handshake_peer = NODE_NO_PEER;
     n->membership_generation = c->local == c->root ? 1u : 0u;
     rc = configuration(n, c);
+    if (rc == NINLIL_OK)
+        rc = ninlil_node_discovery_open(n);
     if (rc == NINLIL_OK && !c->identity->initialized)
         rc = NINLIL_ERR_CORRUPT;
     if (rc == NINLIL_OK)
@@ -339,6 +326,7 @@ void ninlil_node_close(ninlil_node *n)
     unsigned int i, hop;
     if (!n)
         return;
+    ninlil_node_discovery_close(n);
     ninlil_edhoc_close(&n->handshake);
     for (i = 0u; i < NINLIL_NODE_MEMBERS_MAX; i++)
         for (hop = 0u; hop < 2u; hop++) {

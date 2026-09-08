@@ -6,11 +6,11 @@ import time
 from pathlib import Path
 import serial
 from serial.tools import list_ports
-from hardware import IDENTITIES
 
 
 class Board:
     def __init__(self, node, log=None):
+        from hardware import IDENTITIES
         ports = [p.device for p in list_ports.comports()
                  if p.serial_number == IDENTITIES[node] and p.vid == 0x303a
                  and p.pid == 0x1001]
@@ -50,6 +50,7 @@ class Board:
 
 
 def main():
+    from hardware import IDENTITIES
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('node', type=int, choices=IDENTITIES)
     p.add_argument('command')

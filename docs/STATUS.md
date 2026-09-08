@@ -1,6 +1,26 @@
 # Project status
 
-Updated: 2026-09-08
+Updated: 2026-09-09
+
+## Latest scope: field growth and saved deployment settings
+
+The [field deployment implementation](FIELD_DEPLOYMENT_2026-09-08.md) adds durable
+live enrollment, Root-signed COSE credentials, bounded discovery through powered
+Relays, saved USB configuration and opt-in boot autorun. Five-device native
+scenarios cover alternate-Relay failover and recovery through a previously
+unknown Relay. The three-device configuration/reset test preserves identities
+and the existing application ledger. Model evidence and RF evidence are separate.
+The [broader design](FIELD_NETWORK_EVOLUTION_2026-09-08.md) also includes uncompleted
+Root replacement, cross-site transfer, address reuse, battery sleep and capacity.
+The September 9 decision keeps Ninlil independent of KGuard: host integration,
+sensor semantics and battery timing are application choices. Neither a configured
+device nor a successful Join proves
+application delivery or field readiness.
+The latest local matrix passes 66 tests in each of four compiler/sanitizer builds.
+Three consecutive fresh RF deliveries pass, but latency reaches 271 seconds per
+message and Relay custody remains after completion. Final v19 configuration/reset
+preserves all 15 receiver records. All 22 bench attempts, including failures, are
+retained in the [field results](FIELD_RESULTS_2026-09-08.json).
 
 ## Latest extension: storage, bulk and transmit power
 

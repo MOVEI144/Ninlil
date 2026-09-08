@@ -46,6 +46,11 @@ static int replay_record(void *ctx, uint8_t type, const uint8_t *data,
         return NINLIL_OK;
     }
     log->has_records = 1u;
+    if (type == MEMBER_RECORD)
+        return log->replay.member &&
+                       ninlil_control_member_valid(data, length) == NINLIL_OK
+                   ? log->replay.member(log->replay.ctx, data, length)
+                   : NINLIL_ERR_CORRUPT;
     if (type == EPOCH_FENCE) {
         uint64_t epoch = 0u;
         if (length != 12u || memcmp(data, "NEF\001", 4u) != 0 ||
@@ -130,7 +135,7 @@ static int append(ninlil_control_log *log, uint8_t type, const uint8_t *data,
             ninlil_journal_read(log->journal, ref, 0u, checked, (uint16_t)size);
     if (rc == NINLIL_OK && memcmp(data, checked, size) != 0)
         rc = NINLIL_ERR_CORRUPT;
-    if (rc != NINLIL_OK)
+    if (rc != NINLIL_OK && rc != NINLIL_ERR_CAPACITY)
         log->poisoned = 1u;
     return rc;
 }
@@ -144,6 +149,28 @@ int ninlil_control_log_epoch(ninlil_control_log *log, uint64_t epoch)
     for (unsigned int i = 0u; i < 8u; i++)
         data[11u - i] = (uint8_t)(epoch >> (i * 8u));
     return append(log, EPOCH_FENCE, data, sizeof(data), &ref);
+}
+
+int ninlil_control_member_valid(const uint8_t *data, uint16_t length)
+{
+    ninlil_join_record r;
+    const uint8_t transaction[16] = {1u};
+    if (!data || length < 160u || length > 224u ||
+        memcmp(data, "NM\001", 3u) != 0 || data[3] != 4u ||
+        ninlil_join_decode(data + 68, length - 68u, &r) != NINLIL_OK ||
+        r.state != NINLIL_JOIN_PENDING ||
+        memcmp(r.transaction, transaction, sizeof(transaction)) != 0)
+        return NINLIL_ERR_INVALID;
+    return NINLIL_OK;
+}
+
+int ninlil_control_log_member(ninlil_control_log *log, const uint8_t *data,
+                              uint16_t length)
+{
+    ninlil_journal_ref ref;
+    int rc = ninlil_control_member_valid(data, length);
+    return rc == NINLIL_OK ? append(log, MEMBER_RECORD, data, length, &ref)
+                           : rc;
 }
 
 int ninlil_control_log_bind(ninlil_control_log *log, const uint8_t identity[32],

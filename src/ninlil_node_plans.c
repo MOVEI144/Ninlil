@@ -26,17 +26,6 @@ int ninlil_node_local_plan(ninlil_node *n, uint16_t source, uint16_t target,
     }
     return create ? empty : -1;
 }
-static int same_plan(const ninlil_network_plan *a, const ninlil_network_plan *b)
-{
-    ninlil_network_plan x = *a, y = *b;
-    uint8_t left[NINLIL_NETWORK_PLAN_MAX], right[NINLIL_NETWORK_PLAN_MAX];
-    x.phase = y.phase = NINLIL_PLAN_STAGED;
-    x.prepared = x.applied = y.prepared = y.applied = 0u;
-    return ninlil_network_plan_encode(&x, left, sizeof(left)) == sizeof(left) &&
-           ninlil_network_plan_encode(&y, right, sizeof(right)) ==
-               sizeof(right) &&
-           memcmp(left, right, sizeof(left)) == 0;
-}
 
 static int remember(ninlil_node *n, const ninlil_network_plan *p)
 {
@@ -60,7 +49,7 @@ static int remember(ninlil_node *n, const ninlil_network_plan *p)
                p->phase == NINLIL_PLAN_EFFECTIVE) {
         ninlil_network_plan *old = &n->local_plans[slot];
         if (old->epoch > p->epoch ||
-            (old->epoch == p->epoch && !same_plan(old, p)))
+            (old->epoch == p->epoch && !ninlil_node_same_plan(old, p)))
             return NINLIL_ERR_CORRUPT;
         *old = *p;
         if (n->prepared.epoch == p->epoch)
@@ -153,7 +142,8 @@ int ninlil_node_prepare(ninlil_node *n, const ninlil_network_plan *p)
     if (n->relay.draining && at > 0 && (unsigned int)at + 1u < p->path.count)
         return NINLIL_ERR_BUSY;
     if (n->prepared.epoch == p->epoch)
-        return same_plan(&n->prepared, p) ? NINLIL_OK : NINLIL_ERR_CONFLICT;
+        return ninlil_node_same_plan(&n->prepared, p) ? NINLIL_OK
+                                                      : NINLIL_ERR_CONFLICT;
     if (n->prepared.epoch || p->epoch <= n->local_plan_epoch)
         return NINLIL_ERR_STATE;
     slot = ninlil_node_local_plan(n, p->path.nodes[0],
@@ -185,8 +175,12 @@ int ninlil_node_apply(ninlil_node *n, const ninlil_network_plan *p,
     if (slot < 0 || n->retired[slot] >= p->epoch)
         return NINLIL_ERR_STATE;
     if (n->local_plans[slot].epoch != p->epoch &&
-        (n->prepared.epoch != p->epoch || !same_plan(&n->prepared, p)))
+        (n->prepared.epoch != p->epoch ||
+         !ninlil_node_same_plan(&n->prepared, p)))
         return NINLIL_ERR_STATE;
+    if (n->local_plans[slot].epoch != p->epoch && p->prepare_until_ms &&
+        (ninlil_node_lease(n, &now) != NINLIL_OK || now >= p->prepare_until_ms))
+        return NINLIL_ERR_EXPIRED;
     if (n->local_plans[slot].epoch && n->local_plans[slot].epoch != p->epoch &&
         n->local_ready[slot] && n->retired[slot] < n->local_plans[slot].epoch) {
         rc = ninlil_node_lease(n, &now);
@@ -210,7 +204,7 @@ int ninlil_node_apply(ninlil_node *n, const ninlil_network_plan *p,
             return rc;
         n->local_ready[slot] = 0u;
         memset(n->plan_bindings[slot], 0, sizeof(n->plan_bindings[slot]));
-    } else if (!same_plan(&n->local_plans[slot], p))
+    } else if (!ninlil_node_same_plan(&n->local_plans[slot], p))
         return NINLIL_ERR_CONFLICT;
     /* Only the same epoch may retain EFFECTIVE on duplicate APPLY. A new
      * plan and a replaced session both require fresh authority confirmation. */
@@ -229,7 +223,7 @@ int ninlil_node_effective(ninlil_node *n, const ninlil_network_plan *p,
     slot = ninlil_node_local_plan(n, p->path.nodes[0],
                                   p->path.nodes[p->path.count - 1u], 0);
     if (slot < 0 || !(n->local_ready[slot] & 1u) ||
-        !same_plan(&n->local_plans[slot], p))
+        !ninlil_node_same_plan(&n->local_plans[slot], p))
         return NINLIL_ERR_STATE;
     /* Re-read current contexts: a neighbor may have reauthenticated after our
      * APPLIED report and before this coordinator confirmation arrived. */

@@ -1,4 +1,0 @@
-fde5ee15d3169ddbfb379134f021d8256ac51babae4d161849cde4cc4d3eec28  /tmp/ninlil-oss-default-build/ninlil_m1.bin
-c9c7d73ffe744a73c620bd2a7b1e7bf1bf71cdd8dd0b012e23dbb0275ce9fa52  /tmp/ninlil-oss-default-sdkconfig
-# CONFIG_NINLIL_RF_TX_ENABLE is not set
-CONFIG_NINLIL_RF_FREQUENCY_HZ=0

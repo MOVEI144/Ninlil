@@ -1,6 +1,0 @@
-[0/1] Re-running CMake...
--- Configuring done (0.6s)
--- Generating done (0.1s)
--- Build files have been written to: /tmp/ninlil-field-review
-[1/2] Building C object CMakeFiles/test_management.dir/tests/test_management.c.o
-[2/2] Linking C executable test_management

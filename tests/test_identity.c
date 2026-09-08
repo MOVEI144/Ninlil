@@ -109,6 +109,15 @@ int main(void)
     storage.fail = 0;
     CHECK(ninlil_identity_open(&b, io[1]) == NINLIL_OK && b.generation == 1u);
     CHECK(ninlil_identity_rotate(&b, 1u) == NINLIL_OK && b.generation == 2u);
+    CHECK(ninlil_identity_mark_deployed(&b) == NINLIL_ERR_STATE);
+    CHECK(ninlil_identity_mark_initialized(&b) == NINLIL_OK);
+    CHECK(ninlil_identity_mark_deployed(&b) == NINLIL_OK &&
+          b.initialized == 3u);
+    CHECK(ninlil_identity_open(&restored, io[1]) == NINLIL_OK &&
+          restored.initialized == 3u);
+    ninlil_identity_close(&restored);
+    CHECK(ninlil_identity_rotate(&b, b.generation) == NINLIL_OK &&
+          b.initialized == 3u);
     storage.bytes[24] ^= 1u;
     CHECK(ninlil_identity_mark_initialized(&b) == NINLIL_ERR_CORRUPT &&
           !b.signing_key);

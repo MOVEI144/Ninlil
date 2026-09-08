@@ -5,6 +5,24 @@ static uint8_t all(const ninlil_network_plan *p)
 {
     return (uint8_t)((1u << p->path.count) - 1u);
 }
+static int local_step(ninlil_node *n, int result)
+{
+    if (result == NINLIL_OK)
+        n->route_at = n->now_ms; /* No radio retry delay for local commits. */
+    return result;
+}
+static unsigned int next_unconfirmed(ninlil_node *n,
+                                     const ninlil_network_plan *p,
+                                     uint8_t confirmed)
+{
+    unsigned int at = 0u;
+    for (unsigned int i = 0u; i < p->path.count; i++) {
+        at = (unsigned int)(n->plan_cursor++ % p->path.count);
+        if (!(confirmed & (uint8_t)(1u << at)))
+            break;
+    }
+    return at;
+}
 static int flow(ninlil_node *n, uint16_t source, uint16_t target)
 {
     unsigned int i;
@@ -147,8 +165,7 @@ static int receive_plan(ninlil_node *n, node_control_kind kind,
     rc = ninlil_node_effective(n, &plan, data + NINLIL_NETWORK_PLAN_MAX,
                                length - NINLIL_NETWORK_PLAN_MAX);
     if (rc != NINLIL_OK) {
-        ninlil_node_need_reconcile(n, plan.path.nodes[0],
-                                   plan.path.nodes[plan.path.count - 1u]);
+        ninlil_node_plan_rejected(n, &plan);
         return rc;
     }
     return ninlil_node_control_send(n, n->config.root, NODE_EFFECTIVE_ACK,
@@ -251,6 +268,8 @@ static int pending(ninlil_node *n, uint64_t now)
     if (now >= plan.valid_until_ms)
         return ninlil_coordinator_withdraw(&n->coordinator, plan.epoch, now,
                                            NINLIL_TIME_RESTART_SAFE, 0);
+    if (!ninlil_node_prepare_window(&plan, now))
+        return NINLIL_OK;
     if (plan.phase == NINLIL_PLAN_STAGED &&
         n->coordinator.prepared_live == all(&plan)) {
         int slot =
@@ -261,15 +280,14 @@ static int pending(ninlil_node *n, uint64_t now)
             const ninlil_network_plan *old = &n->coordinator.flows[slot].active;
             if (n->released_mask != all(old)) {
                 uint8_t request[16];
-                at = (unsigned int)(n->plan_cursor++ % old->path.count);
-                if (n->released_mask & (uint8_t)(1u << at))
-                    return NINLIL_OK;
+                at = next_unconfirmed(n, old, n->released_mask);
                 peer = old->path.nodes[at];
                 if (peer == n->config.local) {
                     rc = ninlil_node_release(n, old->epoch, plan.epoch);
-                    return rc == NINLIL_OK
+                    return local_step(
+                        n, rc == NINLIL_OK
                                ? release_ack(n, peer, old->epoch, plan.epoch)
-                               : rc;
+                               : rc);
                 }
                 ninlil_node_put(request, old->epoch, 8u);
                 ninlil_node_put(request + 8, plan.epoch, 8u);
@@ -278,15 +296,15 @@ static int pending(ninlil_node *n, uint64_t now)
             }
             released = 1;
         }
-        return ninlil_coordinator_activate(&n->coordinator, now,
-                                           NINLIL_TIME_RESTART_SAFE, released);
+        return local_step(
+            n, ninlil_coordinator_activate(&n->coordinator, now,
+                                           NINLIL_TIME_RESTART_SAFE, released));
     }
-    at = (unsigned int)(n->plan_cursor++ % plan.path.count);
-    if ((plan.phase == NINLIL_PLAN_STAGED || n->proof_mask != all(&plan)) &&
-        ((plan.phase == NINLIL_PLAN_STAGED ? n->coordinator.prepared_live
-                                           : n->proof_mask) &
-         (uint8_t)(1u << at)))
-        return NINLIL_OK;
+    at = next_unconfirmed(n, &plan,
+                          plan.phase == NINLIL_PLAN_STAGED
+                              ? n->coordinator.prepared_live
+                          : n->proof_mask != all(&plan) ? n->proof_mask
+                                                        : 0u);
     peer = plan.path.nodes[at];
     if (peer != n->config.local)
         return plan_send(n, peer,
@@ -295,14 +313,16 @@ static int pending(ninlil_node *n, uint64_t now)
                          &plan, NULL);
     if (plan.phase == NINLIL_PLAN_STAGED) {
         rc = ninlil_node_prepare(n, &plan);
-        return rc == NINLIL_OK ? ninlil_coordinator_prepared(&n->coordinator,
-                                                             peer, plan.epoch)
-                               : rc;
+        return local_step(n, rc == NINLIL_OK
+                                 ? ninlil_coordinator_prepared(&n->coordinator,
+                                                               peer, plan.epoch)
+                                 : rc);
     }
     {
         uint8_t proof[48];
         rc = ninlil_node_apply(n, &plan, proof);
-        return rc == NINLIL_OK ? applied(n, peer, plan.epoch, proof) : rc;
+        return local_step(
+            n, rc == NINLIL_OK ? applied(n, peer, plan.epoch, proof) : rc);
     }
 }
 
@@ -310,7 +330,12 @@ static int active(ninlil_node *n, unsigned int slot)
 {
     ninlil_network_flow *f = &n->coordinator.flows[slot];
     ninlil_network_plan *p = &f->active;
-    unsigned int at = (unsigned int)(n->plan_cursor++ % p->path.count);
+    uint8_t confirmed =
+        f->reconciled == all(p) && n->effective_epoch[slot] == p->epoch
+            ? n->effective_notified[slot]
+        : n->proof_epoch == p->epoch && n->proof_mask != all(p) ? n->proof_mask
+                                                                : 0u;
+    unsigned int at = next_unconfirmed(n, p, confirmed);
     uint16_t peer = p->path.nodes[at];
     int rc;
     if (f->reconciled != all(p) || n->effective_epoch[slot] != p->epoch) {
@@ -319,12 +344,11 @@ static int active(ninlil_node *n, unsigned int slot)
             n->proof_epoch = p->epoch;
             n->proof_mask = 0u;
         }
-        if (n->proof_mask != all(p) && (n->proof_mask & (uint8_t)(1u << at)))
-            return NINLIL_OK;
         if (peer != n->config.local)
             return plan_send(n, peer, NODE_APPLY, p, NULL);
         rc = ninlil_node_apply(n, p, proof);
-        return rc == NINLIL_OK ? applied(n, peer, p->epoch, proof) : rc;
+        return local_step(n, rc == NINLIL_OK ? applied(n, peer, p->epoch, proof)
+                                             : rc);
     }
     if (n->effective_notified[slot] & (uint8_t)(1u << at))
         return NINLIL_OK;
@@ -335,7 +359,7 @@ static int active(ninlil_node *n, unsigned int slot)
                                (size_t)p->path.count * 16u);
     if (rc == NINLIL_OK)
         n->effective_notified[slot] |= (uint8_t)(1u << at);
-    return rc;
+    return local_step(n, rc);
 }
 
 static int maintain(ninlil_node *n, uint64_t now)
@@ -383,6 +407,14 @@ int ninlil_node_routes_step(ninlil_node *n)
         return NINLIL_OK;
     /* Leave airtime for synchronization and responses between plan retries. */
     n->route_at = n->now_ms + 2000u;
+    if (n->config.local == n->config.root && (n->notify_turn ^= 1u)) {
+        int slot = ninlil_node_next_notification(n, now);
+        /* Stored binding vectors no longer use the single proof workspace.
+         * Alternate their notifications with new plans: a lost forward ACK
+         * must not prevent preparing the receipt's reverse path. */
+        if (slot >= 0)
+            return active(n, (unsigned int)slot);
+    }
     if (n->config.local == n->config.root && n->coordinator.pending.epoch)
         return pending(n, now);
     {
@@ -400,7 +432,8 @@ int ninlil_node_routes_step(ninlil_node *n)
         if (p && p->phase == NINLIL_PLAN_EFFECTIVE) {
             int slot =
                 flow(n, p->path.nodes[0], p->path.nodes[p->path.count - 1u]);
-            if (slot >= 0 && n->effective_notified[slot] != all(p))
+            if (slot >= 0 && (n->coordinator.flows[slot].reconciled != all(p) ||
+                              n->effective_epoch[slot] != p->epoch))
                 return active(n, (unsigned int)slot);
         }
     }
@@ -425,15 +458,16 @@ int ninlil_node_routes_step(ninlil_node *n)
                  ? ninlil_coordinator_route(&n->coordinator, source, target,
                                             now, &plan)
                  : ninlil_node_route(n, source, target, now, &plan);
-        if (rc == NINLIL_OK &&
-            (n->config.local != n->config.root ||
-             (existing >= 0 &&
-              n->effective_notified[existing] == all(&plan)))) {
+        if (rc == NINLIL_OK) {
             memset(n->wanted[slot], 0, sizeof(n->wanted[slot]));
             continue;
         }
         if (n->config.local != n->config.root) {
             uint8_t request[13];
+            if (!n->wanted_force[slot] &&
+                ninlil_node_plan_in_progress(n, source, target, now))
+                continue;
+            n->route_at = n->now_ms + 8000u;
             ninlil_node_put(request, source, 2u);
             ninlil_node_put(request + 2, target, 2u);
             ninlil_node_put(request + 4, n->wanted_token[slot], 8u);

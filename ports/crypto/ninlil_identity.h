@@ -23,7 +23,8 @@ typedef struct ninlil_identity {
     uint8_t public_key[65];
     uint8_t fingerprint[32];
     uint8_t identity[32]; /* Stable across key rotation. */
-    uint8_t initialized;  /* Irreversible Core/control provisioning marker. */
+    uint8_t
+        initialized; /* 1: bound Core/control; 3: also durable deployment. */
 } ninlil_identity;
 
 typedef struct ninlil_identity_peer {
@@ -51,6 +52,10 @@ void ninlil_identity_close(ninlil_identity *identity);
 /* Commit once after both bound stores exist, before any RF. Normal startup
  * and repeated provisioning must then refuse missing stores. */
 int ninlil_identity_mark_initialized(ninlil_identity *identity);
+/* NIv4 adds an irreversible deployment marker after bound stores exist.
+ * Missing deployment settings must subsequently fail closed. Old readers
+ * reject NIv4. Key rotation preserves this marker and the stable identity. */
+int ninlil_identity_mark_deployed(ninlil_identity *identity);
 /* The supplied peer key must come from explicit trusted provisioning, never an
  * unauthenticated radio announcement. One peer context per handshake. */
 int ninlil_identity_credentials(ninlil_identity_peer *peer,

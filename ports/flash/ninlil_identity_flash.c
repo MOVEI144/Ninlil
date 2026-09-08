@@ -15,7 +15,8 @@ static int capture(void *ctx, uint8_t type, const uint8_t *data,
     (void)offset;
     if (type != 1u || length != NINLIL_IDENTITY_RECORD_SIZE ||
         (memcmp(data, "NI\002\000", 4u) != 0 &&
-         (memcmp(data, "NI\003", 3u) != 0 || data[3] > 1u)))
+         (memcmp(data, "NI\003", 3u) != 0 || data[3] > 1u) &&
+         (memcmp(data, "NI\004", 3u) != 0 || data[3] != 3u)))
         return NINLIL_ERR_CORRUPT;
     for (i = 4u; i < 12u; i++)
         generation = (generation << 8) | data[i];

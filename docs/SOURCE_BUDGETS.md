@@ -42,3 +42,16 @@ The combined union checks disjoint membership; the 50,000-line ceiling remains.
 Nine duplicate raw console captures were retired from the checkout only after
 byte/hash verification against their committed Git destination, recorded in
 `docs/evidence/2026-09-08-autonomous/INDEX.json`. Their results and failures remain.
+
+The subsequent explicit request for installation/removal without reflashing
+adds a bounded enrollment/discovery/deployment responsibility, accounted in
+`scripts/field_deployment_files.txt` with a 3,000-line ceiling. Existing edited
+owner/control files remain in their original ledgers. No existing scoped or
+project-wide ceiling increases; new sources and tests count in the 50,000 total.
+Bootstrap forwarding now owns its bounded pressure/retry state in
+`ninlil_node_forward.c`, separate from EDHOC authentication. Its former forwarding
+code was removed from `ninlil_node_auth.c`; both files remain counted once.
+Clock renewal now owns its bounded retry window in `ninlil_node_sync.c`;
+the previous one-attempt renewal block was removed from the control dispatcher.
+Control reception accounting now resides in the existing diagnostics module;
+the dispatcher calls remain typed and its former counting wrapper was removed.
