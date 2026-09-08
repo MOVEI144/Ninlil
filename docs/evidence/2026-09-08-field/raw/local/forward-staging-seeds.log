@@ -1,0 +1,466 @@
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 817b38d810b494b3690009d1efab2303 54029c2d4b6de1cf092948cbb01d15ea
+ contexts 1->3: 26c60237722445f19709da6e8aa60280 6a12554f9e248fff3a949b7900c8dc62
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=6660 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5040 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=20856
+ edge=3-1 delivery=0 epoch=1 age=14115
+ edge=2-1 delivery=8 epoch=1 age=18278
+ edge=2-3 delivery=8 epoch=1 age=12350
+ edge=1-3 delivery=0 epoch=1 age=15162
+ edge=1-2 delivery=8 epoch=1 age=16782
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 817b38d810b494b3690009d1efab2303 54029c2d4b6de1cf092948cbb01d15ea
+ contexts 2->3: e8a6f7373b341e1a3904f43be9c56857 7d433f87c9ad087b5178e8a463ce4599
+ peer=1 attempts=8 delivered=8 bits=255 age=8180 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=2240 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 26c60237722445f19709da6e8aa60280 6a12554f9e248fff3a949b7900c8dc62
+ contexts 3->2: e8a6f7373b341e1a3904f43be9c56857 7d433f87c9ad087b5178e8a463ce4599
+ peer=1 attempts=8 delivered=0 bits=0 age=4260 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=100 active=1 secure=1 drain=0
+Node scheduling seed: 1
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: ed7771c314308f6e90cd4e3bf3f73299 1357361b2378e259ebacb8cbae78ee0d
+ contexts 1->3: e1f44efc0d9a25681de932f27bd7b7e8 d466255ea853da2b5ba8ef26bd0accec
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=4980 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=6120 active=1 secure=1 drain=0
+ edge=2-3 delivery=8 epoch=1 age=13915
+ edge=3-2 delivery=8 epoch=1 age=20333
+ edge=3-1 delivery=0 epoch=1 age=20834
+ edge=2-1 delivery=8 epoch=1 age=13253
+ edge=1-3 delivery=0 epoch=1 age=16242
+ edge=1-2 delivery=8 epoch=1 age=15102
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: ed7771c314308f6e90cd4e3bf3f73299 1357361b2378e259ebacb8cbae78ee0d
+ contexts 2->3: a5af469f00281510767b1f00376ddfb5 c10a199dcf7656313b0924a9b0b79cba
+ peer=1 attempts=8 delivered=8 bits=255 age=3320 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=3980 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: e1f44efc0d9a25681de932f27bd7b7e8 d466255ea853da2b5ba8ef26bd0accec
+ contexts 3->2: a5af469f00281510767b1f00376ddfb5 c10a199dcf7656313b0924a9b0b79cba
+ peer=1 attempts=8 delivered=0 bits=0 age=10740 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=10240 active=1 secure=1 drain=0
+Node scheduling seed: 2
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: b0c66599796531a5a3904305890623ec 9edf783fe971aa49aa83e1fbb3dbac24
+ contexts 1->3: e8c044b4660947a0db9a04b319172e7f 002a3d0e4d7f77f8cf7f5b2cbd73fd6b
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=5180 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=3540 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=18093
+ edge=3-1 delivery=0 epoch=1 age=21672
+ edge=2-3 delivery=8 epoch=1 age=15755
+ edge=2-1 delivery=8 epoch=1 age=12846
+ edge=1-3 delivery=0 epoch=1 age=13662
+ edge=1-2 delivery=8 epoch=1 age=15302
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: b0c66599796531a5a3904305890623ec 9edf783fe971aa49aa83e1fbb3dbac24
+ contexts 2->3: 0ef72c1088bbdba24ec27167965e9ab3 b4d65c8c5b774717746e7a6b162a1898
+ peer=1 attempts=8 delivered=8 bits=255 age=3080 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=5980 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: e8c044b4660947a0db9a04b319172e7f 002a3d0e4d7f77f8cf7f5b2cbd73fd6b
+ contexts 3->2: 0ef72c1088bbdba24ec27167965e9ab3 b4d65c8c5b774717746e7a6b162a1898
+ peer=1 attempts=8 delivered=0 bits=0 age=1060 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=8500 active=1 secure=1 drain=0
+node=1 time=637280 joined=1 peers=3 fault=0 handshake=0/0
+Node scheduling seed: 3
+clock=1 pending=0/0 prepare=0 apply=0 proof=7 wants=0 ready=2 authority=2 local=2
+ flow=30 epoch=8 retired=0 ready=3 notice=6 proofepoch=8 live=7 phase=3 end=12885102888
+ flow=31 epoch=7 retired=0 ready=3 notice=7 proofepoch=7 live=7 phase=3 end=12885074888
+ contexts 1->2: fc37f48bd57fbf471b3919524d4788be f1467eea45d6136ddde18e0171fe643e
+ contexts 1->3: 7a28d0bb555f7dd998a7a19083e437f1 1af3e0830f6bf0d3b1fad9a03e9dbc60
+ proof 0:00000000000000000000000000000000f4eda4935d1b59b119c4c7964e7ebfe47a28d0bb555f7dd998a7a19083e437f1
+ proof 1:f4eda4935d1b59b119c4c7964e7ebfe4f1467eea45d6136ddde18e0171fe643e00000000000000000000000000000000
+ proof 2:f1467eea45d6136ddde18e0171fe643e000000000000000000000000000000007a28d0bb555f7dd998a7a19083e437f1
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+Autonomous sequence 1 restart mode 0 PASS
+ peer=2 attempts=8 delivered=8 bits=254 age=280 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=8000 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=21653
+ edge=2-3 delivery=8 epoch=1 age=28541
+ edge=3-1 delivery=0 epoch=1 age=13623
+ edge=2-1 delivery=8 epoch=1 age=12053
+ edge=1-3 delivery=0 epoch=1 age=18122
+ edge=1-2 delivery=8 epoch=1 age=21322
+node=2 time=637280 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=2 authority=0 local=2
+ flow=30 epoch=8 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885102888
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885074888
+ contexts 2->1: fc37f48bd57fbf471b3919524d4788be f1467eea45d6136ddde18e0171fe643e
+ contexts 2->3: f99a762ed0243fd8f352a90b8458b2dd f4eda4935d1b59b119c4c7964e7ebfe4
+ peer=1 attempts=8 delivered=8 bits=255 age=3020 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=19020 active=1 secure=1 drain=0
+node=3 time=637280 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=1 ready=1 authority=0 local=2
+ flow=30 epoch=8 retired=0 ready=1 notice=0 proofepoch=0 live=0 phase=2 end=12885102888
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885074888
+ contexts 3->1: 7a28d0bb555f7dd998a7a19083e437f1 1af3e0830f6bf0d3b1fad9a03e9dbc60
+ contexts 3->2: f99a762ed0243fd8f352a90b8458b2dd f4eda4935d1b59b119c4c7964e7ebfe4
+ peer=1 attempts=8 delivered=0 bits=0 age=4540 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=1860 active=1 secure=1 drain=0
+message outcome=0 evidence=0 applications=2 before=1
+424: now < until && delivered_app == before + 1u
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: ba6492c4a84b71704d5dc655b0234530 a3f040f9559a5496d3608ecf1585d4bf
+ contexts 1->3: 5fa162c8d0437f0beec12120cc077b22 5de5c9c0328519180c6c118370688e58
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=4760 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5260 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=18971
+ edge=3-1 delivery=0 epoch=1 age=19472
+ edge=2-3 delivery=8 epoch=1 age=20037
+ edge=2-1 delivery=8 epoch=1 age=11283
+ edge=1-3 delivery=0 epoch=1 age=15382
+ edge=1-2 delivery=8 epoch=1 age=14882
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: ba6492c4a84b71704d5dc655b0234530 a3f040f9559a5496d3608ecf1585d4bf
+ contexts 2->3: 3b30dad2796c28a91f6f76086b79db36 4e6bb2b3444a86649333b17facc0505d
+ peer=1 attempts=8 delivered=8 bits=255 age=1920 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=10080 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 5fa162c8d0437f0beec12120cc077b22 5de5c9c0328519180c6c118370688e58
+ contexts 3->2: 3b30dad2796c28a91f6f76086b79db36 4e6bb2b3444a86649333b17facc0505d
+ peer=1 attempts=8 delivered=0 bits=0 age=9380 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=8880 active=1 secure=1 drain=0
+Node scheduling seed: 4
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 71ed62604f0ad350be62f8eee8d43fb5 1ce164163e12c9dd65e7df3c34b17e5d
+ contexts 1->3: 9834b5361ad4c186631dd7eca37d0b9d 75c48f68de970ed5b3134f8a01552b8d
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=5640 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=9960 active=1 secure=1 drain=0
+ edge=3-2 delivery=7 epoch=1 age=15408
+ edge=3-1 delivery=0 epoch=1 age=17273
+ edge=2-1 delivery=8 epoch=1 age=10508
+ edge=2-3 delivery=8 epoch=1 age=16914
+ edge=1-3 delivery=0 epoch=1 age=20082
+ edge=1-2 delivery=8 epoch=1 age=15762
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 71ed62604f0ad350be62f8eee8d43fb5 1ce164163e12c9dd65e7df3c34b17e5d
+ contexts 2->3: bef6c000211f4a9160729129c03a1e95 87a7b64d2e1ea38325c527f765b88cf7
+ peer=1 attempts=8 delivered=8 bits=255 age=1400 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=6980 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 9834b5361ad4c186631dd7eca37d0b9d 75c48f68de970ed5b3134f8a01552b8d
+ contexts 3->2: bef6c000211f4a9160729129c03a1e95 87a7b64d2e1ea38325c527f765b88cf7
+ peer=1 attempts=8 delivered=0 bits=0 age=7180 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=5320 active=1 secure=1 drain=0
+Node scheduling seed: 5
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 2f5cb2cedc7de0907c2776a7e8706a1a db69c3111a9bdb9372f320ae3f8bc733
+ contexts 1->3: 1e388dd79f499e79fc49cbfd5e16b440 f4bd98d826d23ed4eeb0a644970529cd
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=5040 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=3060 active=1 secure=1 drain=0
+ edge=2-3 delivery=8 epoch=1 age=17399
+ edge=3-2 delivery=8 epoch=1 age=11251
+ edge=2-1 delivery=8 epoch=1 age=12986
+ edge=3-1 delivery=0 epoch=1 age=19416
+ edge=1-3 delivery=0 epoch=1 age=13182
+ edge=1-2 delivery=8 epoch=1 age=15162
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 2f5cb2cedc7de0907c2776a7e8706a1a db69c3111a9bdb9372f320ae3f8bc733
+ contexts 2->3: d42558ccbc6ccb33c702751b2ae1005d f56470660f652b4c64e114ad73cbcadb
+ peer=1 attempts=8 delivered=8 bits=255 age=2900 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=7300 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 1e388dd79f499e79fc49cbfd5e16b440 f4bd98d826d23ed4eeb0a644970529cd
+ contexts 3->2: d42558ccbc6ccb33c702751b2ae1005d f56470660f652b4c64e114ad73cbcadb
+ peer=1 attempts=8 delivered=0 bits=0 age=9320 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=1180 active=1 secure=1 drain=0
+Node scheduling seed: 6
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 348d24f97114869cb24d367c60e61064 ff7879b225ab3906aa7686a9f3b6b824
+ contexts 1->3: 0696dd145fb083164a639f044549966b 49eca28cafd877d3ddd370d5a209e10c
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=6660 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5040 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=20856
+ edge=3-1 delivery=0 epoch=1 age=14115
+ edge=2-1 delivery=8 epoch=1 age=18278
+ edge=2-3 delivery=8 epoch=1 age=12350
+ edge=1-3 delivery=0 epoch=1 age=15162
+ edge=1-2 delivery=8 epoch=1 age=16782
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 348d24f97114869cb24d367c60e61064 ff7879b225ab3906aa7686a9f3b6b824
+ contexts 2->3: 4044c8edb78b2d8a2cec84886f164173 f130404b91ea19b247ed75430bf0c91f
+ peer=1 attempts=8 delivered=8 bits=255 age=8180 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=2240 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 0696dd145fb083164a639f044549966b 49eca28cafd877d3ddd370d5a209e10c
+ contexts 3->2: 4044c8edb78b2d8a2cec84886f164173 f130404b91ea19b247ed75430bf0c91f
+ peer=1 attempts=8 delivered=0 bits=0 age=4260 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=100 active=1 secure=1 drain=0
+Node scheduling seed: 1
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 9036a500a8d3d853c748c0efaab13245 018fba7fab9194d645592b8ce0b417ef
+ contexts 1->3: 53f15b89ef0882f3c86a0afeab67ef84 4c4dce2b6997e3e0ac5d2d0d730c9604
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=4980 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=6120 active=1 secure=1 drain=0
+ edge=2-3 delivery=8 epoch=1 age=13915
+ edge=3-2 delivery=8 epoch=1 age=20333
+ edge=3-1 delivery=0 epoch=1 age=20834
+ edge=2-1 delivery=8 epoch=1 age=13253
+ edge=1-3 delivery=0 epoch=1 age=16242
+ edge=1-2 delivery=8 epoch=1 age=15102
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 9036a500a8d3d853c748c0efaab13245 018fba7fab9194d645592b8ce0b417ef
+ contexts 2->3: 477ae8fee37699f73f8eb959c5bd6b52 7eb727518d2aaa6f576387bee65b80a0
+ peer=1 attempts=8 delivered=8 bits=255 age=3320 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=3980 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 53f15b89ef0882f3c86a0afeab67ef84 4c4dce2b6997e3e0ac5d2d0d730c9604
+ contexts 3->2: 477ae8fee37699f73f8eb959c5bd6b52 7eb727518d2aaa6f576387bee65b80a0
+ peer=1 attempts=8 delivered=0 bits=0 age=10740 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=10240 active=1 secure=1 drain=0
+Node scheduling seed: 2
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: ba1331bcf535118f4aea1e1ec6aa6ae6 1a983c415efd18d253d11c738bacf8a8
+ contexts 1->3: 4db35f17b30afd97f9d9e30d52b0c6ea e4eba0f4907a4f1abc63791a05531c02
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=5180 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=3540 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=18093
+ edge=3-1 delivery=0 epoch=1 age=21672
+ edge=2-3 delivery=8 epoch=1 age=15755
+ edge=2-1 delivery=8 epoch=1 age=12846
+ edge=1-3 delivery=0 epoch=1 age=13662
+ edge=1-2 delivery=8 epoch=1 age=15302
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: ba1331bcf535118f4aea1e1ec6aa6ae6 1a983c415efd18d253d11c738bacf8a8
+ contexts 2->3: c1dc26d770503564afd95adcb763e22b 4b0a3d33312d57e7575a7d4e198a43c7
+ peer=1 attempts=8 delivered=8 bits=255 age=3080 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=5980 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 4db35f17b30afd97f9d9e30d52b0c6ea e4eba0f4907a4f1abc63791a05531c02
+ contexts 3->2: c1dc26d770503564afd95adcb763e22b 4b0a3d33312d57e7575a7d4e198a43c7
+ peer=1 attempts=8 delivered=0 bits=0 age=1060 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=8500 active=1 secure=1 drain=0
+Node scheduling seed: 3
+node=1 time=637280 joined=1 peers=3 fault=0 handshake=0/0
+Autonomous sequence 1 restart mode 0 PASS
+clock=1 pending=0/0 prepare=0 apply=0 proof=7 wants=0 ready=2 authority=2 local=2
+ flow=30 epoch=8 retired=0 ready=3 notice=6 proofepoch=8 live=7 phase=3 end=12885102888
+ flow=31 epoch=7 retired=0 ready=3 notice=7 proofepoch=7 live=7 phase=3 end=12885074888
+ contexts 1->2: e8c479cfe0ecba319ce2429d2e9aea43 c711645bc9734e23d11865a6a040b2ba
+ contexts 1->3: 143d5f48623ce29902923e06c17fd9a5 53f56c2e6d428b690dd8d2da4b6533cc
+ proof 0:000000000000000000000000000000005fdd6c788469f54bacb0ce0d0bb7d98a143d5f48623ce29902923e06c17fd9a5
+ proof 1:5fdd6c788469f54bacb0ce0d0bb7d98ac711645bc9734e23d11865a6a040b2ba00000000000000000000000000000000
+ proof 2:c711645bc9734e23d11865a6a040b2ba00000000000000000000000000000000143d5f48623ce29902923e06c17fd9a5
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=254 age=280 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=8000 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=21653
+ edge=2-3 delivery=8 epoch=1 age=28541
+ edge=3-1 delivery=0 epoch=1 age=13623
+ edge=2-1 delivery=8 epoch=1 age=12053
+ edge=1-3 delivery=0 epoch=1 age=18122
+ edge=1-2 delivery=8 epoch=1 age=21322
+node=2 time=637280 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=2 authority=0 local=2
+ flow=30 epoch=8 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885102888
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885074888
+ contexts 2->1: e8c479cfe0ecba319ce2429d2e9aea43 c711645bc9734e23d11865a6a040b2ba
+ contexts 2->3: 537e8acd0f9d4ee9b8f9ad053d8f8b24 5fdd6c788469f54bacb0ce0d0bb7d98a
+ peer=1 attempts=8 delivered=8 bits=255 age=3020 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=19020 active=1 secure=1 drain=0
+node=3 time=637280 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=1 ready=1 authority=0 local=2
+ flow=30 epoch=8 retired=0 ready=1 notice=0 proofepoch=0 live=0 phase=2 end=12885102888
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885074888
+ contexts 3->1: 143d5f48623ce29902923e06c17fd9a5 53f56c2e6d428b690dd8d2da4b6533cc
+ contexts 3->2: 537e8acd0f9d4ee9b8f9ad053d8f8b24 5fdd6c788469f54bacb0ce0d0bb7d98a
+ peer=1 attempts=8 delivered=0 bits=0 age=4540 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=1860 active=1 secure=1 drain=0
+message outcome=0 evidence=0 applications=2 before=1
+424: now < until && delivered_app == before + 1u
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 23926326e8b72fdccc752a41b27c2cbc 9151d5411f17ee2d15dbc3d6521751f6
+ contexts 1->3: 92dcd69d855443e976308c6d2f79e861 d39c714d8eb7cad2655c7647c7c55ced
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=4760 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5260 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=18971
+ edge=3-1 delivery=0 epoch=1 age=19472
+ edge=2-3 delivery=8 epoch=1 age=20037
+ edge=2-1 delivery=8 epoch=1 age=11283
+ edge=1-3 delivery=0 epoch=1 age=15382
+ edge=1-2 delivery=8 epoch=1 age=14882
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 23926326e8b72fdccc752a41b27c2cbc 9151d5411f17ee2d15dbc3d6521751f6
+ contexts 2->3: 72025c4670d8f128c96fcb5d1fef7b8b f58cf6da0107111d1c8d5a93c7097067
+ peer=1 attempts=8 delivered=8 bits=255 age=1920 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=10080 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 92dcd69d855443e976308c6d2f79e861 d39c714d8eb7cad2655c7647c7c55ced
+ contexts 3->2: 72025c4670d8f128c96fcb5d1fef7b8b f58cf6da0107111d1c8d5a93c7097067
+ peer=1 attempts=8 delivered=0 bits=0 age=9380 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=8880 active=1 secure=1 drain=0
+Node scheduling seed: 4
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 6952ec7f1a636f255a63b7212cf515a2 8a2db3681b3981159b073374386d443d
+ contexts 1->3: 8bf3c10de48943e0fea499e7758158f5 62b51f0e6785fad05c19579e5b6b4268
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=5640 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=9960 active=1 secure=1 drain=0
+ edge=3-2 delivery=7 epoch=1 age=15408
+ edge=3-1 delivery=0 epoch=1 age=17273
+ edge=2-1 delivery=8 epoch=1 age=10508
+ edge=2-3 delivery=8 epoch=1 age=16914
+ edge=1-3 delivery=0 epoch=1 age=20082
+ edge=1-2 delivery=8 epoch=1 age=15762
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 6952ec7f1a636f255a63b7212cf515a2 8a2db3681b3981159b073374386d443d
+ contexts 2->3: 682a8f3764d5d1a567c0b2d35fab4c4c b1fabefb69ad2bfe99abade54dd5ada8
+ peer=1 attempts=8 delivered=8 bits=255 age=1400 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=6980 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 8bf3c10de48943e0fea499e7758158f5 62b51f0e6785fad05c19579e5b6b4268
+ contexts 3->2: 682a8f3764d5d1a567c0b2d35fab4c4c b1fabefb69ad2bfe99abade54dd5ada8
+ peer=1 attempts=8 delivered=0 bits=0 age=7180 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=5320 active=1 secure=1 drain=0
+Node scheduling seed: 5
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 7a7dad1a9aaa17c6918fa88228063943 66100db13ad38577914090229fc6a912
+ contexts 1->3: c41f5fdd5ea730515bdf5aef96c65374 3ee348b695890b893642ef8bb79e3eb7
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=5040 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=3060 active=1 secure=1 drain=0
+ edge=2-3 delivery=8 epoch=1 age=17399
+ edge=3-2 delivery=8 epoch=1 age=11251
+ edge=2-1 delivery=8 epoch=1 age=12986
+ edge=3-1 delivery=0 epoch=1 age=19416
+ edge=1-3 delivery=0 epoch=1 age=13182
+ edge=1-2 delivery=8 epoch=1 age=15162
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 7a7dad1a9aaa17c6918fa88228063943 66100db13ad38577914090229fc6a912
+ contexts 2->3: 3ee0267e96947c90dfc0e24b958867cd d61992864d4eb872e657168bd0737a69
+ peer=1 attempts=8 delivered=8 bits=255 age=2900 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=7300 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: c41f5fdd5ea730515bdf5aef96c65374 3ee348b695890b893642ef8bb79e3eb7
+ contexts 3->2: 3ee0267e96947c90dfc0e24b958867cd d61992864d4eb872e657168bd0737a69
+ peer=1 attempts=8 delivered=0 bits=0 age=9320 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=1180 active=1 secure=1 drain=0
+Node scheduling seed: 6
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS

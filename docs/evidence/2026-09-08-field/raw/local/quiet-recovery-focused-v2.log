@@ -1,0 +1,34 @@
+[1/12] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_recovery.c.o
+[2/12] Linking C static library libninlil_node.a
+[3/12] Linking C executable test_bulk_application_posix
+[4/12] Linking C executable test_bulk_application_flash_runtime
+[5/12] Linking C executable test_network_pump
+[6/12] Linking C executable test_node_posix
+[7/12] Linking C executable test_node_application_posix
+[8/12] Linking C executable test_field_posix
+[9/12] Linking C executable test_node_flash_runtime
+[10/12] Linking C executable test_field_flash_runtime
+[11/12] Linking C executable test_node_application_flash_runtime
+[12/12] Linking C executable test_node_storage
+Internal ctest changing into directory: /tmp/ninlil-oss-final/gcc
+Test project /tmp/ninlil-oss-final/gcc
+    Start 41: field_replacement_posix
+1/8 Test #41: field_replacement_posix ...........   Passed    1.49 sec
+    Start 42: autonomous_node_posix
+2/8 Test #42: autonomous_node_posix .............   Passed    5.76 sec
+    Start 43: enrollment_posix
+3/8 Test #43: enrollment_posix ..................   Passed    4.26 sec
+    Start 45: discovery_slow_posix
+4/8 Test #45: discovery_slow_posix ..............   Passed    4.54 sec
+    Start 52: field_replacement_flash_runtime
+5/8 Test #52: field_replacement_flash_runtime ...   Passed    1.59 sec
+    Start 53: autonomous_node_flash_runtime
+6/8 Test #53: autonomous_node_flash_runtime .....   Passed    6.19 sec
+    Start 54: enrollment_flash_runtime
+7/8 Test #54: enrollment_flash_runtime ..........   Passed    4.31 sec
+    Start 56: discovery_slow_flash_runtime
+8/8 Test #56: discovery_slow_flash_runtime ......   Passed    4.53 sec
+
+100% tests passed, 0 tests failed out of 8
+
+Total Test time (real) =  32.68 sec

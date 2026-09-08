@@ -1,0 +1,281 @@
+Start testing: Sep 08 13:20 UTC
+----------------------------------------------------------
+41/63 Testing: field_replacement_posix
+41/63 Test: field_replacement_posix
+Command: "/tmp/ninlil-oss-final/gcc/test_field_posix"
+Directory: /tmp/ninlil-oss-final/gcc
+"field_replacement_posix" start time: Sep 08 13:20 UTC
+Output:
+----------------------------------------------------------
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 0 PASS
+Unknown replacement and pending delivery recovered in model: 113000 ms
+Autonomous sequence 3 restart mode 0 PASS
+Out-of-range Join, alternate Relay, partition, unknown replacement, revoked return PASS
+<end of output>
+Test time =   1.53 sec
+----------------------------------------------------------
+Test Passed.
+"field_replacement_posix" end time: Sep 08 13:20 UTC
+"field_replacement_posix" time elapsed: 00:00:01
+----------------------------------------------------------
+
+43/63 Testing: enrollment_posix
+43/63 Test: enrollment_posix
+Command: "/tmp/ninlil-oss-final/gcc/test_node_posix"
+Directory: /tmp/ninlil-oss-final/gcc
+"enrollment_posix" start time: Sep 08 13:20 UTC
+Output:
+----------------------------------------------------------
+PLAN t=121000 epoch=1 phase=1 flow=1->3 mask=0/0 until=8590115592 prep=8590115592
+PLAN t=123000 epoch=1 phase=1 flow=1->3 mask=1/0 until=8590115592 prep=8590115592
+PLAN t=125000 epoch=1 phase=1 flow=1->3 mask=3/0 until=8590115592 prep=8590115592
+PLAN t=127020 epoch=1 phase=1 flow=1->3 mask=7/0 until=8590115592 prep=8590115592
+PLAN t=129000 epoch=1 phase=2 flow=1->3 mask=7/0 until=8590123592 prep=8590115592
+PLAN t=135020 epoch=1 phase=2 flow=1->3 mask=7/1 until=8590123592 prep=8590115592
+PLAN t=135020 epoch=1 phase=2 flow=1->3 mask=7/3 until=8590123592 prep=8590115592
+PLAN t=135020 epoch=1 phase=3 flow=1->3 mask=7/7 until=8590123592 prep=8590115592
+PLAN t=143000 epoch=2 phase=1 flow=3->1 mask=0/0 until=8590137592 prep=8590137592
+PLAN t=145040 epoch=2 phase=1 flow=3->1 mask=1/0 until=8590137592 prep=8590137592
+PLAN t=147000 epoch=2 phase=1 flow=3->1 mask=3/0 until=8590137592 prep=8590137592
+PLAN t=149000 epoch=2 phase=1 flow=3->1 mask=7/0 until=8590137592 prep=8590137592
+PLAN t=151000 epoch=2 phase=2 flow=3->1 mask=7/0 until=8590145592 prep=8590137592
+PLAN t=157000 epoch=2 phase=2 flow=3->1 mask=7/1 until=8590145592 prep=8590137592
+PLAN t=157000 epoch=2 phase=2 flow=3->1 mask=7/3 until=8590145592 prep=8590137592
+PLAN t=157000 epoch=2 phase=3 flow=3->1 mask=7/7 until=8590145592 prep=8590137592
+Node scheduling seed: 1
+Autonomous sequence 1 restart mode 0 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+<end of output>
+Test time =   4.28 sec
+----------------------------------------------------------
+Test Passed.
+"enrollment_posix" end time: Sep 08 13:20 UTC
+"enrollment_posix" time elapsed: 00:00:04
+----------------------------------------------------------
+
+45/63 Testing: discovery_slow_posix
+45/63 Test: discovery_slow_posix
+Command: "/tmp/ninlil-oss-final/gcc/test_node_posix"
+Directory: /tmp/ninlil-oss-final/gcc
+"discovery_slow_posix" start time: Sep 08 13:20 UTC
+Output:
+----------------------------------------------------------
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: b31bf72e11e9dddfca1e5a0d04523003 517cdf2892b0c21d2ac335a103f8a509
+ contexts 1->3: a76a44f1f48420f6c84bb0b158942f1f a82f19cd359126555f43d0d8e581aebf
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=6300 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5800 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=20451
+ edge=3-1 delivery=0 epoch=1 age=12416
+ edge=2-3 delivery=8 epoch=1 age=18653
+ edge=2-1 delivery=8 epoch=1 age=14691
+ edge=1-3 delivery=0 epoch=1 age=15922
+ edge=1-2 delivery=8 epoch=1 age=16422
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: b31bf72e11e9dddfca1e5a0d04523003 517cdf2892b0c21d2ac335a103f8a509
+ contexts 2->3: c6c56300a7dbe315899f88ee545b0933 01e34ed39deae571f917a733e9fa16dc
+ peer=1 attempts=8 delivered=8 bits=255 age=4580 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=8780 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: a76a44f1f48420f6c84bb0b158942f1f a82f19cd359126555f43d0d8e581aebf
+ contexts 3->2: c6c56300a7dbe315899f88ee545b0933 01e34ed39deae571f917a733e9fa16dc
+ peer=1 attempts=8 delivered=0 bits=0 age=2320 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=700 active=1 secure=1 drain=0
+PLAN t=121000 epoch=1 phase=1 flow=1->3 mask=0/0 until=8590115592 prep=8590115592
+PLAN t=123000 epoch=1 phase=1 flow=1->3 mask=1/0 until=8590115592 prep=8590115592
+PLAN t=125000 epoch=1 phase=1 flow=1->3 mask=3/0 until=8590115592 prep=8590115592
+PLAN t=128640 epoch=1 phase=1 flow=1->3 mask=7/0 until=8590115592 prep=8590115592
+PLAN t=129000 epoch=1 phase=2 flow=1->3 mask=7/0 until=8590123592 prep=8590115592
+PLAN t=135500 epoch=1 phase=2 flow=1->3 mask=7/1 until=8590123592 prep=8590115592
+PLAN t=135500 epoch=1 phase=2 flow=1->3 mask=7/3 until=8590123592 prep=8590115592
+PLAN t=135500 epoch=1 phase=3 flow=1->3 mask=7/7 until=8590123592 prep=8590115592
+PLAN t=143000 epoch=2 phase=1 flow=3->1 mask=0/0 until=8590137592 prep=8590137592
+PLAN t=148500 epoch=2 phase=1 flow=3->1 mask=2/0 until=8590137592 prep=8590137592
+PLAN t=149000 epoch=2 phase=1 flow=3->1 mask=6/0 until=8590137592 prep=8590137592
+PLAN t=157000 epoch=2 phase=1 flow=3->1 mask=7/0 until=8590137592 prep=8590137592
+PLAN t=159000 epoch=2 phase=2 flow=3->1 mask=7/0 until=8590153592 prep=8590137592
+PLAN t=219000 epoch=2 phase=4 flow=3->1 mask=7/0 until=8590153592 prep=8590137592
+ contexts 1->2: 1a04826b1122e7a4d64363cfba10a288 e6f3bd708dee4dd4ec5b02c9d7b9fc39
+ contexts 1->3: 11487eb302eb3107cef9ad6321f9f041 e428803755789d80506b305f016599a4
+ proof 0:00000000000000000000000000000000e6f3bd708dee4dd4ec5b02c9d7b9fc3911487eb302eb3107cef9ad6321f9f041
+ proof 1:675bbf5286eef9b0c51fac1b32d7e2b1e6f3bd708dee4dd4ec5b02c9d7b9fc3900000000000000000000000000000000
+ proof 2:e6f3bd708dee4dd4ec5b02c9d7b9fc390000000000000000000000000000000011487eb302eb3107cef9ad6321f9f041
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+PLAN t=221000 epoch=3 phase=5 flow=1->3 mask=7/7 until=8590123592 prep=8590115592
+PLAN t=223000 epoch=4 phase=1 flow=1->3 mask=0/0 until=8590217592 prep=8590217592
+PLAN t=226160 epoch=4 phase=1 flow=1->3 mask=2/0 until=8590217592 prep=8590217592
+PLAN t=229000 epoch=4 phase=1 flow=1->3 mask=3/0 until=8590217592 prep=8590217592
+PLAN t=231780 epoch=4 phase=1 flow=1->3 mask=7/0 until=8590217592 prep=8590217592
+PLAN t=233000 epoch=4 phase=2 flow=1->3 mask=7/0 until=8590227592 prep=8590217592
+PLAN t=239500 epoch=4 phase=2 flow=1->3 mask=7/1 until=8590227592 prep=8590217592
+PLAN t=239500 epoch=4 phase=2 flow=1->3 mask=7/3 until=8590227592 prep=8590217592
+PLAN t=239500 epoch=4 phase=3 flow=1->3 mask=7/7 until=8590227592 prep=8590217592
+PLAN t=253000 epoch=5 phase=1 flow=3->1 mask=0/0 until=8590247592 prep=8590247592
+PLAN t=256500 epoch=5 phase=1 flow=3->1 mask=1/0 until=8590247592 prep=8590247592
+PLAN t=258000 epoch=5 phase=1 flow=3->1 mask=3/0 until=8590247592 prep=8590247592
+PLAN t=259000 epoch=5 phase=1 flow=3->1 mask=7/0 until=8590247592 prep=8590247592
+PLAN t=261000 epoch=5 phase=2 flow=3->1 mask=7/0 until=8590255592 prep=8590247592
+PLAN t=267000 epoch=5 phase=2 flow=3->1 mask=7/1 until=8590255592 prep=8590247592
+PLAN t=267000 epoch=5 phase=2 flow=3->1 mask=7/3 until=8590255592 prep=8590247592
+PLAN t=267000 epoch=5 phase=3 flow=3->1 mask=7/7 until=8590255592 prep=8590247592
+Node scheduling seed: 4
+Autonomous sequence 1 restart mode 0 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+<end of output>
+Test time =   4.70 sec
+----------------------------------------------------------
+Test Passed.
+"discovery_slow_posix" end time: Sep 08 13:20 UTC
+"discovery_slow_posix" time elapsed: 00:00:04
+----------------------------------------------------------
+
+52/63 Testing: field_replacement_flash_runtime
+52/63 Test: field_replacement_flash_runtime
+Command: "/tmp/ninlil-oss-final/gcc/test_field_flash_runtime"
+Directory: /tmp/ninlil-oss-final/gcc
+"field_replacement_flash_runtime" start time: Sep 08 13:20 UTC
+Output:
+----------------------------------------------------------
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 0 PASS
+Unknown replacement and pending delivery recovered in model: 113000 ms
+Autonomous sequence 3 restart mode 0 PASS
+Out-of-range Join, alternate Relay, partition, unknown replacement, revoked return PASS
+<end of output>
+Test time =   1.61 sec
+----------------------------------------------------------
+Test Passed.
+"field_replacement_flash_runtime" end time: Sep 08 13:20 UTC
+"field_replacement_flash_runtime" time elapsed: 00:00:01
+----------------------------------------------------------
+
+54/63 Testing: enrollment_flash_runtime
+54/63 Test: enrollment_flash_runtime
+Command: "/tmp/ninlil-oss-final/gcc/test_node_flash_runtime"
+Directory: /tmp/ninlil-oss-final/gcc
+"enrollment_flash_runtime" start time: Sep 08 13:20 UTC
+Output:
+----------------------------------------------------------
+PLAN t=121000 epoch=1 phase=1 flow=1->3 mask=0/0 until=8590115592 prep=8590115592
+PLAN t=123000 epoch=1 phase=1 flow=1->3 mask=1/0 until=8590115592 prep=8590115592
+PLAN t=125000 epoch=1 phase=1 flow=1->3 mask=3/0 until=8590115592 prep=8590115592
+PLAN t=127020 epoch=1 phase=1 flow=1->3 mask=7/0 until=8590115592 prep=8590115592
+PLAN t=129000 epoch=1 phase=2 flow=1->3 mask=7/0 until=8590123592 prep=8590115592
+PLAN t=135020 epoch=1 phase=2 flow=1->3 mask=7/1 until=8590123592 prep=8590115592
+PLAN t=135020 epoch=1 phase=2 flow=1->3 mask=7/3 until=8590123592 prep=8590115592
+PLAN t=135020 epoch=1 phase=3 flow=1->3 mask=7/7 until=8590123592 prep=8590115592
+PLAN t=143000 epoch=2 phase=1 flow=3->1 mask=0/0 until=8590137592 prep=8590137592
+PLAN t=145040 epoch=2 phase=1 flow=3->1 mask=1/0 until=8590137592 prep=8590137592
+PLAN t=147000 epoch=2 phase=1 flow=3->1 mask=3/0 until=8590137592 prep=8590137592
+PLAN t=149000 epoch=2 phase=1 flow=3->1 mask=7/0 until=8590137592 prep=8590137592
+PLAN t=151000 epoch=2 phase=2 flow=3->1 mask=7/0 until=8590145592 prep=8590137592
+PLAN t=157000 epoch=2 phase=2 flow=3->1 mask=7/1 until=8590145592 prep=8590137592
+PLAN t=157000 epoch=2 phase=2 flow=3->1 mask=7/3 until=8590145592 prep=8590137592
+PLAN t=157000 epoch=2 phase=3 flow=3->1 mask=7/7 until=8590145592 prep=8590137592
+Node scheduling seed: 1
+Autonomous sequence 1 restart mode 0 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+<end of output>
+Test time =   4.45 sec
+----------------------------------------------------------
+Test Passed.
+"enrollment_flash_runtime" end time: Sep 08 13:20 UTC
+"enrollment_flash_runtime" time elapsed: 00:00:04
+----------------------------------------------------------
+
+56/63 Testing: discovery_slow_flash_runtime
+56/63 Test: discovery_slow_flash_runtime
+Command: "/tmp/ninlil-oss-final/gcc/test_node_flash_runtime"
+Directory: /tmp/ninlil-oss-final/gcc
+"discovery_slow_flash_runtime" start time: Sep 08 13:20 UTC
+Output:
+----------------------------------------------------------
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 2e5ecab93421dffbc23d30e7766181f7 5c1bb2fcf85b36504efed4a4dc85efee
+ contexts 1->3: b07f59b1a6b487bbeebccb271ef46c90 eec88a4ffb2f971b70c6c2587612cb44
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=6300 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5800 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=20451
+ edge=3-1 delivery=0 epoch=1 age=12416
+ edge=2-3 delivery=8 epoch=1 age=18653
+ edge=2-1 delivery=8 epoch=1 age=14691
+ edge=1-3 delivery=0 epoch=1 age=15922
+ edge=1-2 delivery=8 epoch=1 age=16422
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 2e5ecab93421dffbc23d30e7766181f7 5c1bb2fcf85b36504efed4a4dc85efee
+ contexts 2->3: 45efcb7ba728a27f796d2b47c0409048 ac330beef8add515d85f34b5eca6b70e
+ peer=1 attempts=8 delivered=8 bits=255 age=4580 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=8780 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: b07f59b1a6b487bbeebccb271ef46c90 eec88a4ffb2f971b70c6c2587612cb44
+ contexts 3->2: 45efcb7ba728a27f796d2b47c0409048 ac330beef8add515d85f34b5eca6b70e
+ peer=1 attempts=8 delivered=0 bits=0 age=2320 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=700 active=1 secure=1 drain=0
+PLAN t=121000 epoch=1 phase=1 flow=1->3 mask=0/0 until=8590115592 prep=8590115592
+PLAN t=123000 epoch=1 phase=1 flow=1->3 mask=1/0 until=8590115592 prep=8590115592
+PLAN t=125000 epoch=1 phase=1 flow=1->3 mask=3/0 until=8590115592 prep=8590115592
+PLAN t=128640 epoch=1 phase=1 flow=1->3 mask=7/0 until=8590115592 prep=8590115592
+PLAN t=129000 epoch=1 phase=2 flow=1->3 mask=7/0 until=8590123592 prep=8590115592
+PLAN t=135500 epoch=1 phase=2 flow=1->3 mask=7/1 until=8590123592 prep=8590115592
+PLAN t=135500 epoch=1 phase=2 flow=1->3 mask=7/3 until=8590123592 prep=8590115592
+PLAN t=135500 epoch=1 phase=3 flow=1->3 mask=7/7 until=8590123592 prep=8590115592
+PLAN t=143000 epoch=2 phase=1 flow=3->1 mask=0/0 until=8590137592 prep=8590137592
+PLAN t=148500 epoch=2 phase=1 flow=3->1 mask=2/0 until=8590137592 prep=8590137592
+PLAN t=149000 epoch=2 phase=1 flow=3->1 mask=6/0 until=8590137592 prep=8590137592
+PLAN t=157000 epoch=2 phase=1 flow=3->1 mask=7/0 until=8590137592 prep=8590137592
+PLAN t=159000 epoch=2 phase=2 flow=3->1 mask=7/0 until=8590153592 prep=8590137592
+PLAN t=219000 epoch=2 phase=4 flow=3->1 mask=7/0 until=8590153592 prep=8590137592
+ contexts 1->2: 9bad5056a524ae5584033ec30557fdd9 447f562b7c691291fc5c9e6ef6b6cc39
+ contexts 1->3: 877a0df9c5a9788ceb4b980f3861fa63 6124fe566a6ffa2cf962279d7b36cbe8
+ proof 0:00000000000000000000000000000000447f562b7c691291fc5c9e6ef6b6cc39877a0df9c5a9788ceb4b980f3861fa63
+ proof 1:8668a081047caad5970b20233a88b5a5447f562b7c691291fc5c9e6ef6b6cc3900000000000000000000000000000000
+ proof 2:447f562b7c691291fc5c9e6ef6b6cc3900000000000000000000000000000000877a0df9c5a9788ceb4b980f3861fa63
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+PLAN t=221000 epoch=3 phase=5 flow=1->3 mask=7/7 until=8590123592 prep=8590115592
+PLAN t=223000 epoch=4 phase=1 flow=1->3 mask=0/0 until=8590217592 prep=8590217592
+PLAN t=226160 epoch=4 phase=1 flow=1->3 mask=2/0 until=8590217592 prep=8590217592
+PLAN t=229000 epoch=4 phase=1 flow=1->3 mask=3/0 until=8590217592 prep=8590217592
+PLAN t=231780 epoch=4 phase=1 flow=1->3 mask=7/0 until=8590217592 prep=8590217592
+PLAN t=233000 epoch=4 phase=2 flow=1->3 mask=7/0 until=8590227592 prep=8590217592
+PLAN t=239500 epoch=4 phase=2 flow=1->3 mask=7/1 until=8590227592 prep=8590217592
+PLAN t=239500 epoch=4 phase=2 flow=1->3 mask=7/3 until=8590227592 prep=8590217592
+PLAN t=239500 epoch=4 phase=3 flow=1->3 mask=7/7 until=8590227592 prep=8590217592
+PLAN t=253000 epoch=5 phase=1 flow=3->1 mask=0/0 until=8590247592 prep=8590247592
+PLAN t=256500 epoch=5 phase=1 flow=3->1 mask=1/0 until=8590247592 prep=8590247592
+PLAN t=258000 epoch=5 phase=1 flow=3->1 mask=3/0 until=8590247592 prep=8590247592
+PLAN t=259000 epoch=5 phase=1 flow=3->1 mask=7/0 until=8590247592 prep=8590247592
+PLAN t=261000 epoch=5 phase=2 flow=3->1 mask=7/0 until=8590255592 prep=8590247592
+PLAN t=267000 epoch=5 phase=2 flow=3->1 mask=7/1 until=8590255592 prep=8590247592
+PLAN t=267000 epoch=5 phase=2 flow=3->1 mask=7/3 until=8590255592 prep=8590247592
+PLAN t=267000 epoch=5 phase=3 flow=3->1 mask=7/7 until=8590255592 prep=8590247592
+Node scheduling seed: 4
+Autonomous sequence 1 restart mode 0 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+<end of output>
+Test time =   4.85 sec
+----------------------------------------------------------
+Test Passed.
+"discovery_slow_flash_runtime" end time: Sep 08 13:20 UTC
+"discovery_slow_flash_runtime" time elapsed: 00:00:04
+----------------------------------------------------------
+
+End testing: Sep 08 13:20 UTC

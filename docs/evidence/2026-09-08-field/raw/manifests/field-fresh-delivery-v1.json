@@ -1,0 +1,17 @@
+{
+  "group": "field-fresh-delivery-v1",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-fresh-delivery-v1/console.jsonl",
+      "sha256": "af6f2061f790328b15e87764ecb8dd369a7a61cee02c64aafe43c0a43f4b9b3f",
+      "bytes": 311292,
+      "git_blob": "20d5f068de52ef94f58ec8635c8cb6c64aef558d"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-fresh-delivery-v1/result.json",
+      "sha256": "dc5d9903ab42eba7d879e480c508e974650c9ae21d33f660e17beed8681861ab",
+      "bytes": 687679,
+      "git_blob": "a52303f27db8abfdbcd553827e2369acea80a51d"
+    }
+  ]
+}

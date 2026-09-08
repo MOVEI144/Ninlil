@@ -1,0 +1,28 @@
+Internal ctest changing into directory: /tmp/ninlil-field-review
+Test project /tmp/ninlil-field-review
+      Start 40: esp_network_pump_model
+ 1/11 Test #40: esp_network_pump_model .............   Passed    0.06 sec
+      Start 41: field_replacement_posix
+ 2/11 Test #41: field_replacement_posix ............   Passed    1.90 sec
+      Start 43: enrollment_posix
+ 3/11 Test #43: enrollment_posix ...................   Passed    5.38 sec
+      Start 44: discovery_posix
+ 4/11 Test #44: discovery_posix ....................   Passed    5.20 sec
+      Start 45: discovery_slow_posix
+ 5/11 Test #45: discovery_slow_posix ...............   Passed    5.07 sec
+      Start 46: lost_effective_ack_posix
+ 6/11 Test #46: lost_effective_ack_posix ...........   Passed    4.95 sec
+      Start 53: field_replacement_flash_runtime
+ 7/11 Test #53: field_replacement_flash_runtime ....   Passed    1.79 sec
+      Start 55: enrollment_flash_runtime
+ 8/11 Test #55: enrollment_flash_runtime ...........   Passed    5.12 sec
+      Start 56: discovery_flash_runtime
+ 9/11 Test #56: discovery_flash_runtime ............   Passed    5.82 sec
+      Start 57: discovery_slow_flash_runtime
+10/11 Test #57: discovery_slow_flash_runtime .......   Passed    5.73 sec
+      Start 58: lost_effective_ack_flash_runtime
+11/11 Test #58: lost_effective_ack_flash_runtime ...   Passed    5.31 sec
+
+100% tests passed, 0 tests failed out of 11
+
+Total Test time (real) =  46.36 sec

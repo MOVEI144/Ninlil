@@ -1,0 +1,136 @@
+Internal ctest changing into directory: /tmp/ninlil-oss-final/clang-sanitize
+Test project /tmp/ninlil-oss-final/clang-sanitize
+      Start  1: m1_hil_delivery
+ 1/65 Test  #1: m1_hil_delivery ............................   Passed    2.89 sec
+      Start  2: m1_core
+ 2/65 Test  #2: m1_core ....................................   Passed    0.40 sec
+      Start  3: core_quota_retry
+ 3/65 Test  #3: core_quota_retry ...........................   Passed    0.09 sec
+      Start  4: collection_posix
+ 4/65 Test  #4: collection_posix ...........................   Passed   14.36 sec
+      Start  5: collection_flash_runtime
+ 5/65 Test  #5: collection_flash_runtime ...................   Passed   16.52 sec
+      Start  6: p0_delivery_state
+ 6/65 Test  #6: p0_delivery_state ..........................   Passed   20.43 sec
+      Start  7: posix_collection_publication
+ 7/65 Test  #7: posix_collection_publication ...............   Passed    0.09 sec
+      Start  8: p0_operations
+ 8/65 Test  #8: p0_operations ..............................   Passed    0.02 sec
+      Start  9: m1_diag_radio
+ 9/65 Test  #9: m1_diag_radio ..............................   Passed    0.02 sec
+      Start 10: m1_flash
+10/65 Test #10: m1_flash ...................................   Passed    0.02 sec
+      Start 11: flash_collection_cuts
+11/65 Test #11: flash_collection_cuts ......................   Passed    0.02 sec
+      Start 12: m1_radio_delivery
+12/65 Test #12: m1_radio_delivery ..........................   Passed    4.57 sec
+      Start 13: m3_security_state
+13/65 Test #13: m3_security_state ..........................   Passed    0.03 sec
+      Start 14: m3_security_partitions
+14/65 Test #14: m3_security_partitions .....................   Passed    0.02 sec
+      Start 15: m1_sx1262_hal
+15/65 Test #15: m1_sx1262_hal ..............................   Passed    0.01 sec
+      Start 16: m1_sx1262_physical
+16/65 Test #16: m1_sx1262_physical .........................   Passed    0.02 sec
+      Start 17: w02_sim_model
+17/65 Test #17: w02_sim_model ..............................   Passed    0.02 sec
+      Start 18: w02_sim_scenarios
+18/65 Test #18: w02_sim_scenarios ..........................   Passed   25.97 sec
+      Start 19: w02_direct
+19/65 Test #19: w02_direct .................................   Passed    0.27 sec
+      Start 20: w02_star
+20/65 Test #20: w02_star ...................................   Passed    1.70 sec
+      Start 21: w02_recovery
+21/65 Test #21: w02_recovery ...............................   Passed    2.29 sec
+      Start 22: bulk_resume_posix
+22/65 Test #22: bulk_resume_posix ..........................   Passed  114.22 sec
+      Start 23: bulk_cold_session_posix
+23/65 Test #23: bulk_cold_session_posix ....................   Passed    0.07 sec
+      Start 24: bulk_resume_flash_runtime
+24/65 Test #24: bulk_resume_flash_runtime ..................   Passed  219.39 sec
+      Start 25: bulk_cold_session_flash_runtime
+25/65 Test #25: bulk_cold_session_flash_runtime ............   Passed    0.06 sec
+      Start 26: m2_secure_envelope
+26/65 Test #26: m2_secure_envelope .........................   Passed    0.03 sec
+      Start 27: m2_edhoc_handshake
+27/65 Test #27: m2_edhoc_handshake .........................   Passed    1.00 sec
+      Start 28: persistent_identity
+28/65 Test #28: persistent_identity ........................   Passed    2.33 sec
+      Start 29: m3_join_lifecycle
+29/65 Test #29: m3_join_lifecycle ..........................   Passed    0.02 sec
+      Start 30: m4_m5_network_control
+30/65 Test #30: m4_m5_network_control ......................   Passed    0.02 sec
+      Start 31: network_restart_fences
+31/65 Test #31: network_restart_fences .....................   Passed    0.02 sec
+      Start 32: separate_preparation_lease
+32/65 Test #32: separate_preparation_lease .................   Passed    0.02 sec
+      Start 33: lease_clock_restart
+33/65 Test #33: lease_clock_restart ........................   Passed    0.02 sec
+      Start 34: store_binding_posix
+34/65 Test #34: store_binding_posix ........................   Passed    0.06 sec
+      Start 35: control_log_posix
+35/65 Test #35: control_log_posix ..........................   Passed    0.03 sec
+      Start 36: store_binding_flash_runtime
+36/65 Test #36: store_binding_flash_runtime ................   Passed    0.06 sec
+      Start 37: control_log_flash_runtime
+37/65 Test #37: control_log_flash_runtime ..................   Passed    0.04 sec
+      Start 38: m5_airtime_scheduler
+38/65 Test #38: m5_airtime_scheduler .......................   Passed    0.02 sec
+      Start 39: radio_power_adaptation
+39/65 Test #39: radio_power_adaptation .....................   Passed    0.01 sec
+      Start 40: esp_network_pump_model
+40/65 Test #40: esp_network_pump_model .....................   Passed    0.06 sec
+      Start 41: field_replacement_posix
+41/65 Test #41: field_replacement_posix ....................   Passed    5.69 sec
+      Start 42: autonomous_node_posix
+42/65 Test #42: autonomous_node_posix ......................   Passed    8.29 sec
+      Start 43: enrollment_posix
+43/65 Test #43: enrollment_posix ...........................   Passed   18.76 sec
+      Start 44: discovery_posix
+44/65 Test #44: discovery_posix ............................   Passed   23.02 sec
+      Start 45: discovery_slow_posix
+45/65 Test #45: discovery_slow_posix .......................   Passed   21.29 sec
+      Start 46: lost_effective_ack_posix
+46/65 Test #46: lost_effective_ack_posix ...................   Passed   22.10 sec
+      Start 47: autonomous_overheard_posix
+47/65 Test #47: autonomous_overheard_posix .................   Passed    5.11 sec
+      Start 48: autonomous_root_relay_posix
+48/65 Test #48: autonomous_root_relay_posix ................   Passed    5.55 sec
+      Start 49: autonomous_join_ack_loss_posix
+49/65 Test #49: autonomous_join_ack_loss_posix .............   Passed    5.90 sec
+      Start 50: autonomous_bounded_radio_posix
+50/65 Test #50: autonomous_bounded_radio_posix .............   Passed    6.03 sec
+      Start 51: autonomous_sustained_radio_posix
+51/65 Test #51: autonomous_sustained_radio_posix ...........   Passed    6.27 sec
+      Start 52: application_ledger_restart_posix
+52/65 Test #52: application_ledger_restart_posix ...........   Passed    0.08 sec
+      Start 53: field_replacement_flash_runtime
+53/65 Test #53: field_replacement_flash_runtime ............   Passed    5.22 sec
+      Start 54: autonomous_node_flash_runtime
+54/65 Test #54: autonomous_node_flash_runtime ..............   Passed    7.79 sec
+      Start 55: enrollment_flash_runtime
+55/65 Test #55: enrollment_flash_runtime ...................   Passed   18.40 sec
+      Start 56: discovery_flash_runtime
+56/65 Test #56: discovery_flash_runtime ....................   Passed   21.36 sec
+      Start 57: discovery_slow_flash_runtime
+57/65 Test #57: discovery_slow_flash_runtime ...............   Passed   24.32 sec
+      Start 58: lost_effective_ack_flash_runtime
+58/65 Test #58: lost_effective_ack_flash_runtime ...........   Passed   21.66 sec
+      Start 59: autonomous_overheard_flash_runtime
+59/65 Test #59: autonomous_overheard_flash_runtime .........   Passed    5.94 sec
+      Start 60: autonomous_root_relay_flash_runtime
+60/65 Test #60: autonomous_root_relay_flash_runtime ........   Passed    6.28 sec
+      Start 61: autonomous_join_ack_loss_flash_runtime
+61/65 Test #61: autonomous_join_ack_loss_flash_runtime .....   Passed    8.47 sec
+      Start 62: autonomous_bounded_radio_flash_runtime
+62/65 Test #62: autonomous_bounded_radio_flash_runtime .....   Passed    6.22 sec
+      Start 63: autonomous_sustained_radio_flash_runtime
+63/65 Test #63: autonomous_sustained_radio_flash_runtime ...   Passed    6.93 sec
+      Start 64: application_ledger_restart_flash_runtime
+64/65 Test #64: application_ledger_restart_flash_runtime ...   Passed    0.17 sec
+      Start 65: node_provisioning_history
+65/65 Test #65: node_provisioning_history ..................   Passed    0.03 sec
+
+100% tests passed, 0 tests failed out of 65
+
+Total Test time (real) = 688.15 sec

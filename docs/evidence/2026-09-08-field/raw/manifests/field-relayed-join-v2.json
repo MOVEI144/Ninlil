@@ -1,0 +1,17 @@
+{
+  "group": "field-relayed-join-v2",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-relayed-join-v2/console.jsonl",
+      "sha256": "7d40be89616324636f2141d17a4f78e81c91954727623fd1c6ce54f5da8c8442",
+      "bytes": 210337,
+      "git_blob": "430a71bbe0c049c2588b2a672671f6071be4b8db"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-relayed-join-v2/result.json",
+      "sha256": "3c715b46850b5db1335db1616a319e9541423f86fdecaffae1535531c0492ed9",
+      "bytes": 585052,
+      "git_blob": "31230d2a70ee0451e8e2050a4d1705171ab2bd3c"
+    }
+  ]
+}

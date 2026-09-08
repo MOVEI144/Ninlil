@@ -1,0 +1,8 @@
+{
+  "app.bin": "579a14ae54c50c8116c7e19c544aeb05ca88c66aaae8748e931d3a0beb9e769a",
+  "app.elf": "45bd0eab0e5e1614fc750516951bc93d6e71819c7c0f878ce970e169bd2844d9",
+  "bootloader.bin": "f86c3ebf012522fac32c024c667a74857990df787062145c74d67245620dd70f",
+  "partitions.bin": "f46dace73eaa0a69d56f4ceae9db6fa72f22086c4db88c9e8fb961ec52d48a1a",
+  "sdkconfig": "2ad3fcc63949826356dc8bd96f43eccf04afaec6f48f8167942d107fd863c70c",
+  "sdkconfig.h": "3f42f0423cd957f045f17cf4c47194dd94b42b55381a12af2cfdef69f838c8bd"
+}

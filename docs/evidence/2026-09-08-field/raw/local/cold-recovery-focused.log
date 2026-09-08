@@ -1,0 +1,159 @@
+Internal ctest changing into directory: /tmp/ninlil-oss-final/gcc
+Test project /tmp/ninlil-oss-final/gcc
+    Start 41: field_replacement_posix
+1/8 Test #41: field_replacement_posix ...........   Passed    1.59 sec
+    Start 42: autonomous_node_posix
+2/8 Test #42: autonomous_node_posix .............   Passed    6.04 sec
+    Start 43: enrollment_posix
+3/8 Test #43: enrollment_posix ..................   Passed    4.68 sec
+    Start 45: discovery_slow_posix
+4/8 Test #45: discovery_slow_posix ..............***Failed    4.84 sec
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 32d229980fc5244c8459b0dc746d2219 432c455e6376e040650ebd2e568031c8
+ contexts 1->3: 85409b9051fac8f3883a3bca154954bf 36dbeb1f0546bfcee49473feca3782dc
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=6300 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5800 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=20451
+ edge=3-1 delivery=0 epoch=1 age=12416
+ edge=2-3 delivery=8 epoch=1 age=18653
+ edge=2-1 delivery=8 epoch=1 age=14691
+ edge=1-3 delivery=0 epoch=1 age=15922
+ edge=1-2 delivery=8 epoch=1 age=16422
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 32d229980fc5244c8459b0dc746d2219 432c455e6376e040650ebd2e568031c8
+ contexts 2->3: adcad8c892478808d32f4c1c0f78b838 6ca255871ae97546f4cfde5d223cbd69
+ peer=1 attempts=8 delivered=8 bits=255 age=4580 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=8780 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 85409b9051fac8f3883a3bca154954bf 36dbeb1f0546bfcee49473feca3782dc
+ contexts 3->2: adcad8c892478808d32f4c1c0f78b838 6ca255871ae97546f4cfde5d223cbd69
+ peer=1 attempts=8 delivered=0 bits=0 age=2320 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=700 active=1 secure=1 drain=0
+node=1 time=620320 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=7 wants=1 ready=1 authority=1 local=1
+ flow=31 epoch=7 retired=0 ready=3 notice=3 proofepoch=7 live=7 phase=3 end=12885086888
+ contexts 1->2: f16cfdf168bd2458738b91e60470ecc6 64cae8e7ba450dc338de17760e86506f
+ contexts 1->3: 92d6ef7c2b205100a6ec91d4aa818655 c7ce9c3940a6f28372a16c44802cc0ec
+ proof 0:0000000000000000000000000000000064cae8e7ba450dc338de17760e86506f92d6ef7c2b205100a6ec91d4aa818655
+ proof 1:64cae8e7ba450dc338de17760e86506fbcc3a86382ceae81026299562adc697100000000000000000000000000000000
+ proof 2:bcc3a86382ceae81026299562adc69710000000000000000000000000000000092d6ef7c2b205100a6ec91d4aa818655
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=8600 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=7600 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=42712
+ edge=2-3 delivery=8 epoch=1 age=25664
+ edge=3-1 delivery=0 epoch=1 age=22592
+ edge=2-1 delivery=8 epoch=1 age=36165
+ edge=1-3 delivery=0 epoch=1 age=17722
+ edge=1-2 delivery=8 epoch=1 age=18722
+node=2 time=620320 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=1 ready=1 authority=0 local=1
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885086888
+ contexts 2->1: f16cfdf168bd2458738b91e60470ecc6 64cae8e7ba450dc338de17760e86506f
+ contexts 2->3: c5a46da4bed72b1ce4d5b8685cd9c3a4 bcc3a86382ceae81026299562adc6971
+ peer=1 attempts=8 delivered=8 bits=255 age=27100 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=1100 active=1 secure=1 drain=0
+node=3 time=620320 joined=1 peers=3 fault=0 handshake=0/0
+clock=0 pending=0/0 prepare=0 apply=0 proof=0 wants=2 ready=1 authority=0 local=1
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885086888
+ contexts 3->1: 92d6ef7c2b205100a6ec91d4aa818655 c7ce9c3940a6f28372a16c44802cc0ec
+ contexts 3->2: c5a46da4bed72b1ce4d5b8685cd9c3a4 bcc3a86382ceae81026299562adc6971
+ peer=1 attempts=8 delivered=0 bits=0 age=13040 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=11320 active=1 secure=1 drain=0
+message outcome=0 evidence=0 applications=2 before=1
+424: now < until && delivered_app == before + 1u
+Node scheduling seed: 4
+Autonomous sequence 1 restart mode 0 PASS
+
+    Start 52: field_replacement_flash_runtime
+5/8 Test #52: field_replacement_flash_runtime ...   Passed    1.76 sec
+    Start 53: autonomous_node_flash_runtime
+6/8 Test #53: autonomous_node_flash_runtime .....   Passed    6.29 sec
+    Start 54: enrollment_flash_runtime
+7/8 Test #54: enrollment_flash_runtime ..........   Passed    4.90 sec
+    Start 56: discovery_slow_flash_runtime
+8/8 Test #56: discovery_slow_flash_runtime ......***Failed    5.04 sec
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: b940a4c65e69cdf82bc59ccc5e7b11ac ca2b2f8a159556ee7608092cfca9b529
+ contexts 1->3: efd9fcb0de4fb14d33a9165ca1276170 50e83c35dbd573aae8fe653ea40f6dd8
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=6300 active=1 secure=1 drain=0
+Errors while running CTest
+ peer=3 attempts=8 delivered=0 bits=0 age=5800 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=20451
+ edge=3-1 delivery=0 epoch=1 age=12416
+ edge=2-3 delivery=8 epoch=1 age=18653
+ edge=2-1 delivery=8 epoch=1 age=14691
+ edge=1-3 delivery=0 epoch=1 age=15922
+ edge=1-2 delivery=8 epoch=1 age=16422
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: b940a4c65e69cdf82bc59ccc5e7b11ac ca2b2f8a159556ee7608092cfca9b529
+ contexts 2->3: 553343e6e36610f5748d0be7cfc90dc9 b8f03c152bdd4a072ade0c1fb0c57bbb
+ peer=1 attempts=8 delivered=8 bits=255 age=4580 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=8780 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: efd9fcb0de4fb14d33a9165ca1276170 50e83c35dbd573aae8fe653ea40f6dd8
+ contexts 3->2: 553343e6e36610f5748d0be7cfc90dc9 b8f03c152bdd4a072ade0c1fb0c57bbb
+ peer=1 attempts=8 delivered=0 bits=0 age=2320 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=700 active=1 secure=1 drain=0
+node=1 time=620320 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=7 wants=1 ready=1 authority=1 local=1
+ flow=31 epoch=7 retired=0 ready=3 notice=3 proofepoch=7 live=7 phase=3 end=12885086888
+ contexts 1->2: 53084c036cda411947d2f6fddb68b2da 62e8402baa4c9ad53e9211ad5c479272
+ contexts 1->3: b800c1b76c47c268e1aa1d7c5a654127 b065345b73f9d05500f7ac8530dd3965
+ proof 0:0000000000000000000000000000000062e8402baa4c9ad53e9211ad5c479272b800c1b76c47c268e1aa1d7c5a654127
+ proof 1:62e8402baa4c9ad53e9211ad5c479272e7f6c19e4fc9cdb34a2a0380fad9cc1b00000000000000000000000000000000
+ proof 2:e7f6c19e4fc9cdb34a2a0380fad9cc1b00000000000000000000000000000000b800c1b76c47c268e1aa1d7c5a654127
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=8600 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=7600 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=42712
+ edge=2-3 delivery=8 epoch=1 age=25664
+ edge=3-1 delivery=0 epoch=1 age=22592
+ edge=2-1 delivery=8 epoch=1 age=36165
+ edge=1-3 delivery=0 epoch=1 age=17722
+ edge=1-2 delivery=8 epoch=1 age=18722
+node=2 time=620320 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=1 ready=1 authority=0 local=1
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885086888
+ contexts 2->1: 53084c036cda411947d2f6fddb68b2da 62e8402baa4c9ad53e9211ad5c479272
+ contexts 2->3: 5535d11b1a6aa61f32b1b87fbf5924d9 e7f6c19e4fc9cdb34a2a0380fad9cc1b
+ peer=1 attempts=8 delivered=8 bits=255 age=27100 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=1100 active=1 secure=1 drain=0
+node=3 time=620320 joined=1 peers=3 fault=0 handshake=0/0
+clock=0 pending=0/0 prepare=0 apply=0 proof=0 wants=2 ready=1 authority=0 local=1
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885086888
+ contexts 3->1: b800c1b76c47c268e1aa1d7c5a654127 b065345b73f9d05500f7ac8530dd3965
+ contexts 3->2: 5535d11b1a6aa61f32b1b87fbf5924d9 e7f6c19e4fc9cdb34a2a0380fad9cc1b
+ peer=1 attempts=8 delivered=0 bits=0 age=13040 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=11320 active=1 secure=1 drain=0
+message outcome=0 evidence=0 applications=2 before=1
+424: now < until && delivered_app == before + 1u
+Node scheduling seed: 4
+Autonomous sequence 1 restart mode 0 PASS
+
+
+75% tests passed, 2 tests failed out of 8
+
+Total Test time (real) =  35.14 sec
+
+The following tests FAILED:
+	 45 - discovery_slow_posix (Failed)
+	 56 - discovery_slow_flash_runtime (Failed)

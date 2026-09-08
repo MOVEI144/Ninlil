@@ -1,0 +1,17 @@
+{
+  "group": "field-receipt-recovery-v5",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-receipt-recovery-v5/console.jsonl",
+      "sha256": "a1b2b062bbf3e94bd29265048e36edf90291b0f3e4f0eb94f360236735c61927",
+      "bytes": 209333,
+      "git_blob": "af6cc59bc0cb6568f98b0486c6def0648c35ee2c"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-receipt-recovery-v5/result.json",
+      "sha256": "5c753be759cb78b09b67c554abf5ede38288266beef0e079ebd3dae38e47e901",
+      "bytes": 583271,
+      "git_blob": "25423d661b93f473dd8f03702fea2fac9f6a9dde"
+    }
+  ]
+}

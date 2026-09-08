@@ -1,0 +1,11 @@
+{
+  "group": "field-relayed-join-v1",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-relayed-join-v1/console.jsonl",
+      "sha256": "3ec502627992f29bd9110f7576555d126369d23e76568cf01fdf08f0fdfbca8f",
+      "bytes": 27310,
+      "git_blob": "3c6441383ee3a7a1b3530d14fa9d0df3c5896217"
+    }
+  ]
+}

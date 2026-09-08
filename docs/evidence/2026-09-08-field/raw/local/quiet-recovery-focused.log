@@ -1,0 +1,54 @@
+[1/17] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_recovery.c.o
+[2/17] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_routes.c.o
+[3/17] Linking C static library libninlil_node.a
+[4/17] Linking C executable test_bulk_application_posix
+[5/17] Linking C executable test_bulk_application_flash_runtime
+[6/17] Linking C executable test_network_pump
+[7/17] Linking C executable test_node_application_posix
+[8/17] Building C object CMakeFiles/test_field_posix.dir/tests/test_field_network.c.o
+[9/17] Building C object CMakeFiles/test_node_posix.dir/tests/test_node.c.o
+[10/17] Linking C executable test_field_posix
+[11/17] Linking C executable test_node_posix
+[12/17] Linking C executable test_node_application_flash_runtime
+[13/17] Linking C executable test_node_storage
+[14/17] Building C object CMakeFiles/test_node_flash_runtime.dir/tests/test_node.c.o
+[15/17] Linking C executable test_node_flash_runtime
+[16/17] Building C object CMakeFiles/test_field_flash_runtime.dir/tests/test_field_network.c.o
+[17/17] Linking C executable test_field_flash_runtime
+Internal ctest changing into directory: /tmp/ninlil-oss-final/gcc
+Test project /tmp/ninlil-oss-final/gcc
+    Start 41: field_replacement_posix
+1/8 Test #41: field_replacement_posix ...........   Passed    1.51 sec
+    Start 42: autonomous_node_posix
+2/8 Test #42: autonomous_node_posix .............***Failed    3.31 sec
+353: ninlil_node_recovery_step(n) == NINLIL_ERR_BUSY
+Node scheduling seed: 1
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous authenticated Relay path bulk transfer PASS
+
+    Start 43: enrollment_posix
+3/8 Test #43: enrollment_posix ..................   Passed    4.32 sec
+    Start 45: discovery_slow_posix
+4/8 Test #45: discovery_slow_posix ..............   Passed    4.44 sec
+    Start 52: field_replacement_flash_runtime
+5/8 Test #52: field_replacement_flash_runtime ...   Passed    1.60 sec
+    Start 53: autonomous_node_flash_runtime
+6/8 Test #53: autonomous_node_flash_runtime .....***Failed    3.74 sec
+353: ninlil_node_recovery_step(n) == NINLIL_ERR_BUSY
+Node scheduling seed: 1
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous authenticated Relay path bulk transfer PASS
+
+    Start 54: enrollment_flash_runtime
+7/8 Test #54: enrollment_flash_runtime ..........   Passed    4.36 sec
+    Start 56: discovery_slow_flash_runtime
+8/8 Test #56: discovery_slow_flash_runtime ......   Passed    4.56 sec
+
+75% tests passed, 2 tests failed out of 8
+
+Total Test time (real) =  27.86 sec
+
+The following tests FAILED:
+	 42 - autonomous_node_posix (Failed)
+	 53 - autonomous_node_flash_runtime (Failed)
+Errors while running CTest

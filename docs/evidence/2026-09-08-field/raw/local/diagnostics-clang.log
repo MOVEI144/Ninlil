@@ -1,0 +1,46 @@
+Internal ctest changing into directory: /tmp/ninlil-oss-final/clang
+Test project /tmp/ninlil-oss-final/clang
+      Start 41: field_replacement_posix
+ 1/20 Test #41: field_replacement_posix ....................   Passed    4.30 sec
+      Start 42: autonomous_node_posix
+ 2/20 Test #42: autonomous_node_posix ......................   Passed    6.12 sec
+      Start 43: enrollment_posix
+ 3/20 Test #43: enrollment_posix ...........................   Passed    6.46 sec
+      Start 44: discovery_posix
+ 4/20 Test #44: discovery_posix ............................   Passed    6.28 sec
+      Start 45: discovery_slow_posix
+ 5/20 Test #45: discovery_slow_posix .......................   Passed    6.54 sec
+      Start 46: autonomous_overheard_posix
+ 6/20 Test #46: autonomous_overheard_posix .................   Passed    5.12 sec
+      Start 47: autonomous_root_relay_posix
+ 7/20 Test #47: autonomous_root_relay_posix ................   Passed    4.22 sec
+      Start 48: autonomous_join_ack_loss_posix
+ 8/20 Test #48: autonomous_join_ack_loss_posix .............   Passed    4.59 sec
+      Start 49: autonomous_bounded_radio_posix
+ 9/20 Test #49: autonomous_bounded_radio_posix .............   Passed    4.77 sec
+      Start 50: autonomous_sustained_radio_posix
+10/20 Test #50: autonomous_sustained_radio_posix ...........   Passed    5.57 sec
+      Start 52: field_replacement_flash_runtime
+11/20 Test #52: field_replacement_flash_runtime ............   Passed    3.45 sec
+      Start 53: autonomous_node_flash_runtime
+12/20 Test #53: autonomous_node_flash_runtime ..............   Passed    5.81 sec
+      Start 54: enrollment_flash_runtime
+13/20 Test #54: enrollment_flash_runtime ...................   Passed    5.43 sec
+      Start 55: discovery_flash_runtime
+14/20 Test #55: discovery_flash_runtime ....................   Passed    6.02 sec
+      Start 56: discovery_slow_flash_runtime
+15/20 Test #56: discovery_slow_flash_runtime ...............   Passed    6.26 sec
+      Start 57: autonomous_overheard_flash_runtime
+16/20 Test #57: autonomous_overheard_flash_runtime .........   Passed    4.01 sec
+      Start 58: autonomous_root_relay_flash_runtime
+17/20 Test #58: autonomous_root_relay_flash_runtime ........   Passed    4.30 sec
+      Start 59: autonomous_join_ack_loss_flash_runtime
+18/20 Test #59: autonomous_join_ack_loss_flash_runtime .....   Passed    4.21 sec
+      Start 60: autonomous_bounded_radio_flash_runtime
+19/20 Test #60: autonomous_bounded_radio_flash_runtime .....   Passed    4.33 sec
+      Start 61: autonomous_sustained_radio_flash_runtime
+20/20 Test #61: autonomous_sustained_radio_flash_runtime ...   Passed    4.59 sec
+
+100% tests passed, 0 tests failed out of 20
+
+Total Test time (real) = 102.39 sec

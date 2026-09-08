@@ -1,0 +1,276 @@
+backend=posix seed=1
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=6220 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5540 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=14962
+ edge=2-3 delivery=8 epoch=1 age=11737
+ edge=3-1 delivery=0 epoch=1 age=21473
+ edge=2-1 delivery=8 epoch=1 age=18637
+ edge=1-3 delivery=0 epoch=1 age=15662
+ edge=1-2 delivery=8 epoch=1 age=16342
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=8880 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=2000 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=960 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=5360 active=1 secure=1 drain=0
+Node scheduling seed: 1
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=posix seed=2
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=7560 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=3820 active=1 secure=1 drain=0
+ edge=2-3 delivery=8 epoch=1 age=12972
+ edge=3-2 delivery=8 epoch=1 age=19173
+ edge=3-1 delivery=0 epoch=1 age=10768
+ edge=1-3 delivery=0 epoch=1 age=13942
+ edge=2-1 delivery=8 epoch=1 age=11969
+ edge=1-2 delivery=8 epoch=1 age=17682
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=2320 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=3320 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=1120 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=9500 active=1 secure=1 drain=0
+Node scheduling seed: 2
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=posix seed=3
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=3500 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=3000 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=18328
+ edge=2-3 delivery=8 epoch=1 age=12295
+ edge=3-1 delivery=0 epoch=1 age=11307
+ edge=1-3 delivery=0 epoch=1 age=13122
+ edge=2-1 delivery=8 epoch=1 age=15096
+ edge=1-2 delivery=8 epoch=1 age=13622
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=5020 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=2500 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=1280 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=8280 active=1 secure=1 drain=0
+Node scheduling seed: 3
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=posix seed=4
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=3220 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=4360 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=17736
+ edge=2-3 delivery=8 epoch=1 age=17809
+ edge=3-1 delivery=0 epoch=1 age=12500
+ edge=2-1 delivery=8 epoch=1 age=11936
+ edge=1-3 delivery=0 epoch=1 age=14482
+ edge=1-2 delivery=8 epoch=1 age=13342
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=1820 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=8160 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=2440 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=7660 active=1 secure=1 drain=0
+Node scheduling seed: 4
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=posix seed=5
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=5620 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=2840 active=1 secure=1 drain=0
+ edge=2-3 delivery=8 epoch=1 age=15442
+ edge=3-2 delivery=8 epoch=1 age=14953
+ edge=3-1 delivery=0 epoch=1 age=19418
+ edge=2-1 delivery=8 epoch=1 age=20738
+ edge=1-3 delivery=0 epoch=1 age=12962
+ edge=1-2 delivery=8 epoch=1 age=15742
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=10640 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=5360 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=9360 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=4860 active=1 secure=1 drain=0
+Node scheduling seed: 5
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=posix seed=6
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=7100 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=10060 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=14056
+ edge=2-3 delivery=8 epoch=1 age=16687
+ edge=1-3 delivery=0 epoch=1 age=20182
+ edge=3-1 delivery=0 epoch=1 age=11408
+ edge=2-1 delivery=8 epoch=1 age=12595
+ edge=1-2 delivery=8 epoch=1 age=17222
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=2520 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=6600 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=2620 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=5260 active=1 secure=1 drain=0
+Node scheduling seed: 6
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=flash_runtime seed=1
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=6220 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5540 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=14962
+ edge=2-3 delivery=8 epoch=1 age=11737
+ edge=3-1 delivery=0 epoch=1 age=21473
+ edge=2-1 delivery=8 epoch=1 age=18637
+ edge=1-3 delivery=0 epoch=1 age=15662
+ edge=1-2 delivery=8 epoch=1 age=16342
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=8880 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=2000 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=960 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=5360 active=1 secure=1 drain=0
+Node scheduling seed: 1
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=flash_runtime seed=2
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=7560 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=3820 active=1 secure=1 drain=0
+ edge=2-3 delivery=8 epoch=1 age=12972
+ edge=3-2 delivery=8 epoch=1 age=19173
+ edge=3-1 delivery=0 epoch=1 age=10768
+ edge=1-3 delivery=0 epoch=1 age=13942
+ edge=2-1 delivery=8 epoch=1 age=11969
+ edge=1-2 delivery=8 epoch=1 age=17682
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=2320 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=3320 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=1120 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=9500 active=1 secure=1 drain=0
+Node scheduling seed: 2
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=flash_runtime seed=3
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=3500 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=3000 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=18328
+ edge=2-3 delivery=8 epoch=1 age=12295
+ edge=3-1 delivery=0 epoch=1 age=11307
+ edge=1-3 delivery=0 epoch=1 age=13122
+ edge=2-1 delivery=8 epoch=1 age=15096
+ edge=1-2 delivery=8 epoch=1 age=13622
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=5020 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=2500 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=1280 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=8280 active=1 secure=1 drain=0
+Node scheduling seed: 3
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=flash_runtime seed=4
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=3220 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=4360 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=17736
+ edge=2-3 delivery=8 epoch=1 age=17809
+ edge=3-1 delivery=0 epoch=1 age=12500
+ edge=2-1 delivery=8 epoch=1 age=11936
+ edge=1-3 delivery=0 epoch=1 age=14482
+ edge=1-2 delivery=8 epoch=1 age=13342
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=1820 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=8160 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=2440 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=7660 active=1 secure=1 drain=0
+Node scheduling seed: 4
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=flash_runtime seed=5
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=5620 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=2840 active=1 secure=1 drain=0
+ edge=2-3 delivery=8 epoch=1 age=15442
+ edge=3-2 delivery=8 epoch=1 age=14953
+ edge=3-1 delivery=0 epoch=1 age=19418
+ edge=2-1 delivery=8 epoch=1 age=20738
+ edge=1-3 delivery=0 epoch=1 age=12962
+ edge=1-2 delivery=8 epoch=1 age=15742
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=10640 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=5360 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=9360 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=4860 active=1 secure=1 drain=0
+Node scheduling seed: 5
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS
+backend=flash_runtime seed=6
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=7100 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=10060 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=14056
+ edge=2-3 delivery=8 epoch=1 age=16687
+ edge=1-3 delivery=0 epoch=1 age=20182
+ edge=3-1 delivery=0 epoch=1 age=11408
+ edge=2-1 delivery=8 epoch=1 age=12595
+ edge=1-2 delivery=8 epoch=1 age=17222
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=2520 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=6600 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=2620 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=5260 active=1 secure=1 drain=0
+Node scheduling seed: 6
+Autonomous sequence 1 restart mode 0 PASS
+Autonomous sequence 2 restart mode 4 PASS
+Root alone, durable live enrollment, encrypted Relay delivery, epoch fence PASS

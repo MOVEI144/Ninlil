@@ -1,0 +1,101 @@
+{
+  "group": "field-node-v5",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/1/app.bin",
+      "sha256": "e575a100bbe0dcf3f7885547d033c7e539c61b1df7f11e31ff496f6a25c5ce81",
+      "bytes": 472496,
+      "git_blob": "1c1b5a201f153db724c20338c16ce740fae3df3e"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/1/bootloader.bin",
+      "sha256": "aa41edb03f56d2195572b0e91acc0a3938208d4f50d95c2ee549be98805486a0",
+      "bytes": 21088,
+      "git_blob": "53129f4e18fb1962cea588dcf1fb27d0375bc0db"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/1/hashes.json",
+      "sha256": "ae81d1b21eb92931f161597cd0930e4b93e49b50970f91da0043a9f1899b0e1a",
+      "bytes": 509,
+      "git_blob": "4838137779918b51ace2b31421831b7eeecd2838"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/1/partitions.bin",
+      "sha256": "f46dace73eaa0a69d56f4ceae9db6fa72f22086c4db88c9e8fb961ec52d48a1a",
+      "bytes": 3072,
+      "git_blob": "38897e14320e5e1ee47396120d0eae7bbedc6bba"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/1/sdkconfig",
+      "sha256": "a0848f5473e9a2a2397333eec70b59d2a01b944e80a3227f543ea53c6445144e",
+      "bytes": 87125,
+      "git_blob": "ea81a4b2939016b3a87309dc4ada03f464c7ba2e"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/2/app.bin",
+      "sha256": "25e5712844aba5793d9fab95359e5c970f7bcf035ac2643878658add38ce557f",
+      "bytes": 472496,
+      "git_blob": "5b999f9f4c09aa820863ea7126b534338165d8fd"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/2/bootloader.bin",
+      "sha256": "f86c3ebf012522fac32c024c667a74857990df787062145c74d67245620dd70f",
+      "bytes": 21088,
+      "git_blob": "e66f82a60088b26d2f4e26fe98aaa6b8576dab3e"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/2/hashes.json",
+      "sha256": "d7405a2a8fa49c2941808811829b2eaca8f3355ad5e36553260e4a189ed8cda7",
+      "bytes": 509,
+      "git_blob": "3f4600d9f5361fa2e0df0e235020cd2f4889e13a"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/2/partitions.bin",
+      "sha256": "f46dace73eaa0a69d56f4ceae9db6fa72f22086c4db88c9e8fb961ec52d48a1a",
+      "bytes": 3072,
+      "git_blob": "38897e14320e5e1ee47396120d0eae7bbedc6bba"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/2/sdkconfig",
+      "sha256": "2ad3fcc63949826356dc8bd96f43eccf04afaec6f48f8167942d107fd863c70c",
+      "bytes": 87125,
+      "git_blob": "8dfdeecfa4d050801723e98c5694695a4146643a"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/3/app.bin",
+      "sha256": "f88db92bb8ecf5c2b37f6217405cf9cd5d167b0b18a3daa0526f606b8755f2b5",
+      "bytes": 472496,
+      "git_blob": "567c9ac0ed0439fdc1d5d3f3c8988e6cc6aad113"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/3/bootloader.bin",
+      "sha256": "0fd56faee4fd5eec2e806313c5dbbd0a8f59be5a52c6c8b224d7015054a9a185",
+      "bytes": 21088,
+      "git_blob": "e111138aa1f713075ba557c2227ff231adf968a7"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/3/hashes.json",
+      "sha256": "10f703ea678f250689846da842c4ba7487b1c96b3b5c7bccf5ba27ecc199c449",
+      "bytes": 509,
+      "git_blob": "7dc25a40b3ec4075da8d17353f5df7a0ce41a448"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/3/partitions.bin",
+      "sha256": "f46dace73eaa0a69d56f4ceae9db6fa72f22086c4db88c9e8fb961ec52d48a1a",
+      "bytes": 3072,
+      "git_blob": "38897e14320e5e1ee47396120d0eae7bbedc6bba"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/3/sdkconfig",
+      "sha256": "b7878619b02dcbb9b9cd28b9fbf7c468934541b15b5666a249166e28206dec7d",
+      "bytes": 87125,
+      "git_blob": "177c798c40259211550c9dfcb3bdb767fcd2a5ea"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v5/inputs.json",
+      "sha256": "4046c1b216f52295f6bd6cb2a04a63e15c0492ca5b217c448154db16260e9e2d",
+      "bytes": 24513,
+      "git_blob": "d30d5cb3c0abe5c26681766099feaea93f86aa69"
+    }
+  ]
+}

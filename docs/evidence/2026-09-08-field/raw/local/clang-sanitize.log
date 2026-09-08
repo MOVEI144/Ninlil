@@ -1,0 +1,204 @@
+[0/1] Re-running CMake...
+-- Configuring done (0.6s)
+-- Generating done (0.1s)
+-- Build files have been written to: /tmp/ninlil-oss-final/clang-sanitize
+[1/74] Building C object CMakeFiles/ninlil_flash_runtime.dir/ports/flash/ninlil_flash_journal_file.c.o
+[2/74] Linking C static library libninlil_flash_runtime.a
+[3/74] Linking C executable test_hil_delivery
+[4/74] Linking C executable test_collection_flash_runtime
+[5/74] Linking C executable test_radio_delivery
+[6/74] Building C object CMakeFiles/test_bulk_application_posix.dir/embedded/esp32s3/main/node_bulk.c.o
+[7/74] Linking C executable test_bulk_flash_runtime
+[8/74] Building C object CMakeFiles/test_bulk_application_flash_runtime.dir/tests/test_bulk_application.c.o
+[9/74] Building C object CMakeFiles/test_bulk_application_posix.dir/tests/test_bulk_application.c.o
+[10/74] Building C object CMakeFiles/ninlil_identity.dir/ports/crypto/ninlil_identity.c.o
+[11/74] Linking C static library libninlil_identity.a
+[12/74] Building C object CMakeFiles/test_bulk_application_flash_runtime.dir/embedded/esp32s3/main/node_bulk.c.o
+[13/74] Building C object CMakeFiles/ninlil_identity_file.dir/ports/posix/ninlil_identity_file.c.o
+[14/74] Linking C static library libninlil_identity_file.a
+[15/74] Building C object CMakeFiles/test_edhoc.dir/tests/test_edhoc.c.o
+[16/74] Building C object CMakeFiles/ninlil_control_log.dir/src/ninlil_control_log.c.o
+[17/74] Building C object CMakeFiles/ninlil_control_log.dir/src/ninlil_control_collect.c.o
+[18/74] Linking C static library libninlil_control_log.a
+[19/74] Linking C executable test_edhoc
+[20/74] Building C object CMakeFiles/test_control_log_posix.dir/tests/test_control_log.c.o
+[21/74] Building C object CMakeFiles/test_store_binding_posix.dir/tests/test_store_binding.c.o
+[22/74] Linking C executable test_control_log_posix
+[23/74] Linking C executable test_store_binding_posix
+[24/74] Building C object CMakeFiles/ninlil_identity_flash.dir/ports/flash/ninlil_identity_flash.c.o
+[25/74] Linking C static library libninlil_identity_flash.a
+[26/74] Building C object CMakeFiles/test_store_binding_flash_runtime.dir/tests/test_store_binding.c.o
+[27/74] Building C object CMakeFiles/test_control_log_flash_runtime.dir/tests/test_control_log.c.o
+[28/74] Linking C executable test_store_binding_flash_runtime
+[29/74] Linking C executable test_control_log_flash_runtime
+[30/74] Building C object CMakeFiles/test_identity.dir/tests/test_identity.c.o
+[31/74] Linking C executable test_identity
+[32/74] Building C object CMakeFiles/test_network_pump.dir/ports/esp32s3/ninlil_network_pump.c.o
+[33/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_membership.c.o
+[34/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_setup.c.o
+[35/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_admission.c.o
+[36/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_discovery.c.o
+[37/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_enrollment.c.o
+[38/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node.c.o
+[39/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_auth.c.o
+[40/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_control.c.o
+[41/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_plans.c.o
+[42/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_routes.c.o
+[43/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_io.c.o
+[44/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_links.c.o
+[45/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_recovery.c.o
+[46/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_lifecycle.c.o
+[47/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_collection.c.o
+[48/74] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_radio.c.o
+[49/74] Linking C static library libninlil_node.a
+[50/74] Linking C executable test_bulk_application_posix
+[51/74] Building C object CMakeFiles/test_node_posix.dir/tests/test_node_bulk.c.o
+[52/74] Linking C executable test_bulk_application_flash_runtime
+[53/74] Building C object CMakeFiles/test_node_posix.dir/tests/test_node.c.o
+[54/74] Linking C executable test_network_pump
+[55/74] Linking C executable test_node_posix
+[56/74] Building C object CMakeFiles/test_field_posix.dir/tests/test_support.c.o
+[57/74] Building C object CMakeFiles/test_field_posix.dir/tests/test_field_network.c.o
+[58/74] Building C object CMakeFiles/test_field_posix.dir/tests/test_node_bulk.c.o
+[59/74] Linking C executable test_field_posix
+[60/74] Building C object CMakeFiles/test_node_application_posix.dir/embedded/esp32s3/main/node_application.c.o
+[61/74] Building C object CMakeFiles/test_node_application_posix.dir/tests/test_node_application.c.o
+[62/74] Linking C executable test_node_application_posix
+[63/74] Building C object CMakeFiles/test_node_flash_runtime.dir/tests/test_node.c.o
+[64/74] Building C object CMakeFiles/test_node_flash_runtime.dir/tests/test_node_bulk.c.o
+[65/74] Linking C executable test_node_flash_runtime
+[66/74] Building C object CMakeFiles/test_field_flash_runtime.dir/tests/test_support.c.o
+[67/74] Building C object CMakeFiles/test_field_flash_runtime.dir/tests/test_node_bulk.c.o
+[68/74] Building C object CMakeFiles/test_field_flash_runtime.dir/tests/test_field_network.c.o
+[69/74] Linking C executable test_field_flash_runtime
+[70/74] Building C object CMakeFiles/test_node_application_flash_runtime.dir/embedded/esp32s3/main/node_application.c.o
+[71/74] Building C object CMakeFiles/test_node_application_flash_runtime.dir/tests/test_node_application.c.o
+[72/74] Linking C executable test_node_application_flash_runtime
+[73/74] Building C object CMakeFiles/test_node_storage.dir/tests/test_node_storage.c.o
+[74/74] Linking C executable test_node_storage
+Internal ctest changing into directory: /tmp/ninlil-oss-final/clang-sanitize
+Test project /tmp/ninlil-oss-final/clang-sanitize
+      Start  1: m1_hil_delivery
+ 1/60 Test  #1: m1_hil_delivery ............................   Passed    2.22 sec
+      Start  2: m1_core
+ 2/60 Test  #2: m1_core ....................................   Passed    0.34 sec
+      Start  3: core_quota_retry
+ 3/60 Test  #3: core_quota_retry ...........................   Passed    0.07 sec
+      Start  4: collection_posix
+ 4/60 Test  #4: collection_posix ...........................   Passed   11.68 sec
+      Start  5: collection_flash_runtime
+ 5/60 Test  #5: collection_flash_runtime ...................   Passed   20.43 sec
+      Start  6: p0_delivery_state
+ 6/60 Test  #6: p0_delivery_state ..........................   Passed   22.65 sec
+      Start  7: posix_collection_publication
+ 7/60 Test  #7: posix_collection_publication ...............   Passed    0.09 sec
+      Start  8: p0_operations
+ 8/60 Test  #8: p0_operations ..............................   Passed    0.01 sec
+      Start  9: m1_diag_radio
+ 9/60 Test  #9: m1_diag_radio ..............................   Passed    0.02 sec
+      Start 10: m1_flash
+10/60 Test #10: m1_flash ...................................   Passed    0.02 sec
+      Start 11: flash_collection_cuts
+11/60 Test #11: flash_collection_cuts ......................   Passed    0.02 sec
+      Start 12: m1_radio_delivery
+12/60 Test #12: m1_radio_delivery ..........................   Passed    5.33 sec
+      Start 13: m3_security_state
+13/60 Test #13: m3_security_state ..........................   Passed    0.03 sec
+      Start 14: m3_security_partitions
+14/60 Test #14: m3_security_partitions .....................   Passed    0.02 sec
+      Start 15: m1_sx1262_hal
+15/60 Test #15: m1_sx1262_hal ..............................   Passed    0.01 sec
+      Start 16: m1_sx1262_physical
+16/60 Test #16: m1_sx1262_physical .........................   Passed    0.02 sec
+      Start 17: w02_sim_model
+17/60 Test #17: w02_sim_model ..............................   Passed    0.02 sec
+      Start 18: w02_sim_scenarios
+18/60 Test #18: w02_sim_scenarios ..........................   Passed   29.22 sec
+      Start 19: w02_direct
+19/60 Test #19: w02_direct .................................   Passed    0.29 sec
+      Start 20: w02_star
+20/60 Test #20: w02_star ...................................   Passed    1.80 sec
+      Start 21: w02_recovery
+21/60 Test #21: w02_recovery ...............................   Passed    2.40 sec
+      Start 22: bulk_resume_posix
+22/60 Test #22: bulk_resume_posix ..........................   Passed  100.31 sec
+      Start 23: bulk_cold_session_posix
+23/60 Test #23: bulk_cold_session_posix ....................   Passed    0.07 sec
+      Start 24: bulk_resume_flash_runtime
+24/60 Test #24: bulk_resume_flash_runtime ..................   Passed  228.89 sec
+      Start 25: bulk_cold_session_flash_runtime
+25/60 Test #25: bulk_cold_session_flash_runtime ............   Passed    0.07 sec
+      Start 26: m2_secure_envelope
+26/60 Test #26: m2_secure_envelope .........................   Passed    0.03 sec
+      Start 27: m2_edhoc_handshake
+27/60 Test #27: m2_edhoc_handshake .........................   Passed    0.80 sec
+      Start 28: persistent_identity
+28/60 Test #28: persistent_identity ........................   Passed    2.39 sec
+      Start 29: m3_join_lifecycle
+29/60 Test #29: m3_join_lifecycle ..........................   Passed    0.02 sec
+      Start 30: m4_m5_network_control
+30/60 Test #30: m4_m5_network_control ......................   Passed    0.02 sec
+      Start 31: network_restart_fences
+31/60 Test #31: network_restart_fences .....................   Passed    0.02 sec
+      Start 32: lease_clock_restart
+32/60 Test #32: lease_clock_restart ........................   Passed    0.02 sec
+      Start 33: store_binding_posix
+33/60 Test #33: store_binding_posix ........................   Passed    0.04 sec
+      Start 34: control_log_posix
+34/60 Test #34: control_log_posix ..........................   Passed    0.02 sec
+      Start 35: store_binding_flash_runtime
+35/60 Test #35: store_binding_flash_runtime ................   Passed    0.05 sec
+      Start 36: control_log_flash_runtime
+36/60 Test #36: control_log_flash_runtime ..................   Passed    0.03 sec
+      Start 37: m5_airtime_scheduler
+37/60 Test #37: m5_airtime_scheduler .......................   Passed    0.02 sec
+      Start 38: radio_power_adaptation
+38/60 Test #38: radio_power_adaptation .....................   Passed    0.01 sec
+      Start 39: esp_network_pump_model
+39/60 Test #39: esp_network_pump_model .....................   Passed    0.07 sec
+      Start 40: field_replacement_posix
+40/60 Test #40: field_replacement_posix ....................   Passed    5.50 sec
+      Start 41: autonomous_node_posix
+41/60 Test #41: autonomous_node_posix ......................   Passed   12.74 sec
+      Start 42: enrollment_posix
+42/60 Test #42: enrollment_posix ...........................   Passed   18.34 sec
+      Start 43: discovery_posix
+43/60 Test #43: discovery_posix ............................   Passed   18.87 sec
+      Start 44: autonomous_overheard_posix
+44/60 Test #44: autonomous_overheard_posix .................   Passed    7.56 sec
+      Start 45: autonomous_root_relay_posix
+45/60 Test #45: autonomous_root_relay_posix ................   Passed    7.17 sec
+      Start 46: autonomous_join_ack_loss_posix
+46/60 Test #46: autonomous_join_ack_loss_posix .............   Passed    6.74 sec
+      Start 47: autonomous_bounded_radio_posix
+47/60 Test #47: autonomous_bounded_radio_posix .............   Passed    6.89 sec
+      Start 48: autonomous_sustained_radio_posix
+48/60 Test #48: autonomous_sustained_radio_posix ...........   Passed    7.26 sec
+      Start 49: application_ledger_restart_posix
+49/60 Test #49: application_ledger_restart_posix ...........   Passed    0.09 sec
+      Start 50: field_replacement_flash_runtime
+50/60 Test #50: field_replacement_flash_runtime ............   Passed    5.29 sec
+      Start 51: autonomous_node_flash_runtime
+51/60 Test #51: autonomous_node_flash_runtime ..............   Passed   14.22 sec
+      Start 52: enrollment_flash_runtime
+52/60 Test #52: enrollment_flash_runtime ...................   Passed   17.45 sec
+      Start 53: discovery_flash_runtime
+53/60 Test #53: discovery_flash_runtime ....................   Passed   18.22 sec
+      Start 54: autonomous_overheard_flash_runtime
+54/60 Test #54: autonomous_overheard_flash_runtime .........   Passed    6.37 sec
+      Start 55: autonomous_root_relay_flash_runtime
+55/60 Test #55: autonomous_root_relay_flash_runtime ........   Passed    6.56 sec
+      Start 56: autonomous_join_ack_loss_flash_runtime
+56/60 Test #56: autonomous_join_ack_loss_flash_runtime .....   Passed    6.88 sec
+      Start 57: autonomous_bounded_radio_flash_runtime
+57/60 Test #57: autonomous_bounded_radio_flash_runtime .....   Passed    7.25 sec
+      Start 58: autonomous_sustained_radio_flash_runtime
+58/60 Test #58: autonomous_sustained_radio_flash_runtime ...   Passed    7.33 sec
+      Start 59: application_ledger_restart_flash_runtime
+59/60 Test #59: application_ledger_restart_flash_runtime ...   Passed    0.11 sec
+      Start 60: node_provisioning_history
+60/60 Test #60: node_provisioning_history ..................   Passed    0.03 sec
+
+100% tests passed, 0 tests failed out of 60
+
+Total Test time (real) = 610.48 sec

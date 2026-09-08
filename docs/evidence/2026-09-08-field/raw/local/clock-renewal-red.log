@@ -1,0 +1,21 @@
+Internal ctest changing into directory: /tmp/ninlil-oss-final/gcc
+Test project /tmp/ninlil-oss-final/gcc
+    Start 33: lease_clock_restart
+1/2 Test #33: lease_clock_restart ..............***Failed    0.00 sec
+62: peer.challenge == 23u && peer.request_ms == 31200u
+
+    Start 43: enrollment_posix
+2/2 Test #43: enrollment_posix .................***Failed    4.12 sec
+297: root->peers[ninlil_node_index(root, 2u)].attempts > 0u
+Node scheduling seed: 1
+Autonomous sequence 1 restart mode 0 PASS
+
+
+0% tests passed, 2 tests failed out of 2
+
+Total Test time (real) =   4.24 sec
+
+The following tests FAILED:
+	 33 - lease_clock_restart (Failed)
+	 43 - enrollment_posix (Failed)
+Errors while running CTest

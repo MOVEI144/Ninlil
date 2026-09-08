@@ -1,0 +1,101 @@
+Internal ctest changing into directory: /tmp/ninlil-oss-final/gcc
+Test project /tmp/ninlil-oss-final/gcc
+    Start 45: discovery_slow_posix
+1/2 Test #45: discovery_slow_posix .............***Failed    4.57 sec
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=6300 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5800 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=20451
+ edge=3-1 delivery=0 epoch=1 age=12416
+ edge=2-3 delivery=8 epoch=1 age=18653
+ edge=2-1 delivery=8 epoch=1 age=14691
+ edge=1-3 delivery=0 epoch=1 age=15922
+ edge=1-2 delivery=8 epoch=1 age=16422
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=4580 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=8780 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=2320 active=1 secure=1 drain=0
+ peer=2 attempts=0 delivered=0 bits=0 age=250000 active=1 secure=0 drain=0
+node=1 time=550000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=7 wants=2 ready=0 authority=1 local=1
+ flow=30 epoch=5 retired=0 ready=1 notice=0 proofepoch=5 live=7 phase=2 end=8590279592
+ peer=2 attempts=8 delivered=8 bits=255 age=5440 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=9440 active=1 secure=1 drain=0
+ edge=3-1 delivery=0 epoch=1 age=22757
+ edge=3-2 delivery=8 epoch=1 age=20236
+ edge=2-3 delivery=8 epoch=1 age=22709
+ edge=2-1 delivery=8 epoch=1 age=19700
+ edge=1-3 delivery=0 epoch=1 age=19562
+ edge=1-2 delivery=8 epoch=1 age=15562
+node=2 time=550000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=1 ready=0 authority=0 local=1
+ flow=30 epoch=5 retired=0 ready=1 notice=0 proofepoch=0 live=0 phase=2 end=8590279592
+ peer=1 attempts=8 delivered=8 bits=255 age=10960 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=1460 active=1 secure=1 drain=0
+node=3 time=550000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=1 ready=0 authority=0 local=1
+ flow=31 epoch=5 retired=0 ready=1 notice=0 proofepoch=0 live=0 phase=2 end=8590279592
+ peer=1 attempts=8 delivered=0 bits=0 age=1980 active=1 secure=1 drain=0
+ peer=2 attempts=0 delivered=0 bits=0 age=300000 active=1 secure=0 drain=0
+message outcome=0 evidence=0 applications=1 before=0
+422: now < until && delivered_app == before + 1u
+Node scheduling seed: 4
+
+    Start 56: discovery_slow_flash_runtime
+2/2 Test #56: discovery_slow_flash_runtime .....***Failed    4.72 sec
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=2 attempts=8 delivered=8 bits=255 age=6300 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5800 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=20451
+ edge=3-1 delivery=0 epoch=1 age=12416
+ edge=2-3 delivery=8 epoch=1 age=18653
+ edge=2-1 delivery=8 epoch=1 age=14691
+ edge=1-3 delivery=0 epoch=1 age=15922
+ edge=1-2 delivery=8 epoch=1 age=16422
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=8 bits=255 age=4580 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=8780 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ peer=1 attempts=8 delivered=0 bits=0 age=2320 active=1 secure=1 drain=0
+ peer=2 attempts=0 delivered=0 bits=0 age=250000 active=1 secure=0 drain=0
+node=1 time=550000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=7 wants=2 ready=0 authority=1 local=1
+ flow=30 epoch=5 retired=0 ready=1 notice=0 proofepoch=5 live=7 phase=2 end=8590279592
+ peer=2 attempts=8 delivered=8 bits=255 age=5440 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=9440 active=1 secure=1 drain=0
+ edge=3-1 delivery=0 epoch=1 age=22757
+ edge=3-2 delivery=8 epoch=1 age=20236
+ edge=2-3 delivery=8 epoch=1 age=22709
+ edge=2-1 delivery=8 epoch=1 age=19700
+ edge=1-3 delivery=0 epoch=1 age=19562
+ edge=1-2 delivery=8 epoch=1 age=15562
+node=2 time=550000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=1 ready=0 authority=0 local=1
+ flow=30 epoch=5 retired=0 ready=1 notice=0 proofepoch=0 live=0 phase=2 end=8590279592
+ peer=1 attempts=8 delivered=8 bits=255 age=10960 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=1460 active=1 secure=1 drain=0
+node=3 time=550000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=1 ready=0 authority=0 local=1
+ flow=31 epoch=5 retired=0 ready=1 notice=0 proofepoch=0 live=0 phase=2 end=8590279592
+ peer=1 attempts=8 delivered=0 bits=0 age=1980 active=1 secure=1 drain=0
+ peer=2 attempts=0 delivered=0 bits=0 age=300000 active=1 secure=0 drain=0
+message outcome=0 evidence=0 applications=1 before=0
+422: now < until && delivered_app == before + 1u
+Node scheduling seed: 4
+
+
+0% tests passed, 2 tests failed out of 2
+
+Total Test time (real) =   9.29 sec
+
+The following tests FAILED:
+	 45 - discovery_slow_posix (Failed)
+	 56 - discovery_slow_flash_runtime (Failed)
+Errors while running CTest

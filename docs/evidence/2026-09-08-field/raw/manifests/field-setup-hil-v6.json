@@ -1,0 +1,17 @@
+{
+  "group": "field-setup-hil-v6",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-setup-hil-v6/console.jsonl",
+      "sha256": "042e8d21b3d5b3e8662af9055ef51dbc37d0dbebfb05d0f0e60de7f857f1133d",
+      "bytes": 38724,
+      "git_blob": "8d9add24492d408a3a6821555148400cd74a0a88"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-setup-hil-v6/result.json",
+      "sha256": "93309ee66c14578be5879e8a2d82a1b72d0428db8cfa18420f4655f46063bfbc",
+      "bytes": 8414,
+      "git_blob": "2259267ba79ce5f8477ee67dc0c07851f3a7b145"
+    }
+  ]
+}

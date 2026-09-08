@@ -1,0 +1,119 @@
+{
+  "group": "field-node-v10",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/1/app.bin",
+      "sha256": "21ffd2ccf92169cb4628a00ae54da17f0a309287a142e1a396ae5862c27bdd06",
+      "bytes": 474096,
+      "git_blob": "b46dc452f007eef7e0ddcea4de66c233bb87bdab"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/1/bootloader.bin",
+      "sha256": "aa41edb03f56d2195572b0e91acc0a3938208d4f50d95c2ee549be98805486a0",
+      "bytes": 21088,
+      "git_blob": "53129f4e18fb1962cea588dcf1fb27d0375bc0db"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/1/device-verification.json",
+      "sha256": "4e0ad11425183279cdcc44b24f546eec3a918a43502acd2e2320ee7587f1ffc0",
+      "bytes": 596,
+      "git_blob": "5621cdc9e59ce024c45291aa1316a0741466c6d3"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/1/hashes.json",
+      "sha256": "6051514769b6f06cd3d86f97ede8d0efdbd6f50bf6cfd3b31886a9062ad0c473",
+      "bytes": 509,
+      "git_blob": "0372c4528706fa998fb422b2e96ed5a41a669f70"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/1/partitions.bin",
+      "sha256": "f46dace73eaa0a69d56f4ceae9db6fa72f22086c4db88c9e8fb961ec52d48a1a",
+      "bytes": 3072,
+      "git_blob": "38897e14320e5e1ee47396120d0eae7bbedc6bba"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/1/sdkconfig",
+      "sha256": "a0848f5473e9a2a2397333eec70b59d2a01b944e80a3227f543ea53c6445144e",
+      "bytes": 87125,
+      "git_blob": "ea81a4b2939016b3a87309dc4ada03f464c7ba2e"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/2/app.bin",
+      "sha256": "bb70bdb19bff90e88b469956bba4f66740a0312588ed39286a8feb6e5be71ea7",
+      "bytes": 474096,
+      "git_blob": "915a7df5d392a6fd404762fa5693101a1c905cee"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/2/bootloader.bin",
+      "sha256": "f86c3ebf012522fac32c024c667a74857990df787062145c74d67245620dd70f",
+      "bytes": 21088,
+      "git_blob": "e66f82a60088b26d2f4e26fe98aaa6b8576dab3e"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/2/device-verification.json",
+      "sha256": "5203a9f539f73df661caafb59c1deace18215bbce796fa8494c9813ee8236b74",
+      "bytes": 596,
+      "git_blob": "73c466ed00602f5610720b69281d5bb3b53ead18"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/2/hashes.json",
+      "sha256": "d3e428143a1750402b4b528522fbce3e61c7523653cb6f9fb3a3b82150bed175",
+      "bytes": 509,
+      "git_blob": "2f791edad485f43d97a54e156f7bbd8222cfe5f4"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/2/partitions.bin",
+      "sha256": "f46dace73eaa0a69d56f4ceae9db6fa72f22086c4db88c9e8fb961ec52d48a1a",
+      "bytes": 3072,
+      "git_blob": "38897e14320e5e1ee47396120d0eae7bbedc6bba"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/2/sdkconfig",
+      "sha256": "2ad3fcc63949826356dc8bd96f43eccf04afaec6f48f8167942d107fd863c70c",
+      "bytes": 87125,
+      "git_blob": "8dfdeecfa4d050801723e98c5694695a4146643a"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/3/app.bin",
+      "sha256": "9e5a75afbed7d5f8651fd8068bda63256c7517206281f4f67199e272985b3cad",
+      "bytes": 474096,
+      "git_blob": "9086cc642e722da94261b538a104b78c8db52bf6"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/3/bootloader.bin",
+      "sha256": "0fd56faee4fd5eec2e806313c5dbbd0a8f59be5a52c6c8b224d7015054a9a185",
+      "bytes": 21088,
+      "git_blob": "e111138aa1f713075ba557c2227ff231adf968a7"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/3/device-verification.json",
+      "sha256": "7acfe1a674987d4a66ba082a760b7ce1c50584ad6f4c017626f73a5050002bb4",
+      "bytes": 596,
+      "git_blob": "d2a95959b11cfefd4cb8c58c2b67122c1bf2d9a5"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/3/hashes.json",
+      "sha256": "e1c6526b53f24d651f261b413d6c2f5893fad88e2bbaedb920ee26e92c553bdf",
+      "bytes": 509,
+      "git_blob": "473456a98bc3fef4b2a5146e1460b7665530de3e"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/3/partitions.bin",
+      "sha256": "f46dace73eaa0a69d56f4ceae9db6fa72f22086c4db88c9e8fb961ec52d48a1a",
+      "bytes": 3072,
+      "git_blob": "38897e14320e5e1ee47396120d0eae7bbedc6bba"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/3/sdkconfig",
+      "sha256": "b7878619b02dcbb9b9cd28b9fbf7c468934541b15b5666a249166e28206dec7d",
+      "bytes": 87125,
+      "git_blob": "177c798c40259211550c9dfcb3bdb767fcd2a5ea"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-node-v10/inputs.json",
+      "sha256": "6eb2765f88b71ba70bba00bc21553a07bcf9e4340cab746df3cb291381d0cf40",
+      "bytes": 24721,
+      "git_blob": "19df7ca2494cca39d3bd3f72e264858ac8e72c45"
+    }
+  ]
+}

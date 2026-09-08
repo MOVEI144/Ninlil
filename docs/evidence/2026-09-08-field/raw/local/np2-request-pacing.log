@@ -1,0 +1,49 @@
+[1/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_membership.c.o
+[2/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_field_plan.c.o
+[3/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_admission.c.o
+[4/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_discovery.c.o
+[5/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_enrollment.c.o
+[6/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node.c.o
+[7/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_auth.c.o
+[8/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_control.c.o
+[9/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_plans.c.o
+[10/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_io.c.o
+[11/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_routes.c.o
+[12/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_links.c.o
+[13/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_recovery.c.o
+[14/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_lifecycle.c.o
+[15/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_collection.c.o
+[16/31] Building C object CMakeFiles/ninlil_node.dir/src/ninlil_node_radio.c.o
+[17/31] Linking C static library libninlil_node.a
+[18/31] Linking C executable test_bulk_application_posix
+[19/31] Linking C executable test_bulk_application_flash_runtime
+[20/31] Linking C executable test_network_pump
+[21/31] Linking C executable test_node_application_posix
+[22/31] Building C object CMakeFiles/test_field_posix.dir/tests/test_field_network.c.o
+[23/31] Building C object CMakeFiles/test_node_posix.dir/tests/test_node.c.o
+[24/31] Linking C executable test_field_posix
+[25/31] Linking C executable test_node_posix
+[26/31] Linking C executable test_node_application_flash_runtime
+[27/31] Linking C executable test_node_storage
+[28/31] Building C object CMakeFiles/test_node_flash_runtime.dir/tests/test_node.c.o
+[29/31] Linking C executable test_node_flash_runtime
+[30/31] Building C object CMakeFiles/test_field_flash_runtime.dir/tests/test_field_network.c.o
+[31/31] Linking C executable test_field_flash_runtime
+Internal ctest changing into directory: /tmp/ninlil-oss-final/gcc
+Test project /tmp/ninlil-oss-final/gcc
+    Start 41: field_replacement_posix
+1/6 Test #41: field_replacement_posix ...........   Passed    1.53 sec
+    Start 43: enrollment_posix
+2/6 Test #43: enrollment_posix ..................   Passed    4.28 sec
+    Start 45: discovery_slow_posix
+3/6 Test #45: discovery_slow_posix ..............   Passed    4.70 sec
+    Start 52: field_replacement_flash_runtime
+4/6 Test #52: field_replacement_flash_runtime ...   Passed    1.61 sec
+    Start 54: enrollment_flash_runtime
+5/6 Test #54: enrollment_flash_runtime ..........   Passed    4.45 sec
+    Start 56: discovery_slow_flash_runtime
+6/6 Test #56: discovery_slow_flash_runtime ......   Passed    4.85 sec
+
+100% tests passed, 0 tests failed out of 6
+
+Total Test time (real) =  21.41 sec

@@ -1,0 +1,17 @@
+{
+  "serial": "E0:72:A1:F7:FF:0C",
+  "app_sha256": "05bb1dc786571bed9c52326c8d8a80ee6a36c85aae79e301c5cb0433718373a2",
+  "before": {
+    "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+    "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008",
+    "existing_node_stores": "0d6041867e39ac55e9446d1d8507fb33"
+  },
+  "after": {
+    "nvs_phy": "4fc15162ee25093ad4ba8ae9142aebac",
+    "prior_stores": "d1f6aaf4ade11c6036e8b95563b69008",
+    "existing_node_stores": "0d6041867e39ac55e9446d1d8507fb33"
+  },
+  "preserved": true,
+  "device_image_verified": true,
+  "backups_created": false
+}

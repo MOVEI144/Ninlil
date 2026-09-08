@@ -1,0 +1,11 @@
+{
+  "group": "public-roster.h",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/public-roster.h",
+      "sha256": "ea496dee169772a146cfaa7b204e9940fdbf9c9fe2534c5d797878f6760a08b4",
+      "bytes": 2821,
+      "git_blob": "f4145ef71a0a86aa6ec622deeb4232d142303b67"
+    }
+  ]
+}

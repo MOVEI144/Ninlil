@@ -1,0 +1,17 @@
+{
+  "group": "field-final-state",
+  "artifacts": [
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-final-state/console.jsonl",
+      "sha256": "be81852ce811b72aff930531ca96f0bdf820db47d0c5be3a30b1ae29d77dac02",
+      "bytes": 2768,
+      "git_blob": "3554174fc9f58a2b8e6c86232a465cc54908ba50"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-field/raw/field-final-state/result.json",
+      "sha256": "3b4d626fb2a336c1d1d77fb9c3db7919c9acf5c62f310e3cdd34d69d2898f808",
+      "bytes": 3716,
+      "git_blob": "a06a246cbeef2def065ad1e1665566aaf2302bee"
+    }
+  ]
+}

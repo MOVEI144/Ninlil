@@ -1,0 +1,14 @@
+-- Configuring done (1.0s)
+-- Generating done (0.2s)
+-- Build files have been written to: /tmp/ninlil-field-review
+gcc: error: unrecognized command-line option ‘--analyze’; did you mean ‘--analyzer’?
+gcc: error: unrecognized command-line option ‘-Xanalyzer’; did you mean ‘-fanalyzer’?
+gcc: error: unrecognized command-line option ‘-analyzer-output=text’
+gcc: error: unrecognized command-line option ‘-Xanalyzer’; did you mean ‘-fanalyzer’?
+gcc: error: unrecognized command-line option ‘-analyzer-werror’
+Traceback (most recent call last):
+  File "/work/scripts/static_crypto.py", line 39, in <module>
+    subprocess.run(clean, cwd=entry["directory"], check=True)
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/usr/bin/gcc', '-I/work/include', '-isystem', '/work/third_party/libedhoc/externals/mbedtls/include', '-isystem', '/work/third_party/libedhoc/externals/mbedtls/3rdparty/everest/include', '-isystem', '/work/third_party/libedhoc/externals/mbedtls/3rdparty/p256-m', '-isystem', '/work/third_party/libedhoc/externals/mbedtls/3rdparty/p256-m/p256-m', '-std=c11', '-Wall', '-Wextra', '-Wpedantic', '-Werror', '-Wshadow', '-Wconversion', '-Wsign-conversion', '-Wformat=2', '-Wundef', '-Wcast-align', '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wvla', '-fno-common', '/work/ports/crypto/ninlil_psa.c', '--analyze', '-Xanalyzer', '-analyzer-output=text', '-Xanalyzer', '-analyzer-werror']' returned non-zero exit status 1.

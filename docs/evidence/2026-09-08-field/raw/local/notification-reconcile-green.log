@@ -1,0 +1,26 @@
+Internal ctest changing into directory: /tmp/ninlil-field-review
+Test project /tmp/ninlil-field-review
+      Start 41: field_replacement_posix
+ 1/10 Test #41: field_replacement_posix ............   Passed    4.34 sec
+      Start 43: enrollment_posix
+ 2/10 Test #43: enrollment_posix ...................   Passed    7.13 sec
+      Start 44: discovery_posix
+ 3/10 Test #44: discovery_posix ....................   Passed    7.66 sec
+      Start 45: discovery_slow_posix
+ 4/10 Test #45: discovery_slow_posix ...............   Passed    7.15 sec
+      Start 46: lost_effective_ack_posix
+ 5/10 Test #46: lost_effective_ack_posix ...........   Passed    7.28 sec
+      Start 53: field_replacement_flash_runtime
+ 6/10 Test #53: field_replacement_flash_runtime ....   Passed    3.77 sec
+      Start 55: enrollment_flash_runtime
+ 7/10 Test #55: enrollment_flash_runtime ...........   Passed    7.17 sec
+      Start 56: discovery_flash_runtime
+ 8/10 Test #56: discovery_flash_runtime ............   Passed    7.76 sec
+      Start 57: discovery_slow_flash_runtime
+ 9/10 Test #57: discovery_slow_flash_runtime .......   Passed    6.93 sec
+      Start 58: lost_effective_ack_flash_runtime
+10/10 Test #58: lost_effective_ack_flash_runtime ...   Passed    7.81 sec
+
+100% tests passed, 0 tests failed out of 10
+
+Total Test time (real) =  67.01 sec

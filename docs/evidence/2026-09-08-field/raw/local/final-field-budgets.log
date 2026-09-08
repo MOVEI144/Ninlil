@@ -1,0 +1,18 @@
+Secure protocol/storage libraries (autonomous execution owner counted separately)
+Physical lines: 12772; unchanged vendor lines: 3005
+First-party nonblank lines: 8426 / 12000
+Autonomous owner and reference integration
+Physical lines: 5652; unchanged vendor lines: 0
+First-party nonblank lines: 5494 / 5500
+Storage collection, bulk profile and TX power adaptation
+Physical lines: 3421; unchanged vendor lines: 0
+First-party nonblank lines: 3364 / 4000
+Dynamic enrollment, discovery and deployment settings
+Physical lines: 3194; unchanged vendor lines: 0
+First-party nonblank lines: 2986 / 3000
+Historical evidence (also included in project-wide first-party accounting)
+Physical lines: 2061; unchanged vendor lines: 0
+First-party nonblank lines: 1938 / 50000
+Project first-party source (including historical evidence)
+Physical lines: 57414; unchanged vendor lines: 3005
+First-party nonblank lines: 49732 / 50000

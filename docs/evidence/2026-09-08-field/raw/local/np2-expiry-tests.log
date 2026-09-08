@@ -1,0 +1,29 @@
+Internal ctest changing into directory: /tmp/ninlil-oss-final/gcc
+Test project /tmp/ninlil-oss-final/gcc
+    Start 43: enrollment_posix
+1/4 Test #43: enrollment_posix .................   Passed    4.18 sec
+    Start 44: discovery_posix
+2/4 Test #44: discovery_posix ..................   Passed    4.58 sec
+    Start 53: enrollment_flash_runtime
+3/4 Test #53: enrollment_flash_runtime .........   Passed    4.61 sec
+    Start 54: discovery_flash_runtime
+4/4 Test #54: discovery_flash_runtime ..........   Passed    4.76 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Total Test time (real) =  18.14 sec
+Secure protocol/storage libraries (autonomous execution owner counted separately)
+Physical lines: 12573; unchanged vendor lines: 3005
+First-party nonblank lines: 8250 / 12000
+Autonomous owner and reference integration
+Physical lines: 5654; unchanged vendor lines: 0
+First-party nonblank lines: 5490 / 5500
+Storage collection, bulk profile and TX power adaptation
+Physical lines: 3328; unchanged vendor lines: 0
+First-party nonblank lines: 3274 / 4000
+Dynamic enrollment, discovery and deployment settings
+Physical lines: 2305; unchanged vendor lines: 0
+First-party nonblank lines: 2136 / 3000
+Historical evidence (also included in project-wide first-party accounting)
+Physical lines: 1956; unchanged vendor lines: 0
+First-party nonblank lines: 1856 / 50000

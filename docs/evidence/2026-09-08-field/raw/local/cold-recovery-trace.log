@@ -1,0 +1,757 @@
+Internal ctest changing into directory: /tmp/ninlil-oss-final/gcc
+Test project /tmp/ninlil-oss-final/gcc
+    Start 45: discovery_slow_posix
+1/1 Test #45: discovery_slow_posix .............***Failed    4.88 sec
+CONTROL t=72020 node=2 kind=1 queue=1
+CONTROL t=72040 node=1 kind=2 queue=1
+CONTROL t=73020 node=2 kind=3 queue=1
+CONTROL t=73040 node=1 kind=4 queue=1
+CONTROL t=74020 node=2 kind=27 queue=3
+CONTROL t=75020 node=2 kind=6 queue=2
+CONTROL t=75040 node=1 kind=7 queue=0
+CONTROL t=80520 node=3 kind=1 queue=0
+CONTROL t=81040 node=1 kind=2 queue=0
+CONTROL t=81540 node=1 kind=5 queue=0
+CONTROL t=82100 node=3 kind=3 queue=0
+CONTROL t=82520 node=2 kind=20 queue=2
+CONTROL t=82740 node=3 kind=1 queue=0
+CONTROL t=83040 node=1 kind=4 queue=1
+CONTROL t=84040 node=1 kind=5 queue=0
+CONTROL t=84520 node=2 kind=6 queue=2
+CONTROL t=84540 node=1 kind=7 queue=0
+CONTROL t=85020 node=2 kind=20 queue=1
+CONTROL t=85040 node=1 kind=4 queue=0
+CONTROL t=85060 node=3 kind=1 queue=0
+CONTROL t=86060 node=3 kind=27 queue=0
+CONTROL t=87180 node=3 kind=6 queue=0
+CONTROL t=87380 node=1 kind=4 queue=0
+CONTROL t=89020 node=1 kind=5 queue=0
+CONTROL t=91020 node=1 kind=5 queue=0
+CONTROL t=91420 node=3 kind=20 queue=0
+CONTROL t=93180 node=2 kind=6 queue=0
+CONTROL t=93200 node=1 kind=7 queue=0
+CONTROL t=97180 node=3 kind=6 queue=0
+CONTROL t=97260 node=1 kind=7 queue=0
+CONTROL t=103560 node=2 kind=6 queue=0
+CONTROL t=103580 node=1 kind=7 queue=0
+CONTROL t=107180 node=3 kind=6 queue=0
+CONTROL t=107320 node=1 kind=7 queue=0
+CONTROL t=113240 node=2 kind=6 queue=0
+CONTROL t=113260 node=1 kind=7 queue=0
+CONTROL t=117360 node=3 kind=6 queue=1
+CONTROL t=117400 node=1 kind=7 queue=0
+CONTROL t=118380 node=2 kind=10 queue=1
+CONTROL t=118400 node=1 kind=28 queue=0
+CONTROL t=123240 node=2 kind=6 queue=0
+CONTROL t=123260 node=1 kind=7 queue=0
+CONTROL t=125000 node=2 kind=10 queue=0
+CONTROL t=125020 node=1 kind=28 queue=0
+CONTROL t=127520 node=3 kind=6 queue=0
+CONTROL t=128060 node=1 kind=7 queue=0
+CONTROL t=129040 node=2 kind=10 queue=0
+CONTROL t=129060 node=1 kind=28 queue=0
+CONTROL t=131900 node=3 kind=10 queue=0
+CONTROL t=131940 node=1 kind=28 queue=0
+CONTROL t=132400 node=3 kind=10 queue=0
+CONTROL t=132940 node=1 kind=28 queue=0
+CONTROL t=133920 node=2 kind=6 queue=0
+CONTROL t=133940 node=1 kind=7 queue=0
+CONTROL t=135600 node=2 kind=10 queue=0
+CONTROL t=135620 node=1 kind=28 queue=0
+CONTROL t=137180 node=3 kind=6 queue=0
+CONTROL t=137700 node=1 kind=7 queue=0
+CONTROL t=139700 node=2 kind=10 queue=0
+CONTROL t=139720 node=1 kind=28 queue=0
+CONTROL t=142740 node=3 kind=10 queue=0
+CONTROL t=142780 node=1 kind=28 queue=0
+CONTROL t=143240 node=3 kind=10 queue=0
+CONTROL t=143760 node=2 kind=6 queue=0
+CONTROL t=143780 node=1 kind=7 queue=0
+CONTROL t=146540 node=2 kind=10 queue=0
+CONTROL t=146560 node=1 kind=28 queue=0
+CONTROL t=147180 node=3 kind=6 queue=0
+CONTROL t=147220 node=1 kind=7 queue=1
+CONTROL t=148360 node=3 kind=10 queue=0
+CONTROL t=148740 node=1 kind=28 queue=0
+CONTROL t=150720 node=2 kind=10 queue=0
+CONTROL t=150740 node=1 kind=28 queue=0
+CONTROL t=153340 node=3 kind=10 queue=0
+CONTROL t=153360 node=2 kind=6 queue=1
+CONTROL t=153380 node=1 kind=7 queue=0
+CONTROL t=153840 node=3 kind=10 queue=0
+CONTROL t=153880 node=1 kind=28 queue=0
+CONTROL t=154380 node=1 kind=28 queue=0
+CONTROL t=157180 node=3 kind=6 queue=0
+CONTROL t=157220 node=1 kind=7 queue=0
+CONTROL t=158200 node=2 kind=10 queue=0
+CONTROL t=158400 node=1 kind=28 queue=0
+CONTROL t=161720 node=2 kind=10 queue=0
+CONTROL t=161740 node=1 kind=28 queue=0
+CONTROL t=163180 node=2 kind=6 queue=0
+CONTROL t=163200 node=1 kind=7 queue=0
+CONTROL t=164240 node=3 kind=10 queue=0
+CONTROL t=164700 node=1 kind=28 queue=0
+CONTROL t=164740 node=3 kind=10 queue=0
+CONTROL t=165700 node=1 kind=28 queue=0
+CONTROL t=167180 node=3 kind=6 queue=0
+CONTROL t=167220 node=1 kind=7 queue=0
+CONTROL t=168200 node=2 kind=10 queue=0
+CONTROL t=168220 node=1 kind=28 queue=0
+CONTROL t=172380 node=2 kind=10 queue=0
+CONTROL t=172400 node=1 kind=28 queue=0
+CONTROL t=173180 node=2 kind=6 queue=0
+CONTROL t=173200 node=1 kind=7 queue=0
+CONTROL t=174180 node=3 kind=10 queue=0
+CONTROL t=174220 node=1 kind=28 queue=0
+CONTROL t=175680 node=3 kind=10 queue=0
+CONTROL t=175720 node=1 kind=28 queue=0
+CONTROL t=177300 node=3 kind=6 queue=0
+CONTROL t=177340 node=1 kind=7 queue=0
+CONTROL t=178320 node=2 kind=10 queue=0
+CONTROL t=178340 node=1 kind=28 queue=0
+CONTROL t=182540 node=2 kind=10 queue=0
+CONTROL t=182560 node=1 kind=28 queue=0
+CONTROL t=183180 node=2 kind=6 queue=0
+CONTROL t=183200 node=1 kind=7 queue=0
+CONTROL t=184660 node=3 kind=10 queue=0
+CONTROL t=184700 node=1 kind=28 queue=0
+CONTROL t=186160 node=3 kind=10 queue=0
+CONTROL t=186200 node=1 kind=28 queue=0
+CONTROL t=187180 node=3 kind=6 queue=0
+CONTROL t=187220 node=1 kind=7 queue=0
+CONTROL t=189200 node=2 kind=10 queue=0
+CONTROL t=189220 node=1 kind=28 queue=0
+CONTROL t=193180 node=2 kind=6 queue=0
+CONTROL t=193200 node=1 kind=7 queue=0
+CONTROL t=193680 node=2 kind=10 queue=0
+CONTROL t=193700 node=1 kind=28 queue=0
+CONTROL t=195440 node=3 kind=10 queue=0
+CONTROL t=195480 node=1 kind=28 queue=0
+CONTROL t=197100 node=3 kind=10 queue=0
+CONTROL t=197140 node=1 kind=28 queue=0
+CONTROL t=197600 node=3 kind=6 queue=0
+CONTROL t=198140 node=1 kind=7 queue=0
+CONTROL t=200120 node=2 kind=10 queue=0
+CONTROL t=200140 node=1 kind=28 queue=0
+CONTROL t=203180 node=2 kind=6 queue=0
+CONTROL t=203200 node=1 kind=7 queue=0
+CONTROL t=203680 node=2 kind=10 queue=0
+CONTROL t=203700 node=1 kind=28 queue=0
+CONTROL t=205700 node=3 kind=10 queue=0
+CONTROL t=205740 node=1 kind=28 queue=0
+CONTROL t=207600 node=3 kind=6 queue=0
+CONTROL t=207640 node=1 kind=7 queue=0
+CONTROL t=208100 node=3 kind=10 queue=0
+CONTROL t=208640 node=1 kind=28 queue=0
+CONTROL t=210620 node=2 kind=10 queue=0
+CONTROL t=210640 node=1 kind=28 queue=0
+CONTROL t=213940 node=2 kind=6 queue=1
+CONTROL t=213960 node=1 kind=7 queue=0
+CONTROL t=214940 node=2 kind=10 queue=0
+CONTROL t=214960 node=1 kind=28 queue=0
+CONTROL t=216700 node=3 kind=10 queue=0
+CONTROL t=216740 node=1 kind=28 queue=0
+CONTROL t=217200 node=3 kind=6 queue=0
+CONTROL t=217740 node=1 kind=7 queue=0
+CONTROL t=218980 node=3 kind=10 queue=0
+CONTROL t=219240 node=1 kind=28 queue=0
+CONTROL t=221220 node=2 kind=10 queue=0
+CONTROL t=221240 node=1 kind=28 queue=0
+CONTROL t=223600 node=2 kind=6 queue=0
+CONTROL t=223620 node=1 kind=7 queue=0
+CONTROL t=225100 node=2 kind=10 queue=0
+CONTROL t=225120 node=1 kind=28 queue=0
+CONTROL t=227160 node=3 kind=10 queue=0
+CONTROL t=227200 node=1 kind=28 queue=0
+CONTROL t=227660 node=3 kind=6 queue=0
+CONTROL t=228200 node=1 kind=7 queue=0
+CONTROL t=229420 node=3 kind=10 queue=0
+CONTROL t=229700 node=1 kind=28 queue=0
+CONTROL t=232080 node=2 kind=10 queue=0
+CONTROL t=232100 node=1 kind=28 queue=0
+CONTROL t=233400 node=2 kind=6 queue=0
+CONTROL t=233900 node=1 kind=7 queue=0
+CONTROL t=235680 node=2 kind=10 queue=0
+CONTROL t=235700 node=1 kind=28 queue=0
+CONTROL t=237620 node=3 kind=6 queue=0
+CONTROL t=237660 node=1 kind=7 queue=0
+CONTROL t=238120 node=3 kind=10 queue=0
+CONTROL t=238660 node=1 kind=28 queue=0
+CONTROL t=240200 node=3 kind=10 queue=0
+CONTROL t=240240 node=1 kind=28 queue=0
+CONTROL t=242220 node=2 kind=10 queue=0
+CONTROL t=242240 node=1 kind=28 queue=0
+CONTROL t=243180 node=2 kind=6 queue=0
+CONTROL t=243200 node=1 kind=7 queue=0
+CONTROL t=246420 node=2 kind=10 queue=0
+CONTROL t=246440 node=1 kind=28 queue=0
+CONTROL t=247180 node=3 kind=6 queue=0
+CONTROL t=247220 node=1 kind=7 queue=0
+CONTROL t=248680 node=3 kind=10 queue=0
+CONTROL t=248720 node=1 kind=28 queue=0
+node=1 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 1->2: 0c8ff071e574a4bbf5d0aac60d016f63 94562af6b11ae819f8c79ce3ddbe2d2a
+ contexts 1->3: 31324e87c2c714aedf7316473911d152 30728a561901129cf560a88555ec72f8
+ proof 0:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 1:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 2:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=6300 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=5800 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=20451
+ edge=3-1 delivery=0 epoch=1 age=12416
+ edge=2-3 delivery=8 epoch=1 age=18653
+ edge=2-1 delivery=8 epoch=1 age=14691
+ edge=1-3 delivery=0 epoch=1 age=15922
+ edge=1-2 delivery=8 epoch=1 age=16422
+node=2 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 2->1: 0c8ff071e574a4bbf5d0aac60d016f63 94562af6b11ae819f8c79ce3ddbe2d2a
+ contexts 2->3: 10a8700c3f16f5c9c98d4ca5e7977654 e48d2e3374a92b359c31e20db29636a6
+ peer=1 attempts=8 delivered=8 bits=255 age=4580 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=8780 active=1 secure=1 drain=0
+node=3 time=250000 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=0 ready=0 authority=0 local=0
+ contexts 3->1: 31324e87c2c714aedf7316473911d152 30728a561901129cf560a88555ec72f8
+ contexts 3->2: 10a8700c3f16f5c9c98d4ca5e7977654 e48d2e3374a92b359c31e20db29636a6
+ peer=1 attempts=8 delivered=0 bits=0 age=2320 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=700 active=1 secure=1 drain=0
+CONTROL t=251700 node=2 kind=1 queue=1
+CONTROL t=251720 node=1 kind=4 queue=1
+CONTROL t=252700 node=2 kind=27 queue=1
+CONTROL t=254340 node=1 kind=5 queue=0
+CONTROL t=254700 node=2 kind=6 queue=2
+CONTROL t=255200 node=2 kind=20 queue=1
+CONTROL t=257880 node=3 kind=1 queue=0
+CONTROL t=258720 node=1 kind=4 queue=0
+CONTROL t=259200 node=3 kind=27 queue=0
+CONTROL t=259220 node=1 kind=5 queue=0
+CONTROL t=260700 node=2 kind=20 queue=1
+CONTROL t=260700 node=3 kind=6 queue=0
+CONTROL t=261020 node=1 kind=5 queue=0
+CONTROL t=263020 node=1 kind=5 queue=0
+CONTROL t=263020 node=3 kind=20 queue=0
+CONTROL t=264020 node=2 kind=6 queue=0
+CONTROL t=270140 node=3 kind=6 queue=0
+CONTROL t=273180 node=2 kind=6 queue=0
+CONTROL t=279740 node=3 kind=6 queue=0
+CONTROL t=283180 node=2 kind=6 queue=0
+CONTROL t=289740 node=3 kind=6 queue=0
+CONTROL t=293180 node=2 kind=6 queue=0
+CONTROL t=299740 node=3 kind=6 queue=0
+CONTROL t=303180 node=2 kind=6 queue=0
+CONTROL t=309740 node=3 kind=6 queue=0
+CONTROL t=313180 node=2 kind=6 queue=0
+CONTROL t=313200 node=1 kind=7 queue=0
+CONTROL t=319740 node=3 kind=6 queue=0
+CONTROL t=319780 node=1 kind=7 queue=0
+CONTROL t=323540 node=2 kind=6 queue=0
+CONTROL t=323560 node=1 kind=7 queue=0
+CONTROL t=329960 node=3 kind=6 queue=0
+CONTROL t=330680 node=1 kind=7 queue=0
+CONTROL t=333540 node=2 kind=6 queue=0
+CONTROL t=333560 node=1 kind=7 queue=0
+CONTROL t=339940 node=3 kind=6 queue=1
+CONTROL t=340440 node=1 kind=7 queue=0
+CONTROL t=343300 node=2 kind=6 queue=0
+CONTROL t=343320 node=1 kind=7 queue=0
+CONTROL t=346940 node=2 kind=10 queue=0
+CONTROL t=346960 node=1 kind=28 queue=0
+CONTROL t=349180 node=2 kind=10 queue=0
+CONTROL t=349200 node=1 kind=28 queue=0
+CONTROL t=349820 node=3 kind=6 queue=0
+CONTROL t=349860 node=1 kind=7 queue=0
+CONTROL t=351500 node=3 kind=10 queue=0
+CONTROL t=351540 node=1 kind=28 queue=0
+CONTROL t=353580 node=2 kind=6 queue=0
+CONTROL t=353600 node=1 kind=7 queue=0
+CONTROL t=355260 node=3 kind=10 queue=0
+CONTROL t=355300 node=1 kind=28 queue=0
+CONTROL t=357720 node=2 kind=10 queue=0
+CONTROL t=357740 node=1 kind=28 queue=0
+CONTROL t=359580 node=2 kind=10 queue=0
+CONTROL t=359600 node=1 kind=28 queue=0
+CONTROL t=359740 node=3 kind=6 queue=0
+CONTROL t=360100 node=1 kind=7 queue=0
+CONTROL t=361700 node=3 kind=10 queue=0
+CONTROL t=361740 node=1 kind=28 queue=0
+CONTROL t=363180 node=2 kind=6 queue=0
+CONTROL t=363200 node=1 kind=7 queue=0
+CONTROL t=365740 node=3 kind=10 queue=0
+CONTROL t=365780 node=1 kind=28 queue=0
+CONTROL t=367800 node=2 kind=10 queue=0
+CONTROL t=367820 node=1 kind=28 queue=0
+CONTROL t=369820 node=3 kind=6 queue=0
+CONTROL t=369860 node=1 kind=7 queue=0
+CONTROL t=370840 node=2 kind=10 queue=0
+CONTROL t=370860 node=1 kind=28 queue=0
+PLAN t=121000 epoch=1 phase=1 flow=1->3 mask=0/0 until=8590115592 prep=8590115592
+CONTROL t=372440 node=3 kind=10 queue=0
+CONTROL t=372480 node=1 kind=28 queue=0
+PLAN t=123000 epoch=1 phase=1 flow=1->3 mask=1/0 until=8590115592 prep=8590115592
+CONTROL t=373460 node=2 kind=6 queue=0
+CONTROL t=373480 node=1 kind=7 queue=0
+CONTROL t=375000 node=1 kind=12 queue=0
+CONTROL t=375000 node=2 kind=13 queue=0
+PLAN t=125000 epoch=1 phase=1 flow=1->3 mask=3/0 until=8590115592 prep=8590115592
+CONTROL t=376620 node=3 kind=10 queue=0
+CONTROL t=376660 node=1 kind=28 queue=0
+CONTROL t=377660 node=1 kind=12 queue=1
+CONTROL t=378140 node=3 kind=13 queue=0
+PLAN t=128640 epoch=1 phase=1 flow=1->3 mask=7/0 until=8590115592 prep=8590115592
+PLAN t=129000 epoch=1 phase=2 flow=1->3 mask=7/0 until=8590123592 prep=8590115592
+CONTROL t=379140 node=2 kind=10 queue=0
+CONTROL t=379160 node=1 kind=28 queue=0
+CONTROL t=379740 node=3 kind=6 queue=0
+CONTROL t=379780 node=1 kind=7 queue=0
+CONTROL t=381760 node=2 kind=10 queue=0
+CONTROL t=381780 node=1 kind=28 queue=0
+CONTROL t=383000 node=1 kind=14 queue=0
+CONTROL t=383000 node=2 kind=15 queue=0
+CONTROL t=383060 node=3 kind=10 queue=0
+CONTROL t=383520 node=1 kind=28 queue=0
+CONTROL t=384000 node=2 kind=6 queue=1
+CONTROL t=384020 node=1 kind=7 queue=0
+CONTROL t=385000 node=1 kind=14 queue=0
+CONTROL t=385000 node=3 kind=15 queue=0
+PLAN t=135500 epoch=1 phase=2 flow=1->3 mask=7/1 until=8590123592 prep=8590115592
+PLAN t=135500 epoch=1 phase=2 flow=1->3 mask=7/3 until=8590123592 prep=8590115592
+PLAN t=135500 epoch=1 phase=3 flow=1->3 mask=7/7 until=8590123592 prep=8590115592
+CONTROL t=387320 node=3 kind=10 queue=0
+CONTROL t=387500 node=2 kind=17 queue=1
+CONTROL t=388500 node=3 kind=11 queue=0
+CONTROL t=389000 node=1 kind=16 queue=0
+CONTROL t=389520 node=2 kind=26 queue=0
+CONTROL t=389740 node=3 kind=6 queue=0
+CONTROL t=390040 node=1 kind=7 queue=1
+CONTROL t=390280 node=3 kind=11 queue=0
+CONTROL t=390520 node=2 kind=10 queue=1
+CONTROL t=391040 node=1 kind=28 queue=1
+CONTROL t=391540 node=1 kind=16 queue=0
+CONTROL t=392520 node=3 kind=11 queue=1
+CONTROL t=393000 node=1 kind=16 queue=0
+CONTROL t=393020 node=3 kind=26 queue=1
+CONTROL t=393520 node=3 kind=10 queue=1
+CONTROL t=394020 node=2 kind=10 queue=2
+CONTROL t=394040 node=1 kind=28 queue=0
+CONTROL t=394520 node=2 kind=6 queue=1
+CONTROL t=394540 node=1 kind=7 queue=0
+CONTROL t=395020 node=3 kind=11 queue=0
+CONTROL t=395040 node=1 kind=16 queue=0
+CONTROL t=395520 node=3 kind=10 queue=0
+CONTROL t=396280 node=3 kind=11 queue=0
+CONTROL t=396860 node=1 kind=28 queue=0
+CONTROL t=397360 node=1 kind=16 queue=0
+CONTROL t=398020 node=3 kind=26 queue=0
+CONTROL t=398520 node=3 kind=10 queue=1
+PLAN t=149000 epoch=2 phase=1 flow=3->1 mask=0/0 until=8590143592 prep=8590143592
+CONTROL t=399020 node=3 kind=11 queue=1
+CONTROL t=399660 node=1 kind=28 queue=0
+CONTROL t=400020 node=3 kind=6 queue=1
+CONTROL t=400520 node=3 kind=10 queue=1
+CONTROL t=401000 node=1 kind=12 queue=0
+CONTROL t=401020 node=3 kind=11 queue=0
+CONTROL t=401500 node=1 kind=7 queue=0
+CONTROL t=402000 node=1 kind=28 queue=0
+CONTROL t=402280 node=3 kind=11 queue=0
+CONTROL t=403060 node=3 kind=10 queue=0
+CONTROL t=403500 node=1 kind=12 queue=0
+CONTROL t=404040 node=1 kind=28 queue=0
+CONTROL t=404280 node=3 kind=11 queue=0
+CONTROL t=404520 node=2 kind=6 queue=2
+CONTROL t=404540 node=1 kind=7 queue=0
+CONTROL t=404780 node=3 kind=10 queue=1
+PLAN t=155000 epoch=2 phase=1 flow=3->1 mask=4/0 until=8590143592 prep=8590143592
+CONTROL t=405020 node=2 kind=13 queue=1
+PLAN t=155020 epoch=2 phase=1 flow=3->1 mask=6/0 until=8590143592 prep=8590143592
+CONTROL t=405520 node=2 kind=10 queue=2
+CONTROL t=405740 node=1 kind=28 queue=0
+CONTROL t=406280 node=3 kind=11 queue=0
+CONTROL t=407000 node=1 kind=12 queue=0
+CONTROL t=408520 node=3 kind=11 queue=2
+CONTROL t=409020 node=3 kind=10 queue=2
+CONTROL t=409280 node=1 kind=12 queue=0
+CONTROL t=410020 node=3 kind=10 queue=1
+CONTROL t=410040 node=1 kind=28 queue=0
+CONTROL t=410520 node=2 kind=10 queue=1
+CONTROL t=410520 node=3 kind=6 queue=1
+CONTROL t=410540 node=1 kind=28 queue=0
+CONTROL t=411020 node=3 kind=11 queue=0
+CONTROL t=411040 node=1 kind=12 queue=1
+CONTROL t=411540 node=1 kind=28 queue=2
+CONTROL t=412280 node=3 kind=11 queue=0
+CONTROL t=412540 node=1 kind=7 queue=0
+CONTROL t=413040 node=1 kind=12 queue=0
+CONTROL t=413500 node=3 kind=10 queue=0
+CONTROL t=414020 node=3 kind=13 queue=0
+CONTROL t=414520 node=2 kind=6 queue=2
+CONTROL t=414860 node=1 kind=7 queue=0
+PLAN t=165020 epoch=2 phase=1 flow=3->1 mask=7/0 until=8590143592 prep=8590143592
+CONTROL t=415360 node=1 kind=12 queue=0
+CONTROL t=416020 node=2 kind=10 queue=1
+CONTROL t=416040 node=1 kind=28 queue=0
+CONTROL t=416480 node=3 kind=10 queue=0
+PLAN t=167000 epoch=2 phase=2 flow=3->1 mask=7/0 until=8590161592 prep=8590143592
+CONTROL t=419020 node=3 kind=10 queue=1
+CONTROL t=419040 node=1 kind=14 queue=0
+CONTROL t=420020 node=2 kind=15 queue=1
+CONTROL t=420020 node=3 kind=6 queue=0
+CONTROL t=420040 node=1 kind=28 queue=0
+CONTROL t=420520 node=2 kind=10 queue=1
+CONTROL t=421040 node=1 kind=28 queue=1
+CONTROL t=421500 node=3 kind=10 queue=0
+CONTROL t=421540 node=1 kind=7 queue=0
+CONTROL t=423000 node=1 kind=14 queue=0
+CONTROL t=423520 node=3 kind=10 queue=1
+CONTROL t=424020 node=2 kind=10 queue=2
+CONTROL t=424020 node=3 kind=15 queue=0
+CONTROL t=424040 node=1 kind=28 queue=0
+CONTROL t=424520 node=2 kind=6 queue=1
+CONTROL t=424540 node=1 kind=7 queue=0
+CONTROL t=425040 node=1 kind=14 queue=0
+CONTROL t=425520 node=3 kind=15 queue=0
+PLAN t=176020 epoch=2 phase=2 flow=3->1 mask=7/1 until=8590161592 prep=8590143592
+PLAN t=176020 epoch=2 phase=2 flow=3->1 mask=7/3 until=8590161592 prep=8590143592
+PLAN t=176020 epoch=2 phase=3 flow=3->1 mask=7/7 until=8590161592 prep=8590143592
+CONTROL t=427020 node=3 kind=10 queue=0
+CONTROL t=427520 node=1 kind=16 queue=0
+CONTROL t=427520 node=3 kind=10 queue=0
+CONTROL t=428520 node=2 kind=26 queue=0
+CONTROL t=429740 node=3 kind=6 queue=0
+CONTROL t=430340 node=1 kind=7 queue=1
+CONTROL t=431320 node=2 kind=10 queue=0
+CONTROL t=431340 node=1 kind=16 queue=1
+CONTROL t=431740 node=3 kind=10 queue=0
+CONTROL t=431840 node=1 kind=28 queue=0
+CONTROL t=432240 node=3 kind=10 queue=2
+CONTROL t=432340 node=1 kind=28 queue=0
+CONTROL t=432740 node=3 kind=26 queue=1
+CONTROL t=433340 node=1 kind=28 queue=1
+CONTROL t=433840 node=1 kind=16 queue=0
+CONTROL t=434320 node=2 kind=6 queue=3
+CONTROL t=434340 node=1 kind=7 queue=0
+CONTROL t=435000 node=1 kind=16 queue=0
+CONTROL t=436480 node=3 kind=10 queue=0
+CONTROL t=437000 node=1 kind=16 queue=0
+CONTROL t=438000 node=1 kind=28 queue=0
+CONTROL t=438480 node=3 kind=26 queue=0
+PLAN t=189000 epoch=3 phase=5 flow=1->3 mask=7/7 until=8590123592 prep=8590115592
+CONTROL t=439740 node=3 kind=6 queue=0
+CONTROL t=440240 node=3 kind=10 queue=0
+CONTROL t=440840 node=1 kind=28 queue=0
+CONTROL t=441200 node=3 kind=10 queue=0
+CONTROL t=441340 node=1 kind=16 queue=0
+CONTROL t=442320 node=3 kind=26 queue=0
+CONTROL t=442820 node=2 kind=10 queue=1
+CONTROL t=442840 node=1 kind=28 queue=0
+CONTROL t=443340 node=1 kind=16 queue=0
+CONTROL t=443820 node=2 kind=6 queue=1
+CONTROL t=443840 node=1 kind=7 queue=0
+CONTROL t=444320 node=3 kind=26 queue=0
+PLAN t=195000 epoch=4 phase=1 flow=1->3 mask=0/0 until=8590189592 prep=8590189592
+CONTROL t=446320 node=2 kind=10 queue=0
+CONTROL t=446340 node=1 kind=28 queue=0
+CONTROL t=446820 node=3 kind=10 queue=0
+CONTROL t=446860 node=1 kind=28 queue=0
+CONTROL t=447360 node=1 kind=12 queue=0
+CONTROL t=447840 node=2 kind=13 queue=0
+PLAN t=197840 epoch=4 phase=1 flow=1->3 mask=2/0 until=8590189592 prep=8590189592
+CONTROL t=449000 node=1 kind=12 queue=0
+CONTROL t=449340 node=3 kind=13 queue=0
+PLAN t=199840 epoch=4 phase=1 flow=1->3 mask=6/0 until=8590189592 prep=8590189592
+CONTROL t=450340 node=3 kind=6 queue=0
+CONTROL t=450380 node=1 kind=7 queue=0
+CONTROL t=450840 node=3 kind=10 queue=0
+PLAN t=201000 epoch=4 phase=1 flow=1->3 mask=7/0 until=8590189592 prep=8590189592
+CONTROL t=451380 node=1 kind=28 queue=0
+CONTROL t=452860 node=3 kind=10 queue=0
+CONTROL t=452900 node=1 kind=28 queue=0
+PLAN t=203000 epoch=4 phase=2 flow=1->3 mask=7/0 until=8590197592 prep=8590189592
+CONTROL t=453880 node=2 kind=6 queue=1
+CONTROL t=453900 node=1 kind=7 queue=0
+CONTROL t=454380 node=2 kind=10 queue=0
+CONTROL t=454400 node=1 kind=28 queue=0
+CONTROL t=455000 node=1 kind=14 queue=0
+CONTROL t=455000 node=2 kind=15 queue=0
+CONTROL t=457000 node=1 kind=14 queue=0
+CONTROL t=457000 node=3 kind=15 queue=0
+CONTROL t=458000 node=2 kind=10 queue=0
+CONTROL t=458020 node=1 kind=28 queue=0
+PLAN t=209000 epoch=4 phase=2 flow=1->3 mask=7/1 until=8590197592 prep=8590189592
+PLAN t=209000 epoch=4 phase=2 flow=1->3 mask=7/3 until=8590197592 prep=8590189592
+PLAN t=209000 epoch=4 phase=3 flow=1->3 mask=7/7 until=8590197592 prep=8590189592
+CONTROL t=460060 node=3 kind=6 queue=0
+CONTROL t=460100 node=1 kind=7 queue=0
+CONTROL t=461000 node=1 kind=16 queue=0
+CONTROL t=461060 node=3 kind=10 queue=0
+CONTROL t=461080 node=2 kind=26 queue=1
+CONTROL t=461560 node=3 kind=10 queue=0
+CONTROL t=461600 node=1 kind=28 queue=0
+CONTROL t=462100 node=1 kind=28 queue=0
+CONTROL t=463340 node=1 kind=16 queue=0
+CONTROL t=463580 node=2 kind=6 queue=1
+CONTROL t=463840 node=1 kind=7 queue=0
+CONTROL t=464080 node=3 kind=26 queue=0
+CONTROL t=467580 node=2 kind=1 queue=0
+CONTROL t=467600 node=1 kind=4 queue=1
+CONTROL t=468080 node=2 kind=27 queue=1
+CONTROL t=470080 node=2 kind=6 queue=0
+CONTROL t=470260 node=1 kind=5 queue=0
+CONTROL t=471080 node=2 kind=20 queue=1
+CONTROL t=473380 node=3 kind=1 queue=0
+CONTROL t=473600 node=1 kind=4 queue=0
+CONTROL t=474100 node=1 kind=5 queue=0
+CONTROL t=474780 node=3 kind=27 queue=1
+CONTROL t=475080 node=2 kind=20 queue=2
+CONTROL t=475780 node=3 kind=6 queue=1
+CONTROL t=476020 node=1 kind=5 queue=0
+CONTROL t=478020 node=1 kind=5 queue=0
+CONTROL t=478540 node=3 kind=20 queue=0
+CONTROL t=479180 node=2 kind=6 queue=0
+CONTROL t=485240 node=3 kind=6 queue=0
+CONTROL t=489180 node=2 kind=6 queue=0
+CONTROL t=495240 node=3 kind=6 queue=0
+CONTROL t=499180 node=2 kind=6 queue=0
+CONTROL t=505240 node=3 kind=6 queue=0
+CONTROL t=509180 node=2 kind=6 queue=0
+CONTROL t=515240 node=3 kind=6 queue=0
+CONTROL t=519180 node=2 kind=6 queue=0
+CONTROL t=525240 node=3 kind=6 queue=0
+PLAN t=61000 epoch=5 phase=5 flow=1->3 mask=7/7 until=8590197592 prep=8590189592
+PLAN t=63000 epoch=6 phase=5 flow=3->1 mask=7/7 until=8590161592 prep=8590143592
+CONTROL t=529180 node=2 kind=6 queue=0
+CONTROL t=529200 node=1 kind=7 queue=0
+CONTROL t=530180 node=2 kind=11 queue=1
+CONTROL t=530680 node=2 kind=17 queue=2
+CONTROL t=531260 node=1 kind=18 queue=0
+CONTROL t=532180 node=2 kind=11 queue=0
+CONTROL t=533220 node=2 kind=11 queue=0
+CONTROL t=535240 node=3 kind=6 queue=0
+CONTROL t=535280 node=2 kind=11 queue=1
+CONTROL t=535800 node=1 kind=7 queue=0
+CONTROL t=536800 node=3 kind=11 queue=2
+CONTROL t=537780 node=2 kind=11 queue=1
+CONTROL t=538300 node=3 kind=11 queue=0
+CONTROL t=539780 node=2 kind=6 queue=1
+CONTROL t=540280 node=2 kind=11 queue=1
+CONTROL t=540300 node=3 kind=11 queue=0
+CONTROL t=540800 node=1 kind=7 queue=0
+CONTROL t=541780 node=2 kind=11 queue=1
+CONTROL t=542300 node=3 kind=11 queue=0
+CONTROL t=543780 node=2 kind=11 queue=1
+CONTROL t=544300 node=3 kind=11 queue=0
+CONTROL t=545560 node=3 kind=6 queue=0
+CONTROL t=545780 node=2 kind=11 queue=1
+CONTROL t=546300 node=1 kind=7 queue=0
+CONTROL t=546560 node=3 kind=11 queue=0
+CONTROL t=547780 node=2 kind=11 queue=1
+CONTROL t=548780 node=3 kind=11 queue=0
+CONTROL t=550300 node=2 kind=6 queue=1
+CONTROL t=550300 node=3 kind=11 queue=0
+CONTROL t=550800 node=2 kind=11 queue=1
+CONTROL t=550820 node=1 kind=7 queue=0
+CONTROL t=552300 node=2 kind=11 queue=0
+CONTROL t=552300 node=3 kind=11 queue=0
+CONTROL t=554300 node=2 kind=11 queue=1
+CONTROL t=554440 node=3 kind=11 queue=0
+CONTROL t=555240 node=3 kind=6 queue=0
+CONTROL t=555800 node=2 kind=11 queue=0
+CONTROL t=556320 node=3 kind=11 queue=0
+CONTROL t=557800 node=2 kind=11 queue=1
+CONTROL t=558760 node=3 kind=11 queue=1
+CONTROL t=559800 node=2 kind=6 queue=1
+CONTROL t=559820 node=1 kind=7 queue=0
+CONTROL t=560300 node=2 kind=11 queue=1
+CONTROL t=560540 node=3 kind=11 queue=0
+CONTROL t=561800 node=2 kind=11 queue=0
+CONTROL t=562300 node=3 kind=11 queue=0
+CONTROL t=563320 node=2 kind=11 queue=0
+CONTROL t=564300 node=3 kind=11 queue=0
+CONTROL t=565300 node=3 kind=6 queue=0
+CONTROL t=565540 node=2 kind=10 queue=1
+CONTROL t=565560 node=1 kind=28 queue=0
+CONTROL t=566040 node=2 kind=11 queue=0
+CONTROL t=566300 node=3 kind=11 queue=0
+CONTROL t=567220 node=2 kind=11 queue=0
+CONTROL t=568220 node=3 kind=10 queue=0
+CONTROL t=568720 node=3 kind=11 queue=0
+CONTROL t=568740 node=1 kind=28 queue=0
+CONTROL t=569220 node=2 kind=10 queue=3
+CONTROL t=569240 node=1 kind=28 queue=0
+CONTROL t=570220 node=2 kind=6 queue=2
+CONTROL t=570240 node=1 kind=7 queue=0
+CONTROL t=570300 node=3 kind=11 queue=0
+CONTROL t=570720 node=2 kind=11 queue=1
+CONTROL t=570800 node=3 kind=10 queue=0
+CONTROL t=571740 node=1 kind=28 queue=0
+PLAN t=107000 epoch=7 phase=1 flow=1->3 mask=0/0 until=12885068888 prep=12885068888
+CONTROL t=572220 node=2 kind=11 queue=1
+CONTROL t=572300 node=3 kind=11 queue=0
+CONTROL t=573720 node=2 kind=11 queue=0
+CONTROL t=573720 node=3 kind=10 queue=0
+PLAN t=109000 epoch=7 phase=1 flow=1->3 mask=1/0 until=12885068888 prep=12885068888
+CONTROL t=574240 node=1 kind=28 queue=0
+CONTROL t=574300 node=3 kind=11 queue=0
+CONTROL t=575240 node=3 kind=6 queue=0
+CONTROL t=575720 node=2 kind=11 queue=1
+CONTROL t=575740 node=3 kind=10 queue=0
+CONTROL t=576000 node=1 kind=12 queue=0
+CONTROL t=576300 node=3 kind=11 queue=0
+CONTROL t=576500 node=1 kind=7 queue=0
+CONTROL t=577000 node=1 kind=28 queue=0
+CONTROL t=577220 node=2 kind=13 queue=2
+PLAN t=112220 epoch=7 phase=1 flow=1->3 mask=3/0 until=12885068888 prep=12885068888
+CONTROL t=578000 node=1 kind=12 queue=0
+CONTROL t=578220 node=2 kind=11 queue=1
+CONTROL t=580000 node=1 kind=12 queue=0
+CONTROL t=580220 node=2 kind=6 queue=2
+CONTROL t=580500 node=1 kind=7 queue=0
+CONTROL t=580720 node=2 kind=11 queue=1
+CONTROL t=581220 node=2 kind=10 queue=1
+CONTROL t=581240 node=1 kind=28 queue=0
+CONTROL t=581720 node=2 kind=11 queue=1
+CONTROL t=582240 node=1 kind=12 queue=1
+CONTROL t=583220 node=2 kind=10 queue=1
+CONTROL t=583240 node=1 kind=28 queue=0
+CONTROL t=583720 node=2 kind=11 queue=0
+CONTROL t=584000 node=1 kind=12 queue=0
+CONTROL t=585220 node=2 kind=11 queue=0
+CONTROL t=585240 node=3 kind=6 queue=0
+CONTROL t=585740 node=1 kind=7 queue=0
+CONTROL t=586240 node=1 kind=12 queue=0
+CONTROL t=586740 node=3 kind=11 queue=2
+CONTROL t=587720 node=2 kind=11 queue=1
+CONTROL t=587740 node=3 kind=13 queue=1
+CONTROL t=588000 node=1 kind=12 queue=0
+CONTROL t=588240 node=3 kind=10 queue=2
+PLAN t=123720 epoch=7 phase=1 flow=1->3 mask=7/0 until=12885068888 prep=12885068888
+CONTROL t=588740 node=3 kind=10 queue=1
+CONTROL t=589240 node=1 kind=28 queue=0
+CONTROL t=589240 node=3 kind=11 queue=0
+CONTROL t=589740 node=1 kind=28 queue=1
+PLAN t=125000 epoch=7 phase=2 flow=1->3 mask=7/0 until=12885086888 prep=12885068888
+CONTROL t=590220 node=2 kind=6 queue=1
+CONTROL t=590240 node=3 kind=11 queue=0
+CONTROL t=590720 node=2 kind=11 queue=1
+CONTROL t=590740 node=1 kind=7 queue=0
+CONTROL t=592220 node=2 kind=11 queue=0
+CONTROL t=592240 node=3 kind=11 queue=0
+CONTROL t=592920 node=3 kind=10 queue=0
+CONTROL t=593540 node=3 kind=10 queue=0
+CONTROL t=593720 node=2 kind=10 queue=1
+CONTROL t=593740 node=1 kind=28 queue=0
+CONTROL t=594220 node=2 kind=11 queue=1
+CONTROL t=594240 node=1 kind=14 queue=0
+CONTROL t=594240 node=3 kind=11 queue=0
+CONTROL t=594720 node=2 kind=10 queue=1
+CONTROL t=594740 node=1 kind=28 queue=0
+CONTROL t=595220 node=2 kind=15 queue=1
+CONTROL t=595240 node=3 kind=6 queue=0
+CONTROL t=595720 node=2 kind=11 queue=1
+CONTROL t=596000 node=1 kind=14 queue=0
+CONTROL t=596240 node=3 kind=11 queue=0
+CONTROL t=596500 node=1 kind=7 queue=0
+CONTROL t=596740 node=3 kind=15 queue=0
+PLAN t=132720 epoch=7 phase=2 flow=1->3 mask=7/1 until=12885086888 prep=12885068888
+PLAN t=132720 epoch=7 phase=2 flow=1->3 mask=7/3 until=12885086888 prep=12885068888
+PLAN t=132720 epoch=7 phase=3 flow=1->3 mask=7/7 until=12885086888 prep=12885068888
+CONTROL t=598220 node=2 kind=11 queue=3
+CONTROL t=598500 node=3 kind=11 queue=0
+CONTROL t=599000 node=3 kind=10 queue=1
+CONTROL t=599500 node=3 kind=10 queue=0
+CONTROL t=599720 node=2 kind=17 queue=2
+CONTROL t=600000 node=1 kind=16 queue=0
+CONTROL t=600220 node=2 kind=6 queue=2
+CONTROL t=600240 node=3 kind=11 queue=0
+CONTROL t=600500 node=1 kind=7 queue=1
+CONTROL t=600720 node=2 kind=11 queue=1
+CONTROL t=601220 node=2 kind=26 queue=2
+CONTROL t=602000 node=1 kind=16 queue=0
+CONTROL t=602220 node=2 kind=11 queue=1
+CONTROL t=602240 node=3 kind=11 queue=0
+CONTROL t=604000 node=1 kind=16 queue=0
+CONTROL t=604220 node=2 kind=11 queue=1
+CONTROL t=604220 node=3 kind=10 queue=0
+CONTROL t=604720 node=3 kind=11 queue=1
+CONTROL t=605220 node=3 kind=26 queue=1
+CONTROL t=605240 node=1 kind=28 queue=0
+CONTROL t=605720 node=3 kind=10 queue=1
+CONTROL t=606000 node=1 kind=16 queue=0
+CONTROL t=606220 node=2 kind=10 queue=1
+CONTROL t=606220 node=3 kind=6 queue=0
+CONTROL t=606500 node=1 kind=28 queue=0
+CONTROL t=606720 node=2 kind=11 queue=1
+CONTROL t=606720 node=3 kind=11 queue=0
+CONTROL t=607620 node=1 kind=7 queue=0
+CONTROL t=608120 node=1 kind=16 queue=0
+CONTROL t=608240 node=3 kind=11 queue=0
+CONTROL t=608720 node=2 kind=11 queue=1
+CONTROL t=609840 node=3 kind=10 queue=0
+CONTROL t=610000 node=1 kind=16 queue=0
+CONTROL t=610220 node=2 kind=6 queue=1
+CONTROL t=610340 node=3 kind=11 queue=0
+CONTROL t=610720 node=2 kind=11 queue=2
+CONTROL t=610840 node=3 kind=10 queue=0
+CONTROL t=611000 node=1 kind=7 queue=0
+CONTROL t=612220 node=1 kind=16 queue=0
+CONTROL t=612220 node=2 kind=11 queue=1
+CONTROL t=612240 node=3 kind=11 queue=0
+CONTROL t=614000 node=1 kind=16 queue=0
+CONTROL t=614220 node=2 kind=11 queue=1
+CONTROL t=614240 node=3 kind=11 queue=0
+CONTROL t=614740 node=3 kind=10 queue=0
+CONTROL t=615240 node=3 kind=6 queue=0
+CONTROL t=615740 node=1 kind=28 queue=0
+CONTROL t=616220 node=2 kind=11 queue=1
+CONTROL t=616240 node=1 kind=16 queue=1
+CONTROL t=618000 node=1 kind=16 queue=0
+CONTROL t=618220 node=2 kind=11 queue=1
+CONTROL t=620000 node=1 kind=16 queue=0
+CONTROL t=620220 node=2 kind=6 queue=3
+node=1 time=620320 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=7 wants=1 ready=1 authority=1 local=1
+ flow=31 epoch=7 retired=0 ready=3 notice=3 proofepoch=7 live=7 phase=3 end=12885086888
+ contexts 1->2: a42e94cde81f834f58fd02d3e6251638 ef47e624b5460d2735dd77015054efbf
+ contexts 1->3: 5a0ebac21321c59a4b5ce570ca98fafc fbade7fd794de40269daa543bb73df60
+ proof 0:00000000000000000000000000000000ef47e624b5460d2735dd77015054efbf5a0ebac21321c59a4b5ce570ca98fafc
+ proof 1:ef47e624b5460d2735dd77015054efbf5d4584099ffd61887e50b5dc8db4779000000000000000000000000000000000
+ proof 2:5d4584099ffd61887e50b5dc8db47790000000000000000000000000000000005a0ebac21321c59a4b5ce570ca98fafc
+ proof 3:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ proof 4:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+ peer=2 attempts=8 delivered=8 bits=255 age=8600 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=0 bits=0 age=7600 active=1 secure=1 drain=0
+ edge=3-2 delivery=8 epoch=1 age=42712
+ edge=2-3 delivery=8 epoch=1 age=25664
+ edge=3-1 delivery=0 epoch=1 age=22592
+ edge=2-1 delivery=8 epoch=1 age=36165
+ edge=1-3 delivery=0 epoch=1 age=17722
+ edge=1-2 delivery=8 epoch=1 age=18722
+node=2 time=620320 joined=1 peers=3 fault=0 handshake=0/0
+clock=1 pending=0/0 prepare=0 apply=0 proof=0 wants=1 ready=1 authority=0 local=1
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885086888
+ contexts 2->1: a42e94cde81f834f58fd02d3e6251638 ef47e624b5460d2735dd77015054efbf
+ contexts 2->3: 03891d2e7b1116e5f8bf084469224d94 5d4584099ffd61887e50b5dc8db47790
+ peer=1 attempts=8 delivered=8 bits=255 age=27100 active=1 secure=1 drain=0
+ peer=3 attempts=8 delivered=8 bits=255 age=1100 active=1 secure=1 drain=0
+node=3 time=620320 joined=1 peers=3 fault=0 handshake=0/0
+clock=0 pending=0/0 prepare=0 apply=0 proof=0 wants=2 ready=1 authority=0 local=1
+ flow=31 epoch=7 retired=0 ready=3 notice=0 proofepoch=0 live=0 phase=3 end=12885086888
+ contexts 3->1: 5a0ebac21321c59a4b5ce570ca98fafc fbade7fd794de40269daa543bb73df60
+ contexts 3->2: 03891d2e7b1116e5f8bf084469224d94 5d4584099ffd61887e50b5dc8db47790
+ peer=1 attempts=8 delivered=0 bits=0 age=13040 active=1 secure=1 drain=0
+ peer=2 attempts=8 delivered=8 bits=255 age=11320 active=1 secure=1 drain=0
+message outcome=0 evidence=0 applications=2 before=1
+425: now < until && delivered_app == before + 1u
+Node scheduling seed: 4
+Autonomous sequence 1 restart mode 0 PASS
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) =   4.88 sec
+
+The following tests FAILED:
+	 45 - discovery_slow_posix (Failed)
+Errors while running CTest

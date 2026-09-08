@@ -1,0 +1,17 @@
+{
+  "serial": "E0:72:A1:D7:77:28",
+  "app_sha256": "14251696f092ed54d55d23728b404df44de88bec33c11ebdf52982366e72ea8f",
+  "before": {
+    "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+    "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad",
+    "existing_node_stores": "8b7a9832964d623d0bcc7d3004a4b0ba"
+  },
+  "after": {
+    "nvs_phy": "540d29534148d81aafe55dbddc03d071",
+    "prior_stores": "0dfa341dc78ff1886d9dff07eccf39ad",
+    "existing_node_stores": "8b7a9832964d623d0bcc7d3004a4b0ba"
+  },
+  "preserved": true,
+  "device_image_verified": true,
+  "backups_created": false
+}

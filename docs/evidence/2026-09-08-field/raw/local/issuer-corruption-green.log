@@ -1,0 +1,22 @@
+Internal ctest changing into directory: /tmp/ninlil-oss-final/gcc
+Test project /tmp/ninlil-oss-final/gcc
+    Start 41: field_replacement_posix
+1/8 Test #41: field_replacement_posix ...........   Passed    1.49 sec
+    Start 43: enrollment_posix
+2/8 Test #43: enrollment_posix ..................   Passed    4.72 sec
+    Start 44: discovery_posix
+3/8 Test #44: discovery_posix ...................   Passed    5.02 sec
+    Start 45: discovery_slow_posix
+4/8 Test #45: discovery_slow_posix ..............   Passed    4.66 sec
+    Start 52: field_replacement_flash_runtime
+5/8 Test #52: field_replacement_flash_runtime ...   Passed    1.45 sec
+    Start 54: enrollment_flash_runtime
+6/8 Test #54: enrollment_flash_runtime ..........   Passed    4.63 sec
+    Start 55: discovery_flash_runtime
+7/8 Test #55: discovery_flash_runtime ...........   Passed    4.76 sec
+    Start 56: discovery_slow_flash_runtime
+8/8 Test #56: discovery_slow_flash_runtime ......   Passed    4.85 sec
+
+100% tests passed, 0 tests failed out of 8
+
+Total Test time (real) =  31.61 sec
