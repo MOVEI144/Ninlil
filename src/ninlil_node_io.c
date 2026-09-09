@@ -5,6 +5,8 @@ static int enter(ninlil_node *n, uint64_t now)
 {
     if (!n || now < n->now_ms || now > UINT64_MAX - NINLIL_EDHOC_DEADLINE_MS)
         return NINLIL_ERR_INVALID;
+    if (n->sleeping || n->config.offline)
+        return NINLIL_ERR_BUSY;
     n->now_ms = now;
     return n->status.fault;
 }
@@ -22,7 +24,7 @@ int ninlil_node_step(ninlil_node *n, uint64_t now)
         return rc;
     if (n->config.local == n->config.root &&
         now - n->clock.began_ms >= UINT32_MAX - 61000u) {
-        rc = ninlil_lease_root_open(&n->clock, n->config.root_eras, now);
+        rc = ninlil_node_root_clock(n, now);
         if (rc != NINLIL_OK) {
             n->status.fault = rc;
             return rc;
@@ -43,9 +45,7 @@ int ninlil_node_step(ninlil_node *n, uint64_t now)
         if (rc != NINLIL_OK)
             return rc;
     }
-    /* A 10 ms minimum tick keeps Core's step-based retries conservative if a
-     * caller polls more frequently. Delayed calls never run an unbounded
-     * catchup. */
+    /* A >=10 ms Core tick bounds retries; delayed calls never catch up. */
     if (now >= n->core_at) {
         uint32_t retry_ms = 1000u;
         for (unsigned int i = 0u; i < NINLIL_NETWORK_FLOWS_MAX; i++)

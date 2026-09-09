@@ -55,3 +55,13 @@ Clock renewal now owns its bounded retry window in `ninlil_node_sync.c`;
 the previous one-attempt renewal block was removed from the control dispatcher.
 Control reception accounting now resides in the existing diagnostics module;
 the dispatcher calls remain typed and its former counting wrapper was removed.
+
+The explicit September 9 lifecycle request adds an 1,800-line bounded allocation
+for new Root replacement, battery suspension and explicit deployment retirement
+code/tests/tools, listed in `scripts/deployment_lifecycle_files.txt`. Existing
+edited files remain in their original ledgers. The project ceiling stays 50,000.
+Superseded reports are replaced with Git retrieval pointers only after exact
+revision/hash verification in `docs/evidence/2026-09-09-maintenance/HISTORY.csv`.
+The earlier over-budget owner/field results were 5,524/5,500 and 3,254/3,000;
+they are failures. Stale roster-only documentation is simplified and historical
+reports are retired; no previous limit is increased and no source is excluded.

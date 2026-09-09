@@ -51,6 +51,7 @@ ninlil_strict_target(ninlil_contract)
 
 set(NINLIL_DELIVERY_SOURCES
   src/ninlil_collect.c
+  src/ninlil_maintenance.c
   src/ninlil.c
   src/ninlil_custody.c
   src/ninlil_group.c

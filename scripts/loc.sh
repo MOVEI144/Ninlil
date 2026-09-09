@@ -5,7 +5,7 @@ limit=${NINLIL_PROJECT_LOC_LIMIT:-50000}
 mapfile -d '' files < <(
   find "$root" -type f \
     \( -name '*.c' -o -name '*.h' -o -name '*.md' -o \
-       -name 'CMakeLists.txt' -o -name '*.sh' -o -name '*.toml' -o \
+       -name 'CMakeLists.txt' -o -name 'requirements.txt' -o -name '*.sh' -o -name '*.toml' -o \
        -name '*.csv' -o -name '*.py' -o -name '*.cmake' -o -name '*.cmake.in' -o \
        -name '*.json' -o -name '*.jsonl' -o -name '*.yml' -o -name '*.yaml' \) \
     ! -path "$root/.git/*" \

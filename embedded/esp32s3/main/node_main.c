@@ -6,6 +6,7 @@
 #include "esp_system.h"
 #include "esp_timer.h"
 #include "ninlil_network_pump.h"
+#include "node_battery.h"
 #include "node_example.h"
 #include <stdio.h>
 #include <string.h>
@@ -217,6 +218,13 @@ static int execute(char command, const uint8_t *data, size_t size,
     }
     if (!node)
         return NINLIL_ERR_STATE;
+    if (command == 'E' && size == 4u) {
+        uint32_t elapsed;
+        int rc = node_battery_sleep(&pump, (uint32_t)get(data, 4u), &elapsed);
+        put(output, elapsed, 4u);
+        *written = 4u;
+        return rc;
+    }
     if (strchr("OMWJYC", command) || (command == 'V' && !size))
         return node_bulk_command(command, data, size, output, written);
     if (command == 'K' && !size)
@@ -400,6 +408,11 @@ void app_main(void)
                 rc = node_application_step(ninlil_node_core(node));
                 if (rc == NINLIL_OK)
                     rc = node_bulk_step(ninlil_node_core(node));
+                if (rc == NINLIL_OK)
+                    rc = node_battery_step(&pump);
+                if (rc == NINLIL_ERR_BUSY)
+                    rc = NINLIL_OK; /* Rejected sleep remains a bounded awake
+                                       cycle. */
                 if (rc != NINLIL_OK) {
                     fault = rc;
                     stop();

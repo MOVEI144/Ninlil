@@ -17,7 +17,9 @@ expected = {(root / "ports/crypto/ninlil_edhoc.c").resolve(),
 expected.update(path.resolve() for path in (root / "src").glob("ninlil_node*.c"))
 expected.update(path.resolve() for path in (root / "src").glob("ninlil_bulk*.c"))
 expected.update((root / "src" / name).resolve()
-                for name in ("ninlil_admission.c", "ninlil_setup.c", "ninlil_field_plan.c"))
+                for name in ("ninlil_admission.c", "ninlil_setup.c", "ninlil_field_plan.c",
+                             "ninlil_root_replacement.c", "ninlil_deployment_retire.c"))
+expected.add((root / "ports/esp32s3/ninlil_sleep_esp.c").resolve())
 seen = set()
 for entry in json.loads((build / "compile_commands.json").read_text()):
     path = pathlib.Path(entry["file"]).resolve()

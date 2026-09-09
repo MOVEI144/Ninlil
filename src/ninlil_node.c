@@ -48,6 +48,9 @@ int ninlil_node_join_commit(void *ctx, const ninlil_join_record *record)
 int ninlil_node_plan_commit(void *ctx, const ninlil_network_plan *plan)
 {
     ninlil_node *n = ctx;
+    if (n->config.authority_key && n->config.local == n->config.root &&
+        (plan->epoch >> 32) != n->members[n->root_index].grant.membership_epoch)
+        return n->status.fault = NINLIL_ERR_CAPACITY;
     int rc = ninlil_control_log_plan(n->log, plan);
     if (rc != NINLIL_OK)
         n->status.fault = rc;
@@ -128,7 +131,7 @@ static int configuration(ninlil_node *n, const ninlil_node_config *c)
 {
     unsigned int i;
     int local, root;
-    if (!c || !c->members || c->member_count < 1u ||
+    if (!c || c->offline > 1u || !c->members || c->member_count < 1u ||
         c->member_count > NINLIL_NODE_MEMBERS_MAX || !c->identity ||
         !c->identity->signing_key || !c->counter_io || !c->emit ||
         !c->random.fill || !c->permitted_profile || !c->journal_location ||
@@ -292,10 +295,10 @@ int ninlil_node_open(ninlil_node **out, const ninlil_node_config *c,
         rc = NINLIL_ERR_CORRUPT;
     if (rc == NINLIL_OK)
         rc = open_layers(n, 0);
-    if (rc == NINLIL_OK && c->local == c->root) {
-        rc = root_identity(n);
+    if (rc == NINLIL_OK && c->local == c->root && !c->offline) {
+        rc = n->status.fault ? n->status.fault : root_identity(n);
         if (rc == NINLIL_OK)
-            rc = ninlil_lease_root_open(&n->clock, c->root_eras, now);
+            rc = ninlil_node_root_clock(n, now);
     } else if (rc == NINLIL_OK)
         ninlil_lease_peer_open(&n->clock, now);
     if (rc != NINLIL_OK) {

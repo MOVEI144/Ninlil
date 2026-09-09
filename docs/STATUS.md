@@ -2,7 +2,20 @@
 
 Updated: 2026-09-09
 
-## Latest scope: field growth and saved deployment settings
+## Latest scope: deployment lifecycle
+
+The [lifecycle implementation](DEPLOYMENT_LIFECYCLE.md) adds an independent
+credential issuer for Root-only replacement, battery Light-sleep, explicit
+site/role transfer and guarded address reuse. The completed-message transport
+history can be retired only after pending ownership is empty; application data
+and device identity remain separate. New tests cover interrupted transfer and
+fresh Join/delivery after address reuse. Battery timer sleep still fails its
+physical recovery gate; the bench device needs USB reconnection before diagnosis
+can continue. [The lifecycle record](evidence/2026-09-09-maintenance/README.md)
+separates completed local checks, passing physical checks and failed sleep tests.
+The runtime remains an alpha with separate field qualification gates.
+
+## Previous scope: field growth and saved deployment settings
 
 The [field deployment implementation](FIELD_DEPLOYMENT_2026-09-08.md) adds durable
 live enrollment, Root-signed COSE credentials, bounded discovery through powered
@@ -10,8 +23,8 @@ Relays, saved USB configuration and opt-in boot autorun. Five-device native
 scenarios cover alternate-Relay failover and recovery through a previously
 unknown Relay. The three-device configuration/reset test preserves identities
 and the existing application ledger. Model evidence and RF evidence are separate.
-The [broader design](FIELD_NETWORK_EVOLUTION_2026-09-08.md) also includes uncompleted
-Root replacement, cross-site transfer, address reuse, battery sleep and capacity.
+The [broader design](FIELD_NETWORK_EVOLUTION_2026-09-08.md) is historical context;
+the lifecycle record above supersedes its deployment feature status.
 The September 9 decision keeps Ninlil independent of KGuard: host integration,
 sensor semantics and battery timing are application choices. Neither a configured
 device nor a successful Join proves

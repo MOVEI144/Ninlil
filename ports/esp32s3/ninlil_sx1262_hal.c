@@ -201,8 +201,15 @@ sx126x_hal_status_t sx126x_hal_write(const void *opaque, const uint8_t *command,
     if (rc == ESP_OK)
         rc = transmit(context->spi, data, NULL, data_length);
     deselect_result = deselect_radio(context);
-    if (rc != ESP_OK || deselect_result != 0 ||
-        wait_busy(context, context->busy_timeout_ms) != 0)
+    if (rc != ESP_OK || deselect_result != 0)
+        return hal_error();
+    /* SetSleep holds BUSY high until wake. Allow retention to finish before
+
+     * * the next SPI access (SX1261/2 datasheet 13.1.1); do not wait for BUSY
+     * low. */
+    if (command_length == 2u && !data_length && command[0] == 0x84u)
+        esp_rom_delay_us(500u);
+    else if (wait_busy(context, context->busy_timeout_ms) != 0)
         return hal_error();
     return SX126X_HAL_STATUS_OK;
 }

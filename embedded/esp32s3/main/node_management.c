@@ -1,3 +1,4 @@
+#include "ninlil_journal.h"
 #include "ninlil_setup.h"
 #include "node_example.h"
 #include <string.h>
@@ -5,9 +6,11 @@
 static ninlil_setup *deployment;
 static uint64_t revision;
 static int autorun;
-static uint8_t upload[534], response[NINLIL_ADMISSION_MAX];
+static uint8_t upload[NINLIL_DEPLOYMENT_PACKET_MAX],
+    response[NINLIL_ADMISSION_MAX];
 static uint16_t total, used, response_length;
 static uint8_t operation;
+static int resume_transfer(void);
 static uint64_t get(const uint8_t *p, size_t size)
 {
     uint64_t value = 0u;
@@ -36,15 +39,18 @@ int node_deployment_open(void)
     rc = ninlil_setup_open(&deployment, "node_setup", &node_identity);
     if (rc == NINLIL_OK)
         rc = refresh();
+    if (rc == NINLIL_ERR_BUSY && ninlil_setup_transfer_pending(deployment))
+        rc = resume_transfer();
     return rc == NINLIL_ERR_EMPTY ? NINLIL_OK : rc;
 }
 int node_deployment_autorun(void)
 {
-    return deployment && revision && autorun && node_identity.initialized == 3u;
+    return deployment && revision && autorun &&
+           (node_identity.initialized & 2u) && !node_config.offline;
 }
 int node_deployment_start(ninlil_node *n)
 {
-    if (node_identity.initialized == 3u && (!deployment || !revision))
+    if ((node_identity.initialized & 2u) && (!deployment || !revision))
         return NINLIL_ERR_CORRUPT;
     return deployment && revision ? ninlil_setup_advertise(deployment, n)
                                   : NINLIL_OK;
@@ -62,23 +68,31 @@ static int configure(ninlil_node *active)
     ninlil_node_member root, local;
     ninlil_node *previous = NULL;
     uint16_t size;
+    size_t prefix = operation == 4u ? 76u : 11u;
+    const uint8_t *key;
     int rc;
-    if (active || total < 171u || upload[8] > 1u)
+    if (active || total < prefix + 1u || upload[8] > 1u || node_config.offline)
         return NINLIL_ERR_STATE;
-    size = (uint16_t)get(upload + 9, 2u);
-    if (size > total - 11u ||
-        ninlil_member_decode(upload + 11, size, &root) != NINLIL_OK)
+    size = (uint16_t)get(upload + prefix - 2u, 2u);
+    if (size > total - prefix ||
+        (operation == 4u
+             ? ninlil_admission_verify(upload + 9, upload + prefix, size, &root)
+             : ninlil_member_decode(upload + prefix, size, &root)) != NINLIL_OK)
         return NINLIL_ERR_INVALID;
+    key = operation == 4u ? upload + 9 : root.public_key;
     local = root;
-    if (total > size + 11u &&
-        ninlil_admission_verify(root.public_key, upload + size + 11u,
-                                total - size - 11u, &local) != NINLIL_OK)
+    if (total > size + prefix &&
+        ninlil_admission_verify(key, upload + size + prefix,
+                                total - size - prefix, &local) != NINLIL_OK)
         return NINLIL_ERR_UNAUTHORIZED;
     if (memcmp(local.grant.identity, node_identity.identity, 32u) ||
         memcmp(local.public_key, node_identity.public_key, 65u))
         return NINLIL_ERR_UNAUTHORIZED;
-    /* Existing custody belongs to its original network. Site transfer needs
-     * an explicit archived-store workflow; never repurpose these partitions. */
+    /* Normal updates retain deployment identity. Explicit transfer uses op 5.
+     */
+    if (node_config.authority_key &&
+        (operation != 4u || memcmp(node_config.authority_key, key, 65u)))
+        return NINLIL_ERR_CONFLICT;
     if (node_config.member_count && node_identity.initialized) {
         const ninlil_node_member *old = NULL;
         for (unsigned int i = 0u; i < node_config.member_count; i++)
@@ -101,6 +115,10 @@ static int configure(ninlil_node *active)
             local.grant.binding_epoch < old->grant.binding_epoch)
             return NINLIL_ERR_CONFLICT;
         if (get(upload, 8u) == revision) {
+            /* Mark prior Root use before assigning an independent issuer. */
+            rc = node_storage_provision();
+            if (rc != NINLIL_OK)
+                return rc;
             rc = ninlil_node_open(&previous, &node_config, 0u);
             if (rc == NINLIL_OK)
                 rc = ninlil_node_preserve_members(previous);
@@ -114,9 +132,11 @@ static int configure(ninlil_node *active)
         if (rc != NINLIL_OK)
             return rc;
     }
-    rc =
-        ninlil_setup_update(deployment, get(upload, 8u), &root,
-                            upload + size + 11u, total - size - 11u, upload[8]);
+    rc = operation == 4u
+             ? ninlil_setup_packet(deployment, upload, total)
+             : ninlil_setup_update(deployment, get(upload, 8u), &root,
+                                   upload + size + prefix,
+                                   total - size - prefix, upload[8]);
     if (rc == NINLIL_OK)
         rc = refresh();
     if (rc == NINLIL_OK)
@@ -125,11 +145,72 @@ static int configure(ninlil_node *active)
         rc = ninlil_identity_mark_deployed(&node_identity);
     return rc;
 }
+static int bulk_retained(void *ctx, uint8_t type, const uint8_t *data,
+                         uint16_t length, const ninlil_journal_ref *ref)
+{
+    (void)ctx;
+    (void)type;
+    (void)data;
+    (void)length;
+    (void)ref;
+    return NINLIL_ERR_BUSY; /* Application must explicitly adopt/retire objects.
+                             */
+}
+static int retire(int commit)
+{
+    ninlil_node *old = NULL;
+    ninlil_journal *bulk = NULL;
+    ninlil_node_config c = node_config;
+    int rc = ninlil_journal_open(&bulk, "node_bulk", 256u * 1024u,
+                                 bulk_retained, NULL);
+    ninlil_journal_close(bulk);
+    c.offline = 1u;
+    if (rc == NINLIL_OK)
+        rc = ninlil_node_open(&old, &c, 0u);
+    if (rc == NINLIL_OK)
+        rc = commit ? ninlil_node_retire_deployment(old)
+                    : ninlil_node_deployment_idle(old);
+    ninlil_node_close(old);
+    return rc;
+}
+static int resume_transfer(void)
+{
+    int rc = retire(1);
+    if (rc == NINLIL_OK)
+        rc = ninlil_setup_transfer_finish(deployment);
+    if (rc == NINLIL_OK)
+        rc = refresh();
+    if (rc == NINLIL_OK)
+        rc = node_storage_provision();
+    if (rc == NINLIL_OK)
+        rc = ninlil_identity_mark_deployed(&node_identity);
+    return rc;
+}
+static int transfer(ninlil_node *active)
+{
+    int rc;
+    if (active || !deployment || !revision)
+        return NINLIL_ERR_STATE;
+    if (!ninlil_setup_transfer_pending(deployment)) {
+        if (get(upload, 8u) + 1u == revision)
+            return ninlil_setup_packet(deployment, upload,
+                                       total); /* Lost final response. */
+        rc = retire(0);
+        if (rc != NINLIL_OK)
+            return rc;
+    }
+    rc = ninlil_setup_transfer_begin(deployment, upload, total);
+    if (rc == NINLIL_OK) {
+        (void)refresh(); /* Intent forces offline before any retirement. */
+        rc = resume_transfer();
+    }
+    return rc;
+}
 int node_management(ninlil_node *n, const uint8_t *data, size_t size,
                     uint8_t *out, size_t *written)
 {
     *written = 0u;
-    if (node_identity.initialized == 3u && (!deployment || !revision))
+    if ((node_identity.initialized & 2u) && (!deployment || !revision))
         return NINLIL_ERR_CORRUPT;
     if (!size)
         return NINLIL_ERR_INVALID;
@@ -144,7 +225,7 @@ int node_management(ninlil_node *n, const uint8_t *data, size_t size,
         *written = 8u;
         return NINLIL_OK;
     }
-    if (data[0] == 0u && size == 4u && data[1] >= 1u && data[1] <= 3u) {
+    if (data[0] == 0u && size == 4u && data[1] >= 1u && data[1] <= 5u) {
         uint16_t length = (uint16_t)get(data + 2, 2u);
         if (!length || length > sizeof(upload))
             return NINLIL_ERR_TOO_LARGE;
@@ -172,8 +253,10 @@ int node_management(ninlil_node *n, const uint8_t *data, size_t size,
         size_t length = 0u;
         int rc;
         response_length = 0u;
-        if (operation == 1u)
+        if (operation == 1u || operation == 4u)
             rc = configure(n);
+        else if (operation == 5u)
+            rc = transfer(n);
         else if (operation == 2u) {
             ninlil_node *temporary = NULL;
             rc = ninlil_member_decode(upload, total, &member);

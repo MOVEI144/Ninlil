@@ -63,7 +63,7 @@ def response(device):
 
 
 def upload(device, operation, blob):
-    if operation not in (1, 2, 3) or not 0 < len(blob) <= 534:
+    if operation not in (1, 2, 3, 4, 5) or not 0 < len(blob) <= 674:
         raise ValueError('Invalid management upload')
     device.call('U', bytes((0, operation)) + struct.pack('>H', len(blob)))
     for offset in range(0, len(blob), 120):

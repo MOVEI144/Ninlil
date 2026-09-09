@@ -44,6 +44,12 @@ int ninlil_node_admit(ninlil_node *node, const uint8_t *credential,
 int ninlil_admission_verify(const uint8_t root_key[65],
                             const uint8_t *credential, size_t length,
                             ninlil_node_member *member);
+/* Trusted issuer boundary, independent of the radio Root. Caller persists the
+ * allocation/epoch before issuing; this function only signs the public grant.
+ */
+int ninlil_admission_sign(ninlil_identity *issuer,
+                          const ninlil_node_member *member, uint8_t *out,
+                          size_t capacity, size_t *length);
 /* Copies this node's signed credential for bounded radio announcements.
  * Caller persists/reloads the deployment settings; normal Join still applies.
  */

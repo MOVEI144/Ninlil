@@ -56,6 +56,9 @@ int ninlil_identity_mark_initialized(ninlil_identity *identity);
  * Missing deployment settings must subsequently fail closed. Old readers
  * reject NIv4. Key rotation preserves this marker and the stable identity. */
 int ninlil_identity_mark_deployed(ninlil_identity *identity);
+/* NIv5 remembers prior Root use across role/site changes. Once marked, a lost
+ * physical boot counter must never be recreated, even with a new CA grant. */
+int ninlil_identity_mark_root(ninlil_identity *identity);
 /* The supplied peer key must come from explicit trusted provisioning, never an
  * unauthenticated radio announcement. One peer context per handshake. */
 int ninlil_identity_credentials(ninlil_identity_peer *peer,

@@ -5,6 +5,8 @@
 typedef int sx126x_status_t;
 #define SX126X_STATUS_OK 0
 #define SX126X_STANDBY_CFG_RC 0
+#define SX126X_SLEEP_CFG_WARM_START 4
+sx126x_status_t sx126x_set_sleep(const void *context, int config);
 #define SX126X_REG_MODE_DCDC 1
 #define SX126X_TCXO_CTRL_1_8V 2
 #define SX126X_CAL_ALL 0x7F

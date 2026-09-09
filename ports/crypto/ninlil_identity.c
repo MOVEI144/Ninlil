@@ -21,7 +21,9 @@ static int import_record(ninlil_identity *id, const uint8_t *record)
         return rc;
     if ((memcmp(record, "NI\002\000", 4u) != 0 &&
          (memcmp(record, "NI\003", 3u) != 0 || record[3] > 1u) &&
-         (memcmp(record, "NI\004", 3u) != 0 || record[3] != 3u)) ||
+         (memcmp(record, "NI\004", 3u) != 0 || record[3] != 3u) &&
+         (memcmp(record, "NI\005", 3u) != 0 ||
+          (record[3] != 5u && record[3] != 7u))) ||
         memcmp(hash, record + 76, 32u) != 0)
         return NINLIL_ERR_CORRUPT;
     /* Old NIv2 owners are conservatively treated as already provisioned. */
@@ -87,7 +89,11 @@ static int generate_record(uint8_t record[NINLIL_IDENTITY_RECORD_SIZE],
     psa_status_t status;
     size_t i, length = 0u;
     memset(record, 0, NINLIL_IDENTITY_RECORD_SIZE);
-    memcpy(record, initialized == 3u ? "NI\004" : "NI\003", 3u);
+    memcpy(record,
+           initialized & 4u    ? "NI\005"
+           : initialized == 3u ? "NI\004"
+                               : "NI\003",
+           3u);
     record[3] = initialized;
     if (identity)
         memcpy(record + 12, identity, 32u);
@@ -162,7 +168,7 @@ static int mark(ninlil_identity *id, uint8_t flags)
         rc = NINLIL_ERR_CONFLICT;
     if (rc == NINLIL_OK && (stored.initialized & flags) != flags) {
         record[3] |= flags;
-        record[2] = record[3] == 3u ? 4u : 3u;
+        record[2] = record[3] & 4u ? 5u : record[3] == 3u ? 4u : 3u;
         for (unsigned int i = 0u; i < 8u; i++)
             record[11u - i] = (uint8_t)((id->generation + 1u) >> (8u * i));
         rc = digest(record, 76u, record + 76);
@@ -184,6 +190,10 @@ int ninlil_identity_mark_initialized(ninlil_identity *id)
 int ninlil_identity_mark_deployed(ninlil_identity *id)
 {
     return id && (id->initialized & 1u) ? mark(id, 3u) : NINLIL_ERR_STATE;
+}
+int ninlil_identity_mark_root(ninlil_identity *id)
+{
+    return id && (id->initialized & 1u) ? mark(id, 5u) : NINLIL_ERR_STATE;
 }
 
 int ninlil_identity_provision(ninlil_identity *id, ninlil_identity_io io)

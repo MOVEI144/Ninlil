@@ -52,6 +52,8 @@ int ninlil_sx1262_radio_receive(ninlil_sx1262_radio *radio, uint8_t *data,
                                 ninlil_sx1262_rx_info *info,
                                 TickType_t wait_ticks);
 int ninlil_sx1262_radio_recover(ninlil_sx1262_radio *radio);
+/* Exclusive owner call. Wake with recover; no TX or RX while asleep. */
+int ninlil_sx1262_radio_sleep(ninlil_sx1262_radio *radio);
 /* Stages power for the next TX standby boundary; never exceeds profile max. */
 int ninlil_sx1262_radio_power(ninlil_sx1262_radio *radio, int8_t power_dbm);
 

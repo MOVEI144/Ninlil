@@ -1,4 +1,5 @@
 #include "ninlil_enrollment.h"
+#include "ninlil_maintenance.h"
 #include "ninlil_node_internal.h"
 #include <string.h>
 
@@ -79,12 +80,21 @@ static int apply(ninlil_node *n, const ninlil_node_member *m, int persist)
         size_t size = ninlil_member_encode(old, prior, sizeof(prior));
         if (length == size && !memcmp(bytes, prior, size))
             return NINLIL_OK;
+        if ((uint16_t)index == n->root_index && n->config.authority_key)
+            return ninlil_node_replace_root(n, m, persist);
         if ((uint16_t)index == n->local_index ||
             (uint16_t)index == n->root_index ||
-            memcmp(m->grant.identity, old->grant.identity, 32u) ||
             m->grant.membership_epoch <= old->grant.membership_epoch ||
             m->grant.binding_epoch < old->grant.binding_epoch)
             return NINLIL_ERR_CONFLICT;
+        if (memcmp(m->grant.identity, old->grant.identity, 32u)) {
+            if (!n->config.authority_key ||
+                m->grant.binding_epoch <= old->grant.binding_epoch)
+                return NINLIL_ERR_CONFLICT;
+            if (persist &&
+                (rc = ninlil_node_address_idle(n, m->grant.node)) != NINLIL_OK)
+                return rc;
+        }
         /* Validate replacement independently of its old address/key entry. */
         if (ninlil_join_grant_valid(&m->grant) != NINLIL_OK ||
             memcmp(m->grant.authority, old->grant.authority, 16u))
@@ -99,7 +109,8 @@ static int apply(ninlil_node *n, const ninlil_node_member *m, int persist)
         }
         for (unsigned int i = 0u; i < n->config.member_count; i++)
             if ((int)i != index &&
-                !memcmp(m->public_key, n->members[i].public_key, 65u))
+                (!memcmp(m->public_key, n->members[i].public_key, 65u) ||
+                 !memcmp(m->grant.identity, n->members[i].grant.identity, 32u)))
                 return NINLIL_ERR_CONFLICT;
         for (unsigned int i = 0u; i < m->grant.service_count; i++)
             if (m->grant.services[i].maximum_payload_bytes > 64u)
@@ -126,6 +137,12 @@ static int apply(ninlil_node *n, const ninlil_node_member *m, int persist)
                 ninlil_edhoc_close(&n->handshake);
             ninlil_node_disconnect(n, (uint16_t)index);
         }
+    }
+    if ((uint16_t)index < n->config.member_count &&
+        memcmp(n->members[index].grant.identity, m->grant.identity, 32u)) {
+        ninlil_join_peer *old = ninlil_node_authority_peer(n, (uint16_t)index);
+        if (old)
+            memset(old, 0, sizeof(*old));
     }
     n->members[index] = *m;
     n->dynamic_members |= (uint16_t)(1u << (unsigned int)index);

@@ -1,6 +1,7 @@
 get_filename_component(NINLIL_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../.." ABSOLUTE)
 idf_component_register(
   SRCS "${NINLIL_ROOT}/ports/esp32s3/ninlil_network_pump.c"
+       "${NINLIL_ROOT}/ports/esp32s3/ninlil_sleep_esp.c"
        "${NINLIL_ROOT}/src/ninlil_secure.c"
        "${NINLIL_ROOT}/src/ninlil_secure_link.c"
        "${NINLIL_ROOT}/ports/crypto/ninlil_psa.c"
@@ -28,6 +29,9 @@ idf_component_register(
        "${NINLIL_ROOT}/src/ninlil_node_discovery.c"
        "${NINLIL_ROOT}/src/ninlil_node_diagnostics.c"
        "${NINLIL_ROOT}/src/ninlil_node_sync.c"
+       "${NINLIL_ROOT}/src/ninlil_node_sleep.c"
+       "${NINLIL_ROOT}/src/ninlil_root_replacement.c"
+       "${NINLIL_ROOT}/src/ninlil_deployment_retire.c"
        "${NINLIL_ROOT}/src/ninlil_node_forward.c"
        "${NINLIL_ROOT}/src/ninlil_setup.c"
        "${NINLIL_ROOT}/src/ninlil_field_plan.c"

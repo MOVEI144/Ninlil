@@ -55,23 +55,57 @@ int ninlil_admission_verify(const uint8_t key[65], const uint8_t *data,
         rc = NINLIL_ERR_UNAUTHORIZED;
     if (verifier)
         (void)psa_destroy_key(verifier);
+    verifier = 0;
+    if (rc == NINLIL_OK && psa_import_key(&attrs, member.public_key, 65u,
+                                          &verifier) != PSA_SUCCESS)
+        rc = NINLIL_ERR_INVALID;
+    if (verifier)
+        (void)psa_destroy_key(verifier);
     psa_reset_key_attributes(&attrs);
     if (rc == NINLIL_OK)
         *out = member;
     return rc;
 }
-int ninlil_node_authorize(ninlil_node *n, const ninlil_node_member *m,
+int ninlil_admission_sign(ninlil_identity *issuer, const ninlil_node_member *m,
                           uint8_t *out, size_t capacity, size_t *length)
 {
     uint8_t data[NINLIL_ADMISSION_MAX], hash[32];
     size_t size, written = 0u;
+    if (length)
+        *length = 0u;
+    if (!issuer || !issuer->signing_key || !m || !out || !length)
+        return NINLIL_ERR_INVALID;
+    size = ninlil_member_encode(m, data + 9, sizeof(data) - 9u);
+    if (!size || capacity < size + 75u)
+        return NINLIL_ERR_TOO_LARGE;
+    int rc = signed_hash(data + 9, size, hash);
+    if (rc != NINLIL_OK)
+        return rc;
+    memcpy(data, prefix, sizeof(prefix));
+    data[8] = (uint8_t)size;
+    data[9u + size] = 0x58;
+    data[10u + size] = 0x40;
+    if (psa_sign_hash(issuer->signing_key, PSA_ALG_ECDSA(PSA_ALG_SHA_256), hash,
+                      sizeof(hash), data + 11u + size, 64u,
+                      &written) != PSA_SUCCESS ||
+        written != 64u)
+        return NINLIL_ERR_IO;
+    memcpy(out, data, size + 75u);
+    *length = size + 75u;
+    return NINLIL_OK;
+}
+int ninlil_node_authorize(ninlil_node *n, const ninlil_node_member *m,
+                          uint8_t *out, size_t capacity, size_t *length)
+{
+    uint8_t data[NINLIL_MEMBER_RECORD_MAX];
+    size_t size;
     int rc, index;
     if (length)
         *length = 0u;
     if (!n || !m || !out || !length || n->status.fault ||
-        n->config.local != n->config.root)
+        n->config.local != n->config.root || n->config.authority_key)
         return NINLIL_ERR_UNAUTHORIZED;
-    size = ninlil_member_encode(m, data + 9, sizeof(data) - 9u);
+    size = ninlil_member_encode(m, data, sizeof(data));
     if (!size || capacity < size + 75u)
         return NINLIL_ERR_TOO_LARGE;
     index = ninlil_node_index(n, m->grant.node);
@@ -84,22 +118,9 @@ int ninlil_node_authorize(ninlil_node *n, const ninlil_node_member *m,
         return rc;
     }
     rc = ninlil_node_enroll(n, m);
-    if (rc == NINLIL_OK)
-        rc = signed_hash(data + 9, size, hash);
-    if (rc != NINLIL_OK)
-        return rc;
-    memcpy(data, prefix, sizeof(prefix));
-    data[8] = (uint8_t)size;
-    data[9u + size] = 0x58;
-    data[10u + size] = 0x40;
-    if (psa_sign_hash(n->config.identity->signing_key,
-                      PSA_ALG_ECDSA(PSA_ALG_SHA_256), hash, sizeof(hash),
-                      data + 11u + size, 64u, &written) != PSA_SUCCESS ||
-        written != 64u)
-        return NINLIL_ERR_IO;
-    memcpy(out, data, size + 75u);
-    *length = size + 75u;
-    return NINLIL_OK;
+    return rc == NINLIL_OK ? ninlil_admission_sign(n->config.identity, m, out,
+                                                   capacity, length)
+                           : rc;
 }
 int ninlil_node_admit(ninlil_node *n, const uint8_t *data, size_t length)
 {
@@ -107,7 +128,7 @@ int ninlil_node_admit(ninlil_node *n, const uint8_t *data, size_t length)
     int rc;
     if (!n || n->status.fault)
         return NINLIL_ERR_STATE;
-    rc = ninlil_admission_verify(n->members[n->root_index].public_key, data,
-                                 length, &member);
+    rc = ninlil_admission_verify(ninlil_node_admission_key(n), data, length,
+                                 &member);
     return rc == NINLIL_OK ? ninlil_node_enroll(n, &member) : rc;
 }

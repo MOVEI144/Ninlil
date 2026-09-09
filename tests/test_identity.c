@@ -118,6 +118,12 @@ int main(void)
     ninlil_identity_close(&restored);
     CHECK(ninlil_identity_rotate(&b, b.generation) == NINLIL_OK &&
           b.initialized == 3u);
+    CHECK(ninlil_identity_mark_root(&b) == NINLIL_OK && b.initialized == 7u);
+    CHECK(ninlil_identity_rotate(&b, b.generation) == NINLIL_OK &&
+          b.initialized == 7u);
+    CHECK(ninlil_identity_open(&restored, io[1]) == NINLIL_OK &&
+          restored.initialized == 7u);
+    ninlil_identity_close(&restored);
     storage.bytes[24] ^= 1u;
     CHECK(ninlil_identity_mark_initialized(&b) == NINLIL_ERR_CORRUPT &&
           !b.signing_key);

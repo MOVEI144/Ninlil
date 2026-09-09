@@ -42,6 +42,9 @@ typedef struct ninlil_node_config {
     ninlil_route_emit_fn emit;
     void *emit_ctx;
     uint8_t dynamic_enrollment; /* Opt-in to signed-credential discovery. */
+    const uint8_t
+        *authority_key; /* Optional 65-byte CA key, borrowed until close. */
+    uint8_t offline;    /* Maintenance only: opens stores, never permits RF. */
 } ninlil_node_config;
 
 typedef struct ninlil_node ninlil_node;

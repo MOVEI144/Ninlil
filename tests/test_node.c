@@ -227,7 +227,8 @@ static void tick(void)
                  p.bytes[31] == 0u) ||
                 (weak_direct &&
                  (!direct_bootstrap || memcmp(p.bytes, "NB\001", 3u) != 0) &&
-                 ((i == 0u && j == 2u) || (i == 2u && j == 0u))))
+                 ((d->config.local == 1u && devices[j].config.local == 3u) ||
+                  (d->config.local == 3u && devices[j].config.local == 1u))))
                 continue;
             (void)ninlil_node_receive(devices[j].node, p.bytes, p.length,
                                       now - devices[j].boot_at);

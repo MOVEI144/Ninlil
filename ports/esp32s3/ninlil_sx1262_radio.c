@@ -495,6 +495,21 @@ int ninlil_sx1262_radio_recover(ninlil_sx1262_radio *radio)
     return rc;
 }
 
+int ninlil_sx1262_radio_sleep(ninlil_sx1262_radio *radio)
+{
+    if (!caller_is_owner(radio) || !radio->configured)
+        return NINLIL_ERR_STATE;
+    /* The synchronous owner has completed TX. An unfinished RX has not been
+     * acknowledged and remains owned by its sender. Preserve the TX pause. */
+    radio->configured = radio->rx_active = false;
+    return sx126x_set_standby(&radio->hal, SX126X_STANDBY_CFG_RC) ==
+                       SX126X_STATUS_OK &&
+                   sx126x_set_sleep(&radio->hal, SX126X_SLEEP_CFG_WARM_START) ==
+                       SX126X_STATUS_OK
+               ? NINLIL_OK
+               : NINLIL_ERR_IO;
+}
+
 int ninlil_sx1262_radio_airtime(const ninlil_sx1262_radio *radio,
                                 uint16_t length, uint32_t *airtime_us)
 {

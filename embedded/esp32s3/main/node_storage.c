@@ -63,7 +63,8 @@ static int eras(int provision)
     ninlil_security_io io;
     ninlil_counter_config c = {{0}, 0u, 1u, UINT32_MAX - 1u};
     int rc;
-    if (node_config.local != node_config.root || era_store.opened)
+    if (node_config.local != node_config.root || era_store.opened ||
+        node_config.offline)
         return NINLIL_OK;
     memcpy(c.session_fingerprint, node_identity.identity, 16u);
     rc = ninlil_esp_security_region(&era_region, &io, "node_era", 0u,
@@ -71,12 +72,16 @@ static int eras(int provision)
     if (rc == NINLIL_OK)
         rc = ninlil_counter_open(&era_store, &io,
                                  NINLIL_COUNTER_RESUME_EXISTING, &c);
-    if (rc == NINLIL_ERR_NOT_FOUND && provision && !node_identity.initialized)
+    if (rc == NINLIL_ERR_NOT_FOUND &&
+        ((provision && !node_identity.initialized) ||
+         (node_config.authority_key && !(node_identity.initialized & 4u))))
         rc =
             ninlil_counter_open(&era_store, &io, NINLIL_COUNTER_CREATE_NEW, &c);
     if (rc == NINLIL_ERR_NOT_FOUND && node_identity.initialized)
         rc = NINLIL_ERR_CORRUPT;
-    return rc;
+    return rc == NINLIL_OK && (node_identity.initialized & 1u)
+               ? ninlil_identity_mark_root(&node_identity)
+               : rc;
 }
 int node_storage_open(void)
 {
@@ -111,6 +116,9 @@ int node_storage_provision(void)
                                    node_identity.initialized ? 0 : 1);
     if (rc == NINLIL_OK && node_config.member_count)
         rc = ninlil_node_provision_stores(&node_config);
+    if (rc == NINLIL_OK && node_config.member_count &&
+        node_config.local == node_config.root)
+        rc = ninlil_identity_mark_root(&node_identity);
     node_application_close();
     return rc;
 }

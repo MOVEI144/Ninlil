@@ -1,6 +1,6 @@
 docs/FIELD_DEPLOYMENT_2026-09-08.md
-docs/FIELD_RESULTS_2026-09-08.json
 docs/FIELD_NETWORK_EVOLUTION_2026-09-08.md
+docs/FIELD_RESULTS_2026-09-08.json
 embedded/esp32s3/main/node_management.c
 embedded/esp32s3/main/node_management.h
 include/ninlil_enrollment.h

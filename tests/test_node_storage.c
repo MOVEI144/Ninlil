@@ -73,6 +73,23 @@ int main(void)
     for (size_t i = 0u; i < sizeof(era_flash_fixture.bytes); i++)
         CHECK(era_flash_fixture.bytes[i] == 255u);
     ninlil_identity_close(&node_identity);
+    /* A device that has never been Root may create its first physical era
+     * under a CA credential. The irreversible marker then prevents recreation.
+     */
+    memset(identity_flash_fixture.bytes, 255,
+           sizeof(identity_flash_fixture.bytes));
+    CHECK(node_storage_open() == NINLIL_ERR_EMPTY);
+    node_config.local = 2u;
+    CHECK(node_storage_provision() == NINLIL_OK);
+    CHECK(ninlil_identity_mark_initialized(&node_identity) == NINLIL_OK);
+    CHECK(ninlil_identity_mark_deployed(&node_identity) == NINLIL_OK);
+    node_config.local = node_config.root = 1u;
+    node_config.authority_key = node_identity.public_key;
+    CHECK(eras(1) == NINLIL_OK && node_identity.initialized == 7u);
+    ninlil_counter_close(&era_store);
+    memset(era_flash_fixture.bytes, 255, sizeof(era_flash_fixture.bytes));
+    CHECK(eras(1) == NINLIL_ERR_CORRUPT);
+    ninlil_identity_close(&node_identity);
     puts("established identity cannot recreate a lost root boot-era history "
          "PASS");
     return 0;

@@ -4,6 +4,7 @@
 #include "ninlil_control_log.h"
 #include "ninlil_identity.h"
 #include "ninlil_node.h"
+int ninlil_node_address_idle(ninlil_node *node, uint16_t address);
 
 #define NODE_RETRY_MS 1000u
 #define NODE_CONTROL_MS 500u
@@ -151,6 +152,7 @@ struct ninlil_node {
     uint8_t plan_cursor;
     uint8_t notify_cursor, notify_turn;
     uint8_t joined;
+    uint8_t sleeping;
     uint8_t removal_ready;
     uint8_t planning;
 };
@@ -249,6 +251,10 @@ int ninlil_node_member_check(ninlil_node *node,
                              const ninlil_node_member *member, uint16_t count);
 int ninlil_node_member_restore(void *ctx, const uint8_t *data, uint16_t length);
 int ninlil_node_member_snapshot(ninlil_node *node, ninlil_control_log *out);
+const uint8_t *ninlil_node_admission_key(ninlil_node *node);
+int ninlil_node_replace_root(ninlil_node *node,
+                             const ninlil_node_member *member, int persist);
+int ninlil_node_root_clock(ninlil_node *node, uint64_t now);
 
 int ninlil_node_discovery_open(ninlil_node *node);
 void ninlil_node_discovery_close(ninlil_node *node);

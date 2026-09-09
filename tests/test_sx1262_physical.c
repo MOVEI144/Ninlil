@@ -297,6 +297,11 @@ sx126x_status_t sx126x_set_standby(const void *context, int config)
     (void)config;
     return fake_fail_standby ? ESP_FAIL : SX126X_STATUS_OK;
 }
+sx126x_status_t sx126x_set_sleep(const void *context, int config)
+{
+    (void)context;
+    return config == SX126X_SLEEP_CFG_WARM_START ? SX126X_STATUS_OK : ESP_FAIL;
+}
 
 sx126x_status_t sx126x_set_reg_mode(const void *context, int mode)
 {
@@ -948,6 +953,14 @@ static int test_adaptive_power_boundary(void)
     fake_power_failure = false;
     CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) == NINLIL_OK);
     CHECK(fake_power == -9 && radio.applied_power_dbm == -9);
+    int64_t pause_until = radio.tx_not_before_us;
+    CHECK(ninlil_sx1262_radio_sleep(&radio) == NINLIL_OK);
+    CHECK(!radio.configured && !radio.rx_active &&
+          radio.tx_not_before_us == pause_until);
+    CHECK(ninlil_sx1262_radio_send(&radio, &data, 1u) != NINLIL_OK);
+    CHECK(ninlil_sx1262_radio_recover(&radio) == NINLIL_OK);
+    CHECK(radio.configured && radio.rx_active &&
+          radio.tx_not_before_us == pause_until);
     ninlil_sx1262_radio_deinit(&radio);
     return 0;
 }

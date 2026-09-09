@@ -122,4 +122,13 @@ config NINLIL_RF_PREAMBLE_SYMBOLS
     range 6 65535
     default 8
 
+config NINLIL_BATTERY_AWAKE_SECONDS
+    int "Battery role maximum awake window in reference firmware (seconds)"
+    range 1 3600
+    default 120
+config NINLIL_BATTERY_SLEEP_SECONDS
+    int "Battery role timer sleep in reference firmware (seconds)"
+    range 1 86400
+    default 60
+
 endmenu

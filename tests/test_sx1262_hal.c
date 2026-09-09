@@ -23,6 +23,7 @@
 static int fake_spi_token;
 static int64_t fake_time_us;
 static int fake_busy_level;
+static int fake_sleep_on_deselect;
 static esp_err_t fake_gpio_config_result;
 static esp_err_t fake_bus_init_result;
 static esp_err_t fake_add_device_result;
@@ -48,6 +49,7 @@ static void reset_fakes(void)
 {
     fake_time_us = 0;
     fake_busy_level = 0;
+    fake_sleep_on_deselect = 0;
     fake_gpio_config_result = ESP_OK;
     fake_bus_init_result = ESP_OK;
     fake_add_device_result = ESP_OK;
@@ -77,6 +79,9 @@ esp_err_t gpio_config(const gpio_config_t *config)
 
 esp_err_t gpio_set_level(gpio_num_t gpio, int level)
 {
+    if (fake_sleep_on_deselect && gpio == NINLIL_SX1262_PIN_NSS && level &&
+        fake_transmitted_size)
+        fake_busy_level = 1; /* Sleep holds BUSY high until wake/reset. */
     fake_gpio_set_calls++;
     if (fake_gpio_set_fail_call == fake_gpio_set_calls)
         return ESP_FAIL;
@@ -395,11 +400,28 @@ static int test_long_non_dma_transfers(void)
     return 0;
 }
 
+static int test_sleep_busy(void)
+{
+    ninlil_sx1262_hal_context context;
+    const uint8_t sleep_command[2] = {0x84u, 4u};
+    reset_fakes();
+    CHECK(ninlil_sx1262_hal_init(&context) == 0);
+    fake_sleep_on_deselect = 1;
+    CHECK(sx126x_hal_write(&context, sleep_command, 2u, NULL, 0u) ==
+          SX126X_HAL_STATUS_OK);
+    CHECK(fake_busy_level && fake_time_us >= 500 && fake_time_us < 20000);
+    /* Other commands still refuse an asserted BUSY signal. */
+    CHECK(sx126x_hal_write(&context, (const uint8_t[]){0x80u, 0u}, 2u, NULL,
+                           0u) == SX126X_HAL_STATUS_ERROR);
+    ninlil_sx1262_hal_deinit(&context);
+    return 0;
+}
 static int (*const tests[])(void) = {
     test_init_io_and_cleanup,
     test_bounded_operation_failures,
     test_init_and_reset_fail_closed,
     test_long_non_dma_transfers,
+    test_sleep_busy,
 };
 
 int main(void)

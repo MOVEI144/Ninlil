@@ -3,6 +3,7 @@ get_filename_component(NINLIL_CORE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../.." 
 idf_component_register(
     SRCS
         "${NINLIL_CORE_ROOT}/src/ninlil_collect.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil_maintenance.c"
         "${NINLIL_CORE_ROOT}/src/ninlil.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_authorization.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_custody.c"

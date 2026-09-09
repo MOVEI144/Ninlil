@@ -30,6 +30,7 @@ host_sources=(
   "$root/src/ninlil_replay.c"
   "$root/src/ninlil_send.c"
   "$root/src/ninlil_storage.c"
+  "$root/src/ninlil_maintenance.c"
   "$root/src/ninlil_topology.c"
   "$root/src/ninlil_wire.c"
   "$root/src/ninlil_secure.c"

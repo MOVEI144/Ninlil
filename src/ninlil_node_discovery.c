@@ -41,10 +41,10 @@ int ninlil_node_advertise(ninlil_node *n, const uint8_t *data, size_t length)
     int rc;
     advert *a;
     if (!n || !n->discovery || n->status.fault ||
-        n->config.local == n->config.root)
+        (n->config.local == n->config.root && !n->config.authority_key))
         return NINLIL_ERR_STATE;
-    rc = ninlil_admission_verify(n->members[n->root_index].public_key, data,
-                                 length, &m);
+    rc =
+        ninlil_admission_verify(ninlil_node_admission_key(n), data, length, &m);
     if (rc != NINLIL_OK)
         return rc;
     size = ninlil_member_encode(&n->members[n->local_index], expected,
@@ -101,7 +101,9 @@ int ninlil_node_discovery_receive(ninlil_node *n, const uint8_t *f,
     struct ninlil_discovery *d = n->discovery;
     if (rc != NINLIL_OK || n->peers[n->local_index].revoked)
         return NINLIL_ERR_UNAUTHORIZED;
-    if (incoming.source == n->config.local || incoming.source == n->config.root)
+    if ((incoming.source == n->config.local &&
+         incoming.source != n->config.root) ||
+        (incoming.source == n->config.root && !n->config.authority_key))
         return NINLIL_ERR_EMPTY;
     r = &d->receive;
     if (r->until <= n->now_ms) {
@@ -132,7 +134,7 @@ int ninlil_node_discovery_receive(ninlil_node *n, const uint8_t *f,
     if (n->now_ms < d->seen_until && !memcmp(digest, d->seen, sizeof(d->seen)))
         return NINLIL_OK;
     d->verify_at = n->now_ms + 1000u;
-    rc = ninlil_admission_verify(n->members[n->root_index].public_key, r->bytes,
+    rc = ninlil_admission_verify(ninlil_node_admission_key(n), r->bytes,
                                  r->size, &m);
     if (rc != NINLIL_OK || m.grant.node != r->source)
         return NINLIL_ERR_UNAUTHORIZED;

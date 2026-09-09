@@ -63,6 +63,12 @@ static void enrollment_config(ninlil_node_config *c, unsigned int index)
 {
     if (!getenv("NINLIL_TEST_ENROLLMENT"))
         return;
+    if (index == 2u && getenv("NINLIL_TEST_BATTERY")) {
+        members[index].grant.role = NINLIL_ROLE_BATTERY_LEAF;
+        members[index].grant.capabilities = NINLIL_CAP_APP_SEND |
+                                            NINLIL_CAP_APP_RECEIVE |
+                                            NINLIL_CAP_POLL_DOWNLINK;
+    }
     if (index >= 3u) {
         members[index].grant.role = NINLIL_ROLE_POWERED_RELAY_CANDIDATE;
         members[index].grant.capabilities |= NINLIL_CAP_RELAY_CUSTODY;
