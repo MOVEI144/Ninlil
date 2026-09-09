@@ -16,6 +16,8 @@ typedef struct ninlil_sx1262_hal_context {
     bool bus_initialized;
 } ninlil_sx1262_hal_context;
 
+// The radio task owns the entire SPI host until deinit. Do not share the host
+// or call this HAL concurrently/from an ISR. Init fails on an occupied host.
 int ninlil_sx1262_hal_init(ninlil_sx1262_hal_context *context);
 void ninlil_sx1262_hal_deinit(ninlil_sx1262_hal_context *context);
 

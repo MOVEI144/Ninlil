@@ -1,0 +1,384 @@
+{
+  "scope": "512-byte object completed across resumed three-board campaigns; not a single-run throughput qualification",
+  "runs": [
+    {
+      "run": 1,
+      "reported_pass": false,
+      "error": "RuntimeError({'time': 1788859623.2309754, 'node': 1, 'command': 'J', 'request': '', 'result': -14, 'response': ''})",
+      "image_set": "extensions-node-v2",
+      "analysis": {
+        "console_sha256": "4a961149a831863f5428a488e654fa9079aa1951f7557bf93f777cae0b4be509",
+        "console_bytes": 5473,
+        "records": 36,
+        "elapsed_seconds": 5.3434224128723145,
+        "manifest": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+        },
+        "source": {},
+        "receiver": {},
+        "source_bytes_match": true,
+        "readback_matches": false,
+        "complete": false,
+        "restarts": [],
+        "collection": [
+          {
+            "record": 3,
+            "node": 1,
+            "kind": "K"
+          },
+          {
+            "record": 7,
+            "node": 2,
+            "kind": "K"
+          },
+          {
+            "record": 11,
+            "node": 3,
+            "kind": "K"
+          }
+        ],
+        "power_pairs": [],
+        "power_decrease_observed": false,
+        "all_stopped": true
+      }
+    },
+    {
+      "run": 2,
+      "reported_pass": false,
+      "error": "RuntimeError('Bulk campaign timed out; partial progress retained')",
+      "image_set": "extensions-node-v3",
+      "analysis": {
+        "console_sha256": "e007a88a351c4b64b60b90d63e44b949e5b97e37dd419f01c41047793c9d11c1",
+        "console_bytes": 298157,
+        "records": 1448,
+        "elapsed_seconds": 573.3748073577881,
+        "manifest": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+        },
+        "source": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 512,
+          "acknowledged": 3,
+          "sending": 1,
+          "ready": 1,
+          "remote_stored": 0,
+          "last_result": 0
+        },
+        "receiver": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 120,
+          "acknowledged": 0,
+          "sending": 0,
+          "ready": 0,
+          "remote_stored": 0,
+          "last_result": 0
+        },
+        "source_bytes_match": true,
+        "readback_matches": false,
+        "complete": false,
+        "restarts": [
+          {
+            "before": {
+              "id": "f867ce4d8eadfb4058c870285faac6d8",
+              "length": 512,
+              "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+              "stored": 80,
+              "acknowledged": 0,
+              "sending": 0,
+              "ready": 0,
+              "remote_stored": 0,
+              "last_result": 0
+            },
+            "after": {
+              "id": "f867ce4d8eadfb4058c870285faac6d8",
+              "length": 512,
+              "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+              "stored": 80,
+              "acknowledged": 0,
+              "sending": 0,
+              "ready": 0,
+              "remote_stored": 0,
+              "last_result": 0
+            },
+            "retained": true
+          }
+        ],
+        "collection": [
+          {
+            "record": 3,
+            "node": 1,
+            "kind": "K"
+          },
+          {
+            "record": 7,
+            "node": 2,
+            "kind": "K"
+          },
+          {
+            "record": 11,
+            "node": 3,
+            "kind": "K"
+          },
+          {
+            "record": 789,
+            "node": 3,
+            "kind": "K"
+          }
+        ],
+        "power_pairs": [
+          [
+            -3,
+            -3
+          ]
+        ],
+        "power_decrease_observed": false,
+        "all_stopped": true
+      }
+    },
+    {
+      "run": 3,
+      "reported_pass": false,
+      "error": "RuntimeError('Bulk campaign timed out; partial progress retained')",
+      "image_set": "extensions-node-v3",
+      "analysis": {
+        "console_sha256": "47d39f202dea444d7244545ee37d7d8dc2465cd1076b9edb9720024b0a73afd5",
+        "console_bytes": 300806,
+        "records": 1459,
+        "elapsed_seconds": 573.3876974582672,
+        "manifest": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+        },
+        "source": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 512,
+          "acknowledged": 6,
+          "sending": 1,
+          "ready": 1,
+          "remote_stored": 0,
+          "last_result": 0
+        },
+        "receiver": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 240,
+          "acknowledged": 0,
+          "sending": 0,
+          "ready": 0,
+          "remote_stored": 0,
+          "last_result": 0
+        },
+        "source_bytes_match": true,
+        "readback_matches": false,
+        "complete": false,
+        "restarts": [],
+        "collection": [
+          {
+            "record": 3,
+            "node": 1,
+            "kind": "K"
+          },
+          {
+            "record": 7,
+            "node": 2,
+            "kind": "K"
+          },
+          {
+            "record": 11,
+            "node": 3,
+            "kind": "K"
+          }
+        ],
+        "power_pairs": [
+          [
+            -6,
+            -6
+          ],
+          [
+            -6,
+            -3
+          ],
+          [
+            -3,
+            -6
+          ],
+          [
+            -3,
+            -3
+          ]
+        ],
+        "power_decrease_observed": true,
+        "all_stopped": true
+      }
+    },
+    {
+      "run": 4,
+      "reported_pass": false,
+      "error": "RuntimeError('Bulk campaign timed out; partial progress retained')",
+      "image_set": "extensions-node-v3",
+      "analysis": {
+        "console_sha256": "ad4a15545203696e21f30011fe90fc7708b2ded27c12505ef9ce791aa437c2d3",
+        "console_bytes": 343709,
+        "records": 1682,
+        "elapsed_seconds": 574.5719742774963,
+        "manifest": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+        },
+        "source": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 512,
+          "acknowledged": 11,
+          "sending": 1,
+          "ready": 1,
+          "remote_stored": 0,
+          "last_result": 0
+        },
+        "receiver": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 440,
+          "acknowledged": 0,
+          "sending": 0,
+          "ready": 0,
+          "remote_stored": 0,
+          "last_result": 0
+        },
+        "source_bytes_match": true,
+        "readback_matches": false,
+        "complete": false,
+        "restarts": [],
+        "collection": [
+          {
+            "record": 3,
+            "node": 1,
+            "kind": "K"
+          },
+          {
+            "record": 7,
+            "node": 2,
+            "kind": "K"
+          },
+          {
+            "record": 11,
+            "node": 3,
+            "kind": "K"
+          }
+        ],
+        "power_pairs": [
+          [
+            -6,
+            -6
+          ],
+          [
+            -3,
+            -3
+          ]
+        ],
+        "power_decrease_observed": true,
+        "all_stopped": true
+      }
+    },
+    {
+      "run": 5,
+      "reported_pass": true,
+      "error": null,
+      "image_set": "extensions-node-v3",
+      "analysis": {
+        "console_sha256": "5f62d6c6acff03e922a66c516eaed78385a147751bac325755f75b6f638eb572",
+        "console_bytes": 312333,
+        "records": 1527,
+        "elapsed_seconds": 517.5095698833466,
+        "manifest": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+        },
+        "source": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 512,
+          "acknowledged": 15,
+          "sending": 1,
+          "ready": 1,
+          "remote_stored": 1,
+          "last_result": 0
+        },
+        "receiver": {
+          "id": "f867ce4d8eadfb4058c870285faac6d8",
+          "length": 512,
+          "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb",
+          "stored": 512,
+          "acknowledged": 0,
+          "sending": 0,
+          "ready": 1,
+          "remote_stored": 0,
+          "last_result": 0
+        },
+        "source_bytes_match": true,
+        "readback_matches": true,
+        "complete": true,
+        "restarts": [],
+        "collection": [
+          {
+            "record": 3,
+            "node": 1,
+            "kind": "K"
+          },
+          {
+            "record": 7,
+            "node": 2,
+            "kind": "K"
+          },
+          {
+            "record": 11,
+            "node": 3,
+            "kind": "K"
+          },
+          {
+            "record": 1516,
+            "node": 1,
+            "kind": "C"
+          },
+          {
+            "record": 1517,
+            "node": 3,
+            "kind": "C"
+          }
+        ],
+        "power_pairs": [
+          [
+            -3,
+            -3
+          ]
+        ],
+        "power_decrease_observed": false,
+        "all_stopped": true
+      }
+    }
+  ],
+  "completed_object": {
+    "id": "f867ce4d8eadfb4058c870285faac6d8",
+    "length": 512,
+    "sha256": "eda04e59a20f1be022239fe01051d3a26bab3b864fa5e0755b4d1ac7a1a4e8cb"
+  },
+  "power_decrease_observed": true,
+  "electrical_power_cut_tested": false
+}

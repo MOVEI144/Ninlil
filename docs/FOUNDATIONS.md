@@ -169,7 +169,7 @@ The primary workload is sparse IoT traffic:
 
 Continuous media, arbitrary file transfer, firmware images, and streaming are not normal Ninlil traffic.
 
-The current direct-radio profile has a 92-byte radio MTU. Larger logical messages require an explicit fragmentation profile; fragmentation is never silently enabled by the core. Bulk transfer is a separate bounded traffic class and must not starve control traffic.
+The historical direct simulator has a 92-byte MTU. The secure-network software profile raises the physical radio MTU to 240 bytes; its routed application payload is at most 64 bytes, and that new physical profile has not undergone RF HIL. Larger logical messages require an explicit fragmentation profile; fragmentation is never silently enabled by the core. Bulk transfer is a separate bounded traffic class and must not starve control traffic.
 
 ## 13. Host and product integration
 

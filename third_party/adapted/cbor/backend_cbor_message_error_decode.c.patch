@@ -1,0 +1,49 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_message_error_decode.c
++++ third_party/adapted/cbor/backend_cbor_message_error_decode.c
+@@ -21,13 +21,29 @@
+ static bool decode_message_error(zcbor_state_t *state, struct message_error *result);
+ 
+ 
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_decode_message_error(zcbor_state_t *state, void *data)
++{
++    return decode_message_error(state, data);
++}
++
++static bool ninlil_decoder_decode_repeated_message_error_ERR_INFO(zcbor_state_t *state, void *data)
++{
++    return decode_repeated_message_error_ERR_INFO(state, data);
++}
++
++static bool ninlil_decoder_zcbor_int32_decode(zcbor_state_t *state, void *data)
++{
++    return zcbor_int32_decode(state, data);
++}
++
+ static bool decode_suites(
+ 		zcbor_state_t *state, struct suites_r *result)
+ {
+ 	zcbor_log("%s\r\n", __func__);
+ 	bool int_res;
+ 
+-	bool tmp_result = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_list_start_decode(state) && ((zcbor_multi_decode(2, 3, &(*result).suites_int_l_int_count, (zcbor_decoder_t *)zcbor_int32_decode, state, (&(*result).suites_int_l_int), sizeof(int32_t))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))) && (((*result).suites_choice = suites_int_l_c), true))
++	bool tmp_result = (((zcbor_union_start_code(state) && (int_res = ((((zcbor_list_start_decode(state) && ((zcbor_multi_decode(2, 3, &(*result).suites_int_l_int_count, ninlil_decoder_zcbor_int32_decode, state, (&(*result).suites_int_l_int), sizeof(int32_t))) || (zcbor_list_map_end_force_decode(state), false)) && zcbor_list_end_decode(state))) && (((*result).suites_choice = suites_int_l_c), true))
+ 	|| (zcbor_union_elem_code(state) && (((zcbor_int32_decode(state, (&(*result).suites_int)))) && (((*result).suites_choice = suites_int_c), true)))), zcbor_union_end_code(state), int_res))));
+ 
+ 	if (!tmp_result) {
+@@ -66,7 +82,7 @@
+ 	zcbor_log("%s\r\n", __func__);
+ 
+ 	bool tmp_result = (((((zcbor_int32_decode(state, (&(*result).message_error_ERR_CODE))))
+-	&& zcbor_present_decode(&((*result).message_error_ERR_INFO_present), (zcbor_decoder_t *)decode_repeated_message_error_ERR_INFO, state, (&(*result).message_error_ERR_INFO)))));
++	&& zcbor_present_decode(&((*result).message_error_ERR_INFO_present), ninlil_decoder_decode_repeated_message_error_ERR_INFO, state, (&(*result).message_error_ERR_INFO)))));
+ 
+ 	if (!tmp_result) {
+ 		zcbor_trace_file(state);
+@@ -88,5 +104,5 @@
+ 	zcbor_state_t states[5];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)result, payload_len_out, states,
+-		(zcbor_decoder_t *)decode_message_error, sizeof(states) / sizeof(zcbor_state_t), 2);
++		ninlil_decoder_decode_message_error, sizeof(states) / sizeof(zcbor_state_t), 2);
+ }

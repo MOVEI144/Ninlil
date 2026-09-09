@@ -1,0 +1,22 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_enc_structure_encode.c
++++ third_party/adapted/cbor/backend_cbor_enc_structure_encode.c
+@@ -18,6 +18,12 @@
+ 
+ static bool encode_enc_structure(zcbor_state_t *state, const struct enc_structure *input);
+ 
++
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_encode_enc_structure(zcbor_state_t *state, void *data)
++{
++    return encode_enc_structure(state, data);
++}
+ 
+ static bool encode_enc_structure(
+ 		zcbor_state_t *state, const struct enc_structure *input)
+@@ -49,5 +55,5 @@
+ 	zcbor_state_t states[3];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)input, payload_len_out, states,
+-		(zcbor_decoder_t *)encode_enc_structure, sizeof(states) / sizeof(zcbor_state_t), 1);
++		ninlil_decoder_encode_enc_structure, sizeof(states) / sizeof(zcbor_state_t), 1);
+ }

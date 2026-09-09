@@ -1,0 +1,22 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_message_4_encode.c
++++ third_party/adapted/cbor/backend_cbor_message_4_encode.c
+@@ -18,6 +18,12 @@
+ 
+ static bool encode_message_4_CIPHERTEXT_4(zcbor_state_t *state, const struct zcbor_string *input);
+ 
++
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_encode_message_4_CIPHERTEXT_4(zcbor_state_t *state, void *data)
++{
++    return encode_message_4_CIPHERTEXT_4(state, data);
++}
+ 
+ static bool encode_message_4_CIPHERTEXT_4(
+ 		zcbor_state_t *state, const struct zcbor_string *input)
+@@ -46,5 +52,5 @@
+ 	zcbor_state_t states[2];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)input, payload_len_out, states,
+-		(zcbor_decoder_t *)encode_message_4_CIPHERTEXT_4, sizeof(states) / sizeof(zcbor_state_t), 1);
++		ninlil_decoder_encode_message_4_CIPHERTEXT_4, sizeof(states) / sizeof(zcbor_state_t), 1);
+ }

@@ -1,0 +1,16 @@
+docs/AUTONOMOUS_HIL_RESULTS_2026-09-08.json
+docs/HISTORICAL_CONTROLLERS.md
+docs/HISTORICAL_FIELD_DESIGN.json
+docs/LOCAL_VERIFICATION_2026-09-08.json
+docs/OSS_COMPLETION_2026-09-08.md
+docs/SECURE_NETWORK_PROFILE_2026-09-07.md
+docs/SECURE_TWO_BOARD_HIL_2026-09-08.md
+docs/SECURE_TWO_BOARD_RESULTS_2026-09-08.json
+docs/THREE_BOARD_RELAY_HIL_2026-09-08.md
+docs/THREE_BOARD_RELAY_RESULTS_2026-09-08.json
+docs/evidence/2026-09-08-autonomous/INDEX.json
+docs/evidence/2026-09-08-autonomous/README.md
+docs/evidence/2026-09-08-autonomous/proof-isolation-inputs.json
+docs/evidence/2026-09-08-field/INDEX.csv
+docs/evidence/2026-09-08-field/README.md
+docs/evidence/2026-09-09-maintenance/HISTORY.csv

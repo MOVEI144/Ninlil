@@ -373,10 +373,8 @@ static int test_partial_commit_is_not_accepted(void)
         flash.fail_write_call = 0u;
         memset(&records, 0, sizeof(records));
         CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
-              NINLIL_OK);
+              NINLIL_ERR_CORRUPT);
         CHECK(records.count == 0u);
-        CHECK(ninlil_flash_store_append_offset(&store) ==
-              NINLIL_FLASH_SECTOR_SIZE);
     }
     return 0;
 }
@@ -421,6 +419,31 @@ static int test_committed_marker_corruption_is_hard_failure(void)
     memset(&records, 0, sizeof(records));
     CHECK(ninlil_flash_store_open(&store, &io, capture_record, &records) ==
           NINLIL_ERR_CORRUPT);
+    return 0;
+}
+
+static int test_every_committed_marker_bit_is_checked(void)
+{
+    memory_flash flash;
+    ninlil_flash_store store;
+    capture records;
+    unsigned int byte, bit;
+    for (byte = 0u; byte < 8u; byte++)
+        for (bit = 0u; bit < 8u; bit++) {
+            ninlil_flash_io io;
+            memory_flash_init(&flash);
+            io = memory_io(&flash, sizeof(flash.bytes));
+            memset(&records, 0, sizeof(records));
+            CHECK(ninlil_flash_store_open(&store, &io, capture_record,
+                                          &records) == NINLIL_OK);
+            CHECK(ninlil_flash_store_append(
+                      &store, 1u, (const uint8_t *)"owned", 5u) == NINLIL_OK);
+            flash.bytes[TEST_FLASH_COMMIT_OFFSET + byte] ^=
+                (uint8_t)(1u << bit);
+            memset(&records, 0, sizeof(records));
+            CHECK(ninlil_flash_store_open(&store, &io, capture_record,
+                                          &records) == NINLIL_ERR_CORRUPT);
+        }
     return 0;
 }
 
@@ -498,6 +521,7 @@ static int (*const tests[])(void) = {
     test_partial_commit_is_not_accepted,
     test_committed_header_corruption_is_hard_failure,
     test_committed_marker_corruption_is_hard_failure,
+    test_every_committed_marker_bit_is_checked,
     test_erased_sector_gap_is_corrupt,
     test_referenced_reads_revalidate_complete_record,
 };

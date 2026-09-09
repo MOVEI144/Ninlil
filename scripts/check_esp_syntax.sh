@@ -16,6 +16,7 @@ common=(
   -Wstrict-prototypes -Wmissing-prototypes -fno-common
 )
 platform_sources=(
+  "$root/ports/esp32s3/ninlil_network_pump.c"
   "$root/ports/esp32s3/ninlil_sx1262_hal.c"
   "$root/ports/esp32s3/ninlil_sx1262_radio.c"
   "$root/ports/esp32s3/ninlil_flash_journal.c"
@@ -29,6 +30,7 @@ base_config=(
   -DCONFIG_NINLIL_RADIO_INIT_CYCLES=1
   -DCONFIG_NINLIL_DIAGNOSTIC_PING_COUNT=1000
   -DCONFIG_NINLIL_DELIVERY_MESSAGE_COUNT=100
+  -DCONFIG_NINLIL_DELIVERY_CAMPAIGN_ID=1
   -DCONFIG_ESP_MAIN_TASK_STACK_SIZE=16384
   -DCONFIG_NINLIL_RF_TX_POWER_DBM=-9
   -DCONFIG_NINLIL_RF_SF=9
@@ -68,6 +70,12 @@ for compiler in "${CC:-gcc}" "${CLANG:-clang}"; do
 
   "$compiler" "${common[@]}" "${active_config[@]}" \
     -DCONFIG_NINLIL_M1_MODE_DELIVERY=1 \
+    -DCONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT=1 \
+    -DCONFIG_NINLIL_RF_TX_ENABLE=1 "$app"
+
+  "$compiler" "${common[@]}" "${active_config[@]}" \
+    -DCONFIG_NINLIL_M1_MODE_DELIVERY=1 \
+    -DCONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN=1 \
     -DCONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT=1 \
     -DCONFIG_NINLIL_RF_TX_ENABLE=1 "$app"
 done

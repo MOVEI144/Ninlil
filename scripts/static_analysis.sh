@@ -12,6 +12,8 @@ common=(
   -I"$root/ports/esp32s3"
   -I"$root/ports/esp32s3/include"
   -I"$root/tests/esp_stub"
+  -I"$root/tests"
+  -I"$root/tests/sim"
   -Wall -Wextra -Wpedantic -Werror -Wshadow -Wconversion -Wsign-conversion
   -Wformat=2 -Wundef -Wcast-align -Wstrict-prototypes
   -Wmissing-prototypes -Wvla -fno-common
@@ -28,8 +30,24 @@ host_sources=(
   "$root/src/ninlil_replay.c"
   "$root/src/ninlil_send.c"
   "$root/src/ninlil_storage.c"
+  "$root/src/ninlil_maintenance.c"
   "$root/src/ninlil_topology.c"
   "$root/src/ninlil_wire.c"
+  "$root/src/ninlil_secure.c"
+  "$root/src/ninlil_secure_link.c"
+  "$root/src/ninlil_join.c"
+  "$root/src/ninlil_join_wire.c"
+  "$root/src/ninlil_network.c" "$root/src/ninlil_network_route.c"
+  "$root/src/ninlil_network_wire.c"
+  "$root/src/ninlil_relay.c"
+  "$root/src/ninlil_routed.c"
+  "$root/src/ninlil_control_log.c"
+  "$root/src/ninlil_collect.c"
+  "$root/src/ninlil_control_collect.c"
+  "$root/src/ninlil_radio_adapt.c"
+  "$root/ports/flash/ninlil_flash_bank.c"
+  "$root/src/ninlil_airtime.c"
+  "$root/src/ninlil_lease_clock.c"
   "$root/src/ninlil_diag.c"
   "$root/src/ninlil_radio.c"
   "$root/src/ninlil_rf_profile.c"
@@ -37,8 +55,13 @@ host_sources=(
   "$root/ports/flash/ninlil_security_state.c"
   "$root/ports/flash/ninlil_flash_journal_file.c"
   "$root/ports/posix/ninlil_journal.c"
+  "$root/tests/sim/sim_manifest.c"
+  "$root/tests/sim/sim_radio.c"
+  "$root/tests/sim/sim_workload.c"
+  "$root/tests/sim/sim_main.c"
 )
 esp_sources=(
+  "$root/ports/esp32s3/ninlil_network_pump.c"
   "$root/ports/esp32s3/ninlil_sx1262_hal.c"
   "$root/ports/esp32s3/ninlil_sx1262_radio.c"
   "$root/ports/esp32s3/ninlil_flash_journal.c"
@@ -46,9 +69,15 @@ esp_sources=(
   "$root/ports/esp32s3/ninlil_security_partitions.c"
 )
 
-"$gcc_bin" "${common[@]}" -fanalyzer -fsyntax-only "${host_sources[@]}"
-"$gcc_bin" "${common[@]}" -DESP_PLATFORM=1 -fanalyzer -fsyntax-only \
-  "${esp_sources[@]}"
+temporary=$(mktemp -d)
+trap 'rm -rf "$temporary"' EXIT
+# GCC's analyzer needs object compilation; -fsyntax-only does not run it.
+for source in "${host_sources[@]}"; do
+  "$gcc_bin" "${common[@]}" -fanalyzer -c "$source" -o "$temporary/analysis.o"
+done
+for source in "${esp_sources[@]}"; do
+  "$gcc_bin" "${common[@]}" -DESP_PLATFORM=1 -fanalyzer -c "$source" -o "$temporary/analysis.o"
+done
 
 for source in "${host_sources[@]}"; do
   "$clang_bin" "${common[@]}" --analyze \

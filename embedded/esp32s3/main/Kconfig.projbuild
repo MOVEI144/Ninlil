@@ -9,7 +9,14 @@ config NINLIL_M1_MODE_DIAGNOSTIC
 
 config NINLIL_M1_MODE_DELIVERY
     bool "M1.2/M1.3 durable direct delivery"
+config NINLIL_MODE_AUTONOMOUS
+    bool "Autonomous secure small-message reference node"
 endchoice
+
+config NINLIL_NODE_HIL_ENABLE
+    bool "Enable explicit USB-controlled RX loss injection for node HIL"
+    default n
+    depends on NINLIL_MODE_AUTONOMOUS
 
 config NINLIL_NODE_ID
     int "Local node id"
@@ -46,6 +53,21 @@ config NINLIL_DELIVERY_MESSAGE_COUNT
     int "Durable HIL delivery message count"
     range 1 100
     default 100
+    depends on NINLIL_M1_MODE_DELIVERY
+
+config NINLIL_DELIVERY_FAULT_CAMPAIGN
+    bool "Inject bounded bench faults (test firmware only)"
+    default n
+    depends on NINLIL_M1_MODE_DELIVERY
+    help
+        Drop/duplicate received frames, reject malformed and wrong-target DATA,
+        mask one TX completion interrupt and restart after consuming sequence 6
+        before its receipt is sent. Never enable for normal operation.
+
+config NINLIL_DELIVERY_CAMPAIGN_ID
+    int "Durable HIL campaign identity (retain across recovery boots)"
+    range 1 2147483647
+    default 1
     depends on NINLIL_M1_MODE_DELIVERY
 
 config NINLIL_RF_TX_ENABLE
@@ -99,5 +121,14 @@ config NINLIL_RF_PREAMBLE_SYMBOLS
     int "LoRa preamble symbols"
     range 6 65535
     default 8
+
+config NINLIL_BATTERY_AWAKE_SECONDS
+    int "Battery role maximum awake window in reference firmware (seconds)"
+    range 1 3600
+    default 120
+config NINLIL_BATTERY_SLEEP_SECONDS
+    int "Battery role timer sleep in reference firmware (seconds)"
+    range 1 86400
+    default 60
 
 endmenu

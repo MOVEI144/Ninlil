@@ -1,5 +1,15 @@
 # Roadmap
 
+The September 8 [field-network design proposal](FIELD_NETWORK_EVOLUTION_2026-09-08.md)
+maps the user's incremental installation/removal scenarios to concrete gaps,
+implementation slices and proposed acceptance tests. It does not declare the
+milestones below complete or increase the current supported network size.
+The first [implementation slice](FIELD_DEPLOYMENT_2026-09-08.md) now provides
+live admission, relayed discovery and saved deployment settings. Its remaining
+Root replacement, battery and physical acceptance work stays explicit.
+
+The 2026-09-07 conversation steps 4-6 have a scoped [software implementation](SECURE_NETWORK_PROFILE_2026-09-07.md). Physical milestone acceptance remains separate; conversation step 6 is adaptive communication, not the M6 bulk/OTA milestone below.
+
 ## B0 — Canonical baseline import
 
 Import the reviewed compact C11 baseline into `MOVEI144/Ninlil`, add governance and remote CI, and verify that the imported tree is reproducible.
@@ -20,6 +30,11 @@ The design authority is:
 - [`P0_OPERATIONAL_PROFILES_V1.md`](P0_OPERATIONAL_PROFILES_V1.md).
 
 ## M1 — Direct radio physical acceptance
+
+W01 and the initial W02 static-direct host baseline from Issue #14 are described
+in [ADAPTIVE_NETWORK_CONTRACT.md](ADAPTIVE_NETWORK_CONTRACT.md) and
+[SIMULATION.md](SIMULATION.md). This allows design and model evaluation before
+physical M1 acceptance without enabling later milestone features.
 
 Canonical procedure: [`M1_HIL_ACCEPTANCE.md`](M1_HIL_ACCEPTANCE.md).
 

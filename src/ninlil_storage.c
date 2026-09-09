@@ -91,6 +91,8 @@ int ninlil_append_record(ninlil_runtime *runtime, uint8_t type,
         return runtime->fatal_error;
     rc = ninlil_journal_append(runtime->journal, type, payload, length,
                                reference);
+    if (rc == NINLIL_OK)
+        runtime->has_records = 1u;
     if (rc != NINLIL_OK && rc != NINLIL_ERR_CAPACITY)
         runtime->fatal_error = rc;
     return rc;
@@ -106,6 +108,30 @@ int ninlil_read_payload(ninlil_runtime *runtime,
 
     if (rc != NINLIL_OK)
         runtime->fatal_error = rc;
+    return rc;
+}
+
+int ninlil_verify_retained(ninlil_runtime *r)
+{
+    if (!r)
+        return NINLIL_ERR_INVALID;
+    int rc = ninlil_health(r);
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->outbound_capacity; i++)
+        if (r->outbound[i].used)
+            rc = ninlil_read_payload(r, &r->outbound[i].record_ref, 0u, NULL,
+                                     0u);
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->inbound_capacity; i++)
+        if (r->inbound[i].used)
+            rc =
+                ninlil_read_payload(r, &r->inbound[i].record_ref, 0u, NULL, 0u);
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->archive_capacity; i++)
+        if (r->archive[i].used)
+            rc =
+                ninlil_read_payload(r, &r->archive[i].record_ref, 0u, NULL, 0u);
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->rejection_capacity; i++)
+        if (r->rejections[i].used && r->rejections[i].durable)
+            rc = ninlil_read_payload(r, &r->rejections[i].record_ref, 0u, NULL,
+                                     0u);
     return rc;
 }
 

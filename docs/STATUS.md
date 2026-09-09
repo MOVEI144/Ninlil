@@ -1,42 +1,39 @@
 # Project status
 
-Updated: 2026-09-04
 
-## Canonical repository
 
-`MOVEI144/Ninlil` is the implementation authority. Earlier repositories and generated delivery archives are provenance inputs only.
+Updated: 2026-09-09
 
-## Imported baseline
+## Latest scope: deployment lifecycle
 
-The first review branch imports a compact C11 baseline containing:
+The [lifecycle implementation](DEPLOYMENT_LIFECYCLE.md) adds an independent
+credential issuer for Root-only replacement, battery Light-sleep, explicit
+site/role transfer and guarded address reuse. The completed-message transport
+history can be retired only after pending ownership is empty; application data
+and device identity remain separate. New tests cover interrupted transfer and
+fresh Join/delivery after address reuse. Battery sleep returns through radio
+recovery and achieves fresh RF application receipts. Restart-window HIL passes;
+USB-host awake operation also passes; forced-sleep timing remains unobserved. [The lifecycle record](evidence/2026-09-09-maintenance/README.md)
+separates completed local checks, passing physical checks and failed sleep tests.
+The runtime remains an alpha with separate field qualification gates.
 
-- POSIX durable delivery and restart recovery;
-- a bounded direct-radio model;
-- ESP32-S3/SX1262 HAL and physical-radio software;
-- a raw-flash delivery journal;
-- fail-closed persistent security-counter and membership stores;
-- host, fault-injection, and fake-hardware tests.
+## Previous scope and evidence
 
-## P0 implementation candidate
+Saved enrollment, discovery through powered Relays and route replacement are
+described in [field deployment](FIELD_DEPLOYMENT_2026-09-08.md), with all passing
+and failed bench attempts in [field results](FIELD_RESULTS_2026-09-08.json).
+Ninlil remains independent of KGuard; host integration, sensors and timing are
+application choices. Configuration and Join are distinct from application delivery.
 
-The P0 implementation candidate adds versioned per-message delivery evidence, immediate durable-store receipts, at-least-once Application handoff, restart-safe deadline boundaries, bounded role scheduling, default-deny service grants, and caller-backed Host custody/topology/group contracts. This is not accepted hardware or production-security evidence. See [`P0_IMPLEMENTATION.md`](P0_IMPLEMENTATION.md).
+[Storage, bulk and radio extensions](STORAGE_BULK_RADIO_2026-09-08.md) provide
+automatic journal collection, resumable bulk transfer and bounded TX power
+adaptation. OTA is excluded. The 512-byte physical transfer/restart/readback
+result is in [hardware evidence](EXTENSION_HIL_RESULTS_2026-09-08.json); full-size
+RF transfer, electrical write-interruption and field qualification remain open.
 
-## Important non-claims
+## Repository and history
 
-The official baseline does **not** yet contain a completed secure-link layer, EDHOC integration, Join protocol, multi-peer Gateway authority store, Relay, scheduled MAC, or fragmentation. Earlier conversational milestones do not become official implementation evidence unless their source and tests are imported and reviewed here.
-
-## Acceptance state
-
-- Host/model tests: candidate evidence exists and is re-run by repository CI.
-- ESP-IDF configure/link: required remote CI gate.
-- Two-board RF: not accepted.
-- Hard-power flash interruption: not accepted.
-- Production security: not accepted.
-
-The physical M1 procedure is now defined in
-[`M1_HIL_ACCEPTANCE.md`](M1_HIL_ACCEPTANCE.md), with a separate
-[`M1_HIL_EVIDENCE_TEMPLATE.md`](M1_HIL_EVIDENCE_TEMPLATE.md). Defining the
-procedure does not complete any physical gate; Issue #7 remains the canonical
-acceptance tracker.
-
-The next decision is based on repository commits and CI evidence, not on generated reports alone.
+`MOVEI144/Ninlil` is the implementation authority. The earlier milestone status
+sections remain in Git at `e213d49446463f363fd89c80ddfaab1749e9e384`: `docs/STATUS.md`.
+The original revision and hash were verified before consolidating this page; see
+[the history index](evidence/2026-09-09-maintenance/HISTORY.csv).

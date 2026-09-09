@@ -1,0 +1,36 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_id_cred_x_encode.c
++++ third_party/adapted/cbor/backend_cbor_id_cred_x_encode.c
+@@ -23,6 +23,17 @@
+ static bool encode_repeated_id_cred_x_x5t(zcbor_state_t *state, const struct id_cred_x_x5t *input);
+ static bool encode_id_cred_x(zcbor_state_t *state, const struct id_cred_x *input);
+ 
++
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_encode_id_cred_x(zcbor_state_t *state, void *data)
++{
++    return encode_id_cred_x(state, data);
++}
++
++static bool ninlil_encoder_zcbor_bstr_encode(zcbor_state_t *state, const void *data)
++{
++    return zcbor_bstr_encode(state, data);
++}
+ 
+ static bool encode_repeated_id_cred_x_kid(
+ 		zcbor_state_t *state, const struct id_cred_x_kid_r *input)
+@@ -50,7 +61,7 @@
+ 	zcbor_log("%s\r\n", __func__);
+ 
+ 	bool tmp_result = (((((*input).COSE_X509_choice == COSE_X509_bstr_c) ? ((zcbor_bstr_encode(state, (&(*input).COSE_X509_bstr))))
+-	: (((*input).COSE_X509_choice == COSE_X509_certs_l_c) ? ((zcbor_list_start_encode(state, 3) && ((zcbor_multi_encode_minmax(2, 3, &(*input).COSE_X509_certs_l_certs_count, (zcbor_encoder_t *)zcbor_bstr_encode, state, (&(*input).COSE_X509_certs_l_certs), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 3)))
++	: (((*input).COSE_X509_choice == COSE_X509_certs_l_c) ? ((zcbor_list_start_encode(state, 3) && ((zcbor_multi_encode_minmax(2, 3, &(*input).COSE_X509_certs_l_certs_count, ninlil_encoder_zcbor_bstr_encode, state, (&(*input).COSE_X509_certs_l_certs), sizeof(struct zcbor_string))) || (zcbor_list_map_end_force_encode(state), false)) && zcbor_list_end_encode(state, 3)))
+ 	: false))));
+ 
+ 	if (!tmp_result) {
+@@ -148,5 +159,5 @@
+ 	zcbor_state_t states[5];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)input, payload_len_out, states,
+-		(zcbor_decoder_t *)encode_id_cred_x, sizeof(states) / sizeof(zcbor_state_t), 1);
++		ninlil_decoder_encode_id_cred_x, sizeof(states) / sizeof(zcbor_state_t), 1);
+ }

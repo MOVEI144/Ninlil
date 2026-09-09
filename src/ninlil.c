@@ -58,8 +58,6 @@ int ninlil_open(ninlil_runtime **out, const ninlil_config *config)
     *out = NULL;
     if (!config_valid(config))
         return NINLIL_ERR_INVALID;
-    if (config->profile.role == NINLIL_ROLE_POWERED_RELAY_CANDIDATE)
-        return NINLIL_ERR_STATE;
     if (config->link.max_packet_size != 0u &&
         config->link.max_packet_size < NINLIL_WIRE_RECEIPT_SIZE)
         return NINLIL_ERR_INVALID;
@@ -325,6 +323,9 @@ int ninlil_step(ninlil_runtime *runtime)
         return runtime->fatal_error;
     if (runtime->step_count == UINT64_MAX)
         return NINLIL_ERR_FAULT;
+    result = ninlil_collect_if_needed(runtime);
+    if (result != NINLIL_OK)
+        return result;
     runtime->step_count++;
     while (work < runtime->config.max_work_per_step) {
         uint8_t offset;
@@ -359,7 +360,8 @@ int ninlil_step(ninlil_runtime *runtime)
     return result;
 }
 
-int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
+static int receive_filtered(ninlil_runtime *runtime, uint16_t service,
+                            uint8_t classes, ninlil_inbound *out)
 {
     int blocked = NINLIL_ERR_EMPTY;
     int expired_one = 0;
@@ -373,7 +375,9 @@ int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
         ninlil_inbound_entry *entry = &runtime->inbound[index];
         int rc;
 
-        if (!entry->used || entry->handed)
+        if (!entry->used || entry->handed ||
+            (service && entry->service != service) ||
+            !(classes & NINLIL_TRAFFIC_MASK(entry->traffic_class)))
             continue;
         if (entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED &&
             entry->absolute_deadline_ms != 0u) {
@@ -417,6 +421,23 @@ int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
         return NINLIL_OK;
     }
     return blocked;
+}
+
+int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
+{
+    return ninlil_receive_service(runtime, 0u, out);
+}
+int ninlil_receive_service(ninlil_runtime *runtime, uint16_t service,
+                           ninlil_inbound *out)
+{
+    return receive_filtered(runtime, service, 15u, out);
+}
+int ninlil_receive_class(ninlil_runtime *runtime, uint16_t service,
+                         ninlil_traffic_class traffic, ninlil_inbound *out)
+{
+    uint8_t mask = NINLIL_TRAFFIC_MASK(traffic);
+    return mask ? receive_filtered(runtime, service, mask, out)
+                : NINLIL_ERR_INVALID;
 }
 
 int ninlil_application_accept(ninlil_runtime *runtime,
@@ -600,4 +621,49 @@ int ninlil_mark_unknown(ninlil_runtime *runtime, const ninlil_id *message_id)
     if (!entry->attempted)
         return NINLIL_ERR_STATE;
     return ninlil_finish_outbound(runtime, entry, NINLIL_OUTCOME_UNKNOWN);
+}
+
+int ninlil_set_retry_interval(ninlil_runtime *runtime, uint32_t steps)
+{
+    if (!runtime || steps == 0u || steps > NINLIL_MAX_RETRY_INTERVAL_STEPS)
+        return NINLIL_ERR_INVALID;
+    if (runtime->fatal_error != NINLIL_OK)
+        return runtime->fatal_error;
+    runtime->config.retry_interval_steps = steps;
+    return NINLIL_OK;
+}
+
+int ninlil_health(const ninlil_runtime *runtime)
+{
+    return runtime ? runtime->fatal_error : NINLIL_ERR_INVALID;
+}
+int ninlil_bind_storage(ninlil_runtime *r, const uint8_t identity[32],
+                        int initialize)
+{
+    uint8_t record[33], checked[33];
+    ninlil_journal_ref ref;
+    int rc;
+    if (!r || !identity || memcmp(identity, (uint8_t[32]){0}, 32u) == 0)
+        return NINLIL_ERR_INVALID;
+    if (r->fatal_error != NINLIL_OK)
+        return r->fatal_error;
+    if (r->storage_bound)
+        return memcmp(identity, r->storage_identity, 32u) == 0
+                   ? NINLIL_OK
+                   : NINLIL_ERR_CONFLICT;
+    if (!initialize || r->has_records)
+        return NINLIL_ERR_CORRUPT;
+    record[0] = 1u;
+    memcpy(record + 1, identity, 32u);
+    rc = ninlil_append_record(r, NINLIL_JRN_STORAGE_BINDING, record,
+                              sizeof(record), &ref);
+    if (rc == NINLIL_OK)
+        rc = ninlil_read_payload(r, &ref, 0u, checked, sizeof(checked));
+    if (rc == NINLIL_OK && memcmp(record, checked, sizeof(record)) != 0)
+        rc = NINLIL_ERR_CORRUPT;
+    if (rc == NINLIL_OK) {
+        memcpy(r->storage_identity, identity, 32u);
+        r->storage_bound = 1u;
+    }
+    return rc;
 }

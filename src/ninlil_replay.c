@@ -357,6 +357,15 @@ int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
     if (!payload || !reference || reference->length != length ||
         reference->type != type)
         return NINLIL_ERR_CORRUPT;
+    if (type == NINLIL_JRN_STORAGE_BINDING) {
+        if (runtime->has_records || length != 33u || payload[0] != 1u ||
+            memcmp(payload + 1, (uint8_t[32]){0}, 32u) == 0)
+            return NINLIL_ERR_CORRUPT;
+        memcpy(runtime->storage_identity, payload + 1, 32u);
+        runtime->storage_bound = runtime->has_records = 1u;
+        return NINLIL_OK;
+    }
+    runtime->has_records = 1u;
     if (type == NINLIL_JRN_OUT_CREATE)
         return replay_out_create(runtime, payload, length, reference);
     if (type == NINLIL_JRN_IN_ACCEPT)

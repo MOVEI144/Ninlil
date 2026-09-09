@@ -118,6 +118,46 @@ static void entry_submission(const ninlil_outbound_entry *entry,
     submission->payload_len = entry->payload_len;
 }
 
+int ninlil_deadline_check(ninlil_runtime *r, uint64_t deadline)
+{
+    int passed, rc;
+    if (!r)
+        return NINLIL_ERR_INVALID;
+    if (r->fatal_error != NINLIL_OK)
+        return r->fatal_error;
+    rc = ninlil_deadline_passed(r, deadline, &passed);
+    return rc != NINLIL_OK ? rc : passed ? NINLIL_ERR_EXPIRED : NINLIL_OK;
+}
+
+int ninlil_transmit_check(ninlil_runtime *r, const uint8_t *packet,
+                          size_t length)
+{
+    ninlil_wire_data_view view;
+    ninlil_outbound_entry *entry;
+    ninlil_submission submission;
+    uint8_t payload[NINLIL_MAX_PAYLOAD], expected[NINLIL_WIRE_DATA_MAX];
+    size_t encoded;
+    int rc;
+    if (!r || ninlil_wire_decode_data(packet, length, &view) != NINLIL_OK ||
+        view.source != r->config.node_id)
+        return NINLIL_ERR_INVALID;
+    if (r->fatal_error != NINLIL_OK)
+        return r->fatal_error;
+    entry = ninlil_find_outbound(r, &view.message_id);
+    if (!entry || !entry->attempted)
+        return NINLIL_ERR_STATE;
+    rc = ninlil_read_payload(r, &entry->record_ref, NINLIL_JRN_OUT_HEADER,
+                             payload, entry->payload_len);
+    if (rc != NINLIL_OK)
+        return rc;
+    entry_submission(entry, payload, &submission);
+    encoded = ninlil_wire_encode_data(expected, r->config.node_id, &submission,
+                                      &entry->message_id, payload);
+    if (encoded != length || memcmp(packet, expected, length) != 0)
+        return NINLIL_ERR_CONFLICT;
+    return ninlil_deadline_check(r, entry->absolute_deadline_ms);
+}
+
 int ninlil_process_outbound(ninlil_runtime *runtime, int *worked)
 {
     ninlil_outbound_entry *entry;
