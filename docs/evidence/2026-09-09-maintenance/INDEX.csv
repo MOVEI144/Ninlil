@@ -73,4 +73,4 @@ local_path,sha256,bytes
 .verify-m1-evidence/maintenance-local/battery-usb-matrix.log,c819cbad07d90273a23ae6976a2019242215adbf08629d870fd1f6b5c0ae3507,3177
 .verify-m1-evidence/maintenance-battery-usb/inputs.json,31de09c20f03591f06688501c5a03f5077a49c30fc162400114973f1183527a2,25905
 .verify-m1-evidence/maintenance-battery-usb/2/hashes.json,b5f34247d6c21b87bb14ebce82ac23e64b6ed872ea787525983899457667c742,509
-.verify-m1-evidence/maintenance-local/battery-usb-prepared-bundle.json,30bd26cba3f975fd00e0b682818a0611e5d16b47407126daa5708d38964966a5,1084
+.verify-m1-evidence/maintenance-local/battery-usb-completed-bundle.json,a414ae0a57d8d7d3ee062e9ce5addd8950873bf382b4b000ae5414b5df29e3f2,2533

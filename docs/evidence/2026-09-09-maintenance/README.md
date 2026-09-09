@@ -91,17 +91,17 @@ flashing. No identity/store erase or device private-key export was performed.
 - The ordinary fix is subsequently installed: a 125-second stopped interval
   preserves a fresh awake window and record 1; sequence 26090882 then reaches
   APPLICATION_ACCEPTED (`c30c70ef2db548e24ef28bb8bf042bd5`) after forced sleep.
-  Its USB reply remains absent. A USB-host automatic-sleep guard passes the four
-  affected model builds; its physical installation/awake test is pending.
+  Its USB reply remains absent. The USB-host guard then passes on hardware:
+  after 125 seconds awake, sequence 26090883 reaches APPLICATION_ACCEPTED and
+  receiver records grow 2 to 3; both owners acknowledge stop (137.48-second run).
 
 The retired probe commands and initial/corrected symbol checks remain in Git at
 `214d279:docs/evidence/2026-09-09-maintenance/README.md`; ordinary images omit them.
 
-Board 1 and board 3 are stopped with autorun false, setup revision 19. Board 2's
-last confirmed settings are battery role, autorun false, revision 20; its current
-runtime state is again unobservable. The installed ordinary restart-window image
-is `48119929e0a0e3806abd0a7f2385eaf219ef4168766f940efbe734a2d04051a2`.
-Its final X is unacknowledged. Reconnect before installing the USB-host guard.
+All three boards are verified stopped, fault 0, autorun false. Boards 1 and 3
+retain setup revision 19; board 2 remains battery role, revision 20, with image
+`15615084b248e63660fd5a0899b8e4bb49d8cf021acccddb45722d22362dc421`.
+Protected stores match across flashing. Forced-sleep elapsed-time readout remains open.
 A fresh, unregistered spare is still needed for physical Root replacement.
 Timed electrical power cuts, current/lifetime and field/long-duration gates
 remain unrun. No PR, push or field release was performed.

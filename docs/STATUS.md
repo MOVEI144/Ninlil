@@ -13,7 +13,7 @@ history can be retired only after pending ownership is empty; application data
 and device identity remain separate. New tests cover interrupted transfer and
 fresh Join/delivery after address reuse. Battery sleep returns through radio
 recovery and achieves fresh RF application receipts. Restart-window HIL passes;
-USB-host awake operation and forced-sleep timing are separate gates. [The lifecycle record](evidence/2026-09-09-maintenance/README.md)
+USB-host awake operation also passes; forced-sleep timing remains unobserved. [The lifecycle record](evidence/2026-09-09-maintenance/README.md)
 separates completed local checks, passing physical checks and failed sleep tests.
 The runtime remains an alpha with separate field qualification gates.
 
