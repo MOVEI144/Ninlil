@@ -32,6 +32,7 @@ def flow_status(board, source, target):
 def analyze(folder):
     raw = (folder / 'console.jsonl').read_bytes()
     rows = [json.loads(line) for line in raw.decode('utf-8').splitlines()]
+    rows = [r for r in rows if r['request'] is not None]
     result_path = folder / 'result.json'
     result = json.loads(result_path.read_text()) if result_path.exists() else {}
     start = next((r['time'] for r in rows if r['command'] == 'G' and r['result'] == 0), rows[0]['time'])

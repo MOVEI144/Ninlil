@@ -1,7 +1,11 @@
+#include "bootloader_random.h"
+#include "driver/usb_serial_jtag.h"
 #include "esp_sleep.h"
 #include "esp_timer.h"
 #include "ninlil_sleep.h"
 #include "ninlil_sleep_esp.h"
+#include "node_battery.h"
+#include "node_example.h"
 #include <stdio.h>
 #define CHECK(x)                                                               \
     do {                                                                       \
@@ -13,6 +17,18 @@
 static int suspended, rejected, timer_fail, radio_fail, recovered, disabled;
 static int64_t clock_us;
 static uint64_t requested, resumed_at;
+static bool usb_connected;
+bool usb_serial_jtag_is_connected(void)
+{
+    return usb_connected;
+}
+ninlil_node_config node_config;
+void bootloader_random_enable(void)
+{
+}
+void bootloader_random_disable(void)
+{
+}
 int64_t esp_timer_get_time(void)
 {
     return clock_us;
@@ -85,6 +101,27 @@ int main(void)
     radio_fail = timer_fail = rejected = 0;
     CHECK(ninlil_esp_node_sleep(&pump, 5000u, &elapsed) == NINLIL_OK);
     CHECK(recovered == 5 && pump.scheduler.busy && elapsed == 5000u);
+    node_config.resources.role = NINLIL_ROLE_BATTERY_LEAF;
+    node_battery_reset();
+    requested = 0;
+    CHECK(node_battery_step(&pump) == NINLIL_OK && !requested);
+    clock_us += 120000000;
+    CHECK(node_battery_step(&pump) == NINLIL_OK && requested == 60000000u);
+    usb_connected = true;
+    requested = 0;
+    clock_us += 300000000;
+    CHECK(node_battery_step(&pump) == NINLIL_OK && !requested);
+    usb_connected = false;
+    CHECK(node_battery_step(&pump) == NINLIL_OK && !requested);
+    /* A stopped owner may be restarted after its previous awake window. */
+    clock_us += 300000000;
+    node_battery_reset();
+    requested = 0;
+    CHECK(node_battery_step(&pump) == NINLIL_OK && !requested);
+    clock_us += 119000000;
+    CHECK(node_battery_step(&pump) == NINLIL_OK && !requested);
+    clock_us += 1000000;
+    CHECK(node_battery_step(&pump) == NINLIL_OK && requested == 60000000u);
     puts("ESP timer, rejected sleep, radio failure recovery and elapsed clock "
          "PASS");
     return 0;

@@ -60,11 +60,10 @@ Repeated exact final requests are idempotent after a lost reply.
 
 ## Battery operation
 
-Hardware gate OPEN: on the USB-powered bench, the current reference firmware
-becomes unresponsive after entering timer sleep; USB and radio recovery have not
-been verified. The portable/model tests pass, but this battery implementation
-is not complete for deployment. See the failed attempts and next diagnostic in
-the evidence record. Do not infer hardware success from the API/model results.
+The ordinary ESP32-S3 image delivers a fresh application receipt after timer
+sleep, and the restart-window regression passes on hardware. Forced sleep can
+disconnect USB; its elapsed-time reply remains unobserved. These are scoped
+bench results, with current/lifetime and field qualification still open.
 
 `ninlil_node_suspend/resume` supports RAM-retaining platform sleep for battery
 leaves only. It retains session nonce state, invalidates time/leases and requests
@@ -77,8 +76,10 @@ It owns the timer wake source for the call, permits caller-configured GPIO wake,
 preserves regional TX pause accounting, and uses elapsed `esp_timer` time.
 The caller must finish its peripheral/storage work first. USB can disconnect.
 The reference battery role uses configurable Kconfig awake/sleep windows
-(120/60 seconds by default), including when no Root can be reached. USB command
-`E` accepts a BE32 duration in milliseconds, 1..86,400,000. The reference owns
+(120/60 seconds by default), including when no Root can be reached. Automatic
+sleep pauses while a USB host is connected; power-only USB does not count as a
+host (`usb_serial_jtag_is_connected`, ESP-IDF 6.0.2). USB command `E` explicitly
+forces bench sleep, accepting BE32 milliseconds, 1..86,400,000. The reference owns
 SAR entropy and disables/restores it around sleep. Actual applications choose
 sensor timing and peripheral power. Deep sleep, measured battery lifetime and
 board-level current qualification are outside this Light-sleep implementation.
@@ -119,12 +120,6 @@ different device.
 
 ## Sleep failure diagnosis
 
-For bench diagnosis only, `build.py --sleep-probe` links checkpoint wrappers.
-They write one bounded record to NVS namespace `ninlil_sleep`, without erasing
-NVS or accessing device keys/application stores. Boot prints `SLEEP_PROBE`:
-stage 0 means no retained checkpoint; 1/2 surround the SDK sleep call, 3/4 surround
-radio recovery, and 5/6 surround entropy restoration. A nonzero result retains
-the first error until the next sleep attempt. Interrupted record publication
-and timing disturbed by Flash writes are not sleep evidence. Read the boot line
-after reconnect/reset. Ordinary builds explicitly disable these wrappers,
-including when reusing a cache previously built with the probe.
+The retired diagnostic probe and its stage-6 readout are retained in the evidence
+history (`214d279:tools/node_hil/sleep_probe.c`). `sleep_test.py` measures RF
+recovery even after a USB timeout; that alone does not pass timing/ledger gates.

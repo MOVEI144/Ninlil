@@ -1,10 +1,15 @@
 #include "node_battery.h"
 #include "bootloader_random.h"
+#include "driver/usb_serial_jtag.h"
 #include "esp_timer.h"
 #include "ninlil_sleep_esp.h"
 #include "node_example.h"
 #include "sdkconfig.h"
 static uint64_t awake_until;
+void node_battery_reset(void)
+{
+    awake_until = 0u;
+}
 int node_battery_sleep(ninlil_esp_network_pump *p, uint32_t duration,
                        uint32_t *elapsed)
 {
@@ -23,6 +28,10 @@ int node_battery_step(ninlil_esp_network_pump *p)
     uint32_t elapsed;
     if (node_config.resources.role != NINLIL_ROLE_BATTERY_LEAF)
         return NINLIL_OK;
+    if (usb_serial_jtag_is_connected()) {
+        node_battery_reset(); /* Preserve configuration access on USB hosts. */
+        return NINLIL_OK;
+    }
     if (!awake_until)
         awake_until =
             now + (uint64_t)CONFIG_NINLIL_BATTERY_AWAKE_SECONDS * 1000u;

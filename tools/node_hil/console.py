@@ -17,7 +17,7 @@ class Board:
         if len(ports) != 1:
             raise RuntimeError(f'Expected one verified board {node}')
         self.node, self.log = node, log
-        self.port = serial.Serial(port=None, baudrate=115200, timeout=0.1)
+        self.port = serial.Serial(port=None, baudrate=115200, timeout=0.1, write_timeout=1)
         self.port.dtr = self.port.rts = False
         self.port.port = ports[0]
         self.port.open()
@@ -32,14 +32,16 @@ class Board:
             if 'panic' in raw or 'Guru Meditation' in raw:
                 raise RuntimeError(raw)
             match = re.fullmatch(r'NODE (.) (-?\d+)(?: ([0-9a-f]*))?', raw)
-            if not match or match[1] != command:
+            if not match:
                 continue
             rc, result = int(match[2]), bytes.fromhex(match[3] or '')
-            record = {'time': time.time(), 'node': self.node, 'command': command,
-                      'request': payload.hex(), 'result': rc, 'response': result.hex()}
+            record = {'time': time.time(), 'node': self.node, 'command': match[1],
+                      'request': payload.hex() if match[1] == command else None, 'result': rc, 'response': result.hex()}
             if self.log:
                 self.log.write(json.dumps(record)+'\n')
                 self.log.flush()
+            if match[1] != command:
+                continue
             if expected is not None and rc != expected:
                 raise RuntimeError(record)
             return result if expected is not None else (rc, result)

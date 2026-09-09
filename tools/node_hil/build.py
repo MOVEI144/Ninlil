@@ -21,7 +21,6 @@ def main():
     p.add_argument('output', type=Path)
     p.add_argument('--nodes', type=int, nargs='+', default=[1, 2, 3])
     p.add_argument('--build-directory', type=Path, help='Parent directory for per-node ESP-IDF caches')
-    p.add_argument('--sleep-probe', action='store_true', help='Bench only: retain sleep checkpoints in a separate NVS namespace')
     args = p.parse_args()
     if not args.nodes or len(set(args.nodes)) != len(args.nodes) or any(n < 1 or n > 65534 for n in args.nodes):
         p.error('Node IDs must be distinct values in 1..65534')
@@ -35,8 +34,6 @@ def main():
     inputs = {root / n: digest(root / n) for n in paths if n and (root / n).is_file()
               and (n.startswith(('src/', 'include/', 'ports/', 'third_party/', 'cmake/', 'embedded/')) or n == 'CMakeLists.txt')}
     inputs[args.sdkconfig.resolve()] = digest(args.sdkconfig)
-    if args.sleep_probe:
-        inputs[root / 'tools/node_hil/sleep_probe.c'] = digest(root / 'tools/node_hil/sleep_probe.c')
     if roster:
         inputs[roster] = digest(roster)
     for node in args.nodes:
@@ -48,7 +45,6 @@ def main():
         build = cache / str(node)
         command = [sys.executable, str(idf), '-B', str(build), '-D', 'SDKCONFIG='+str(folder / 'sdkconfig')]
         command += ['-D', 'NINLIL_NODE_ROSTER_HEADER='+(str(roster) if roster else '')]
-        command += ['-D', 'NINLIL_SLEEP_PROBE='+('ON' if args.sleep_probe else 'OFF')]
         with (folder / 'build.log').open('w', encoding='utf-8') as log:
             subprocess.run(command + ['reconfigure', 'build'], cwd=root / 'embedded/esp32s3', stdout=log, stderr=subprocess.STDOUT, check=True)
         for src, dst in [('ninlil_m1.bin', 'app.bin'), ('ninlil_m1.elf', 'app.elf'),

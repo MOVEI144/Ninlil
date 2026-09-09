@@ -2,18 +2,20 @@
 
 2026-09-09, Windows host and local Linux containers. Hosted CI was not run.
 Root replacement without child reconfiguration, explicit transfer and address
-reuse are implemented. Battery software/model support is implemented, but the
-reference ESP32-S3 wake/recovery gate remains **FAILED / awaiting diagnosis**.
+reuse are implemented. Battery RF recovery is now observed; USB timing/ledger
+and restart-window HIL are recorded separately below.
 
 ## Local verification
 
-GCC 13.3 and Clang 18.1.3, each normal and ASan/UBSan, pass 73 CTests each.
+GCC 13.3 and Clang 18.1.3, each normal and ASan/UBSan, pass 73 CTests each again
+after the restart-window fix (`cmake --build DIR --parallel 4` followed by
+`ctest --test-dir DIR --parallel 4 --output-on-failure`, the four directories below).
 After the final HAL/sleep changes, all five affected tests pass again in all four
 builds. This is the full matrix plus affected regression runs, not a claim that
 the interrupted umbrella scripts themselves passed. Formatting races in two
 umbrella runs are retained; the final format/static/fuzz/package gates pass.
-Python 3.12.10, pyserial 3.5, esptool 5.3.0 and cryptography 50.0.1 pass the three
-issuer/management tests. CMake 3.28.3 and Ninja 1.11.1 were used on Linux.
+Python 3.12.10, pyserial 3.5, esptool 5.3.0 and cryptography 50.0.1 pass five
+issuer/management/late-reply tests. CMake 3.28.3 and Ninja 1.11.1 were used on Linux.
 
 Commands: `NINLIL_CLEAN_BUILD=0 NINLIL_BUILD_ROOT=/tmp/ninlil-oss-final
 NINLIL_JOBS=4 CLANG=clang-18 CLANG_FORMAT=clang-format-18
@@ -76,19 +78,30 @@ flashing. No identity/store erase or device private-key export was performed.
   prints stage 0. Join succeeds, then E5000 again times out; no S occurs.
   USB reset fails. The recorded checkpoint has not yet been read: another
   physical reconnect is needed. Diagnostic progress is not yet established.
+- The subsequent boot reads stage 6, result 0, timestamp 34833479 us. A further
+  test keeps the Root active after the USB timeout: sequence 26090881 reaches
+  APPLICATION_ACCEPTED (`45bc09ab6465c44f68ec5194bca88ba3`). Both X replies are
+  observed. The aggregate test still fails its unobserved USB timing/ledger gate.
+  Earlier radio observations followed an unacknowledged X, so absence of traffic
+  did not establish a CPU hang. Starting the battery again after the old awake
+  deadline exposes a separate timer-reset defect; the fix resets the awake
+  window on every successful start, with a native boundary regression.
+  Diagnostic-only wrappers are retired to verified Git history. Normal images
+  are prepared, but USB loader reset fails; the physical fix is not installed.
+- The ordinary fix is subsequently installed: a 125-second stopped interval
+  preserves a fresh awake window and record 1; sequence 26090882 then reaches
+  APPLICATION_ACCEPTED (`c30c70ef2db548e24ef28bb8bf042bd5`) after forced sleep.
+  Its USB reply remains absent. A USB-host automatic-sleep guard passes the four
+  affected model builds; its physical installation/awake test is pending.
 
-Probe command (inside the IDF container, `/work`):
-`python tools/node_hil/build.py .verify-m1-evidence/sleep-cpu-retained-sdkconfig - .verify-m1-evidence/maintenance-sleep-probe-r3 --nodes 2 --build-directory /tmp/ninlil-retained-cpu-builds --sleep-probe`.
-The same command without `--sleep-probe`, output `maintenance-sleep-probe-disabled`,
-verifies removal from that cache. `xtensa-esp32s3-elf-nm` checks the three named
-wrappers. The first symbol check incorrectly included unrelated SDK wrappers;
-the corrected check matches only the three diagnostic symbols. Final format,
-project/scoped budgets and diff checks pass after recording the new file in the union.
+The retired probe commands and initial/corrected symbol checks remain in Git at
+`214d279:docs/evidence/2026-09-09-maintenance/README.md`; ordinary images omit them.
 
 Board 1 and board 3 are stopped with autorun false, setup revision 19. Board 2's
 last confirmed settings are battery role, autorun false, revision 20; its current
-runtime state is again unobservable. Its installed image is now the checkpoint
-probe above. Restore it and read `SLEEP_PROBE` before any further sleep attempt.
+runtime state is again unobservable. The installed ordinary restart-window image
+is `48119929e0a0e3806abd0a7f2385eaf219ef4168766f940efbe734a2d04051a2`.
+Its final X is unacknowledged. Reconnect before installing the USB-host guard.
 A fresh, unregistered spare is still needed for physical Root replacement.
 Timed electrical power cuts, current/lifetime and field/long-duration gates
 remain unrun. No PR, push or field release was performed.

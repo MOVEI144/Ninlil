@@ -14,6 +14,7 @@ def reconcile(capture):
     result = json.loads((capture / 'result.json').read_text(encoding='utf-8'))
     raw = capture / 'console.jsonl'
     rows = [json.loads(line) for line in raw.read_text(encoding='utf-8').splitlines()]
+    rows = [r for r in rows if r['request'] is not None]
     # Host wall-clock readings can tie; the serialized capture order is exact.
     for order, row in enumerate(rows):
         row['order'] = order

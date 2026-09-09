@@ -139,6 +139,7 @@ static int start(uint64_t duration)
         return rc;
     }
     pump.accept_rx = accept_rx;
+    node_battery_reset();
     expires = duration ? milliseconds() + duration : UINT64_MAX;
     fault = 0;
     return NINLIL_OK;

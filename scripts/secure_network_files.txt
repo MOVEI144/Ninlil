@@ -203,5 +203,8 @@ tools/node_hil/hardware.py
 tools/node_hil/issuer.py
 tools/node_hil/requirements.txt
 tools/node_hil/sleep_test.py
-tools/node_hil/sleep_probe.c
+tests/battery_stub/bootloader_random.h
+tests/battery_stub/sdkconfig.h
+tests/battery_stub/driver/usb_serial_jtag.h
+tests/test_console.py
 tools/node_hil/manage.py

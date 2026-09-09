@@ -41,5 +41,5 @@ These software RF masks do not prove physical out-of-range coverage. Record exac
 image hashes, hardware/wiring revision, date, console results and protected-store
 checksums. Mid-program electrical cuts need a separate controlled power fixture.
 
-The optional `build.py --sleep-probe` records diagnostic checkpoints; see
-[sleep diagnosis](../../docs/DEPLOYMENT_LIFECYCLE.md#sleep-failure-diagnosis).
+Sleep tests retain late USB replies and separately report radio completion;
+see [sleep diagnosis](../../docs/DEPLOYMENT_LIFECYCLE.md#sleep-failure-diagnosis).

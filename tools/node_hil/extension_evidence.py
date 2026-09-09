@@ -8,6 +8,7 @@ from pathlib import Path
 def analyze(path):
     raw = path.read_bytes()
     rows = [json.loads(line) for line in raw.decode().splitlines()]
+    rows = [r for r in rows if r['request'] is not None]
     latest, stopped, powers, collection, restarts = {}, {}, set(), [], []
     manifest = None
     readback = {}

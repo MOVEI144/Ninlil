@@ -16,6 +16,8 @@ def main():
     parser.add_argument('output', type=Path)
     parser.add_argument('--leaf', type=int, choices=(2, 3), required=True)
     parser.add_argument('--sequence', type=int, required=True)
+    parser.add_argument('--restart-window', action='store_true', help='Check restart after the reference 120-second awake window')
+    parser.add_argument('--usb-awake', action='store_true', help='Check host-connected awake operation instead of forced sleep')
     args = parser.parse_args()
     if not 0 < args.sequence < 2**32:
         parser.error('Sequence must be a fresh nonzero uint32')
@@ -27,6 +29,19 @@ def main():
         try:
             for n in (1, args.leaf):
                 boards.append(Board(n, log))
+            if args.restart_window:
+                leaf = boards[1]
+                leaf.call('X')
+                leaf.call('G', (30000).to_bytes(4, 'big'))
+                first = status(leaf)
+                leaf.call('X')
+                time.sleep(125)  # Expire the old deadline while stopped.
+                leaf.call('G', (30000).to_bytes(4, 'big'))
+                restarted = status(leaf)
+                if not first['running'] or not restarted['running'] or restarted['fault']:
+                    raise RuntimeError('Fresh awake window was not established')
+                result['restart_window'] = {'before': first, 'after': restarted}
+                leaf.call('X')
             for board in boards:
                 board.call('X')
                 board.call('F', b'\0')
@@ -41,15 +56,31 @@ def main():
             else:
                 raise TimeoutError('Battery node did not join')
             before = states[1]['application_records']
-            response = boards[1].call('E', (5000).to_bytes(4, 'big'), timeout=30)
-            if len(response) != 4 or not 4500 <= int.from_bytes(response, 'big') <= 15000:
+            if args.usb_awake:
+                result['scope'] = 'physical USB-host awake window and fresh application delivery'
+                time.sleep(125)  # Exceed the configured 120-second window.
+                result['usb_awake'] = status(boards[1])
+                if not result['usb_awake']['running'] or result['usb_awake']['fault']:
+                    raise RuntimeError('USB-host configuration access was interrupted')
+                response = None
+            else:
+                try:
+                    response = boards[1].call('E', (5000).to_bytes(4, 'big'), timeout=30)
+                except TimeoutError as error:
+                    response = None
+                    result['usb_sleep_reply_error'] = str(error)
+                    deadline = min(deadline, time.monotonic() + 90)
+            if response is not None and (len(response) != 4 or not 4500 <= int.from_bytes(response, 'big') <= 15000):
                 raise RuntimeError('Timer sleep was not observed')
-            result['elapsed_sleep_ms'] = int.from_bytes(response, 'big')
+            result['elapsed_sleep_ms'] = int.from_bytes(response, 'big') if response is not None else None
             message = boards[0].call('S', args.leaf.to_bytes(2, 'big') + args.sequence.to_bytes(4, 'big'))
             result['message_id'] = message.hex()
             while time.monotonic() < deadline:
                 outcome = boards[0].call('Q', message)
                 if outcome == b'\x01\x05':
+                    result['outcome'] = 'SATISFIED/APPLICATION_ACCEPTED'
+                    if response is None and not args.usb_awake:
+                        raise RuntimeError('Radio delivery recovered; USB sleep timing and receiver ledger remain unobserved')
                     after = status(boards[1])['application_records']
                     if after != before + 1:
                         raise RuntimeError('Application ledger does not reconcile')
