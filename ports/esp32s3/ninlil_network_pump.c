@@ -1,4 +1,5 @@
 #include "ninlil_network_pump.h"
+#include "ninlil_feedback_pump.h"
 #include "esp_random.h"
 #include "esp_timer.h"
 #include "ninlil_node.h"
@@ -39,8 +40,11 @@ int ninlil_esp_network_emit(void *ctx, uint16_t next,
     rc = ninlil_sx1262_radio_airtime(p->radio, (uint16_t)length, &airtime);
     if (rc != NINLIL_OK)
         return rc;
-    return ninlil_airtime_enqueue(&p->scheduler, ++p->token, next, traffic,
-                                  airtime, frame, length);
+    rc = ninlil_airtime_enqueue(&p->scheduler, ++p->token, next, traffic,
+                                airtime, frame, length);
+    if (rc == NINLIL_OK && p->adaptive_power == 2u)
+        ninlil_esp_feedback_queued(p, p->token, esp_timer_get_time());
+    return rc;
 }
 
 int ninlil_esp_node_open(ninlil_esp_network_pump *p, ninlil_sx1262_radio *radio,
@@ -63,6 +67,9 @@ static int control_frame(const uint8_t *frame, size_t length)
 
 int ninlil_esp_node_adaptive_power(ninlil_esp_network_pump *p, int8_t minimum)
 {
+#ifdef NINLIL_FEEDBACK_DEFAULT
+    return ninlil_esp_node_feedback_open(p, minimum);
+#else
     ninlil_radio_adapt initial;
     if (!p || !p->node || !p->radio ||
         ninlil_radio_adapt_open(&initial, minimum,
@@ -73,6 +80,7 @@ int ninlil_esp_node_adaptive_power(ninlil_esp_network_pump *p, int8_t minimum)
         p->power[i] = initial;
     p->adaptive_power = 1u;
     return NINLIL_OK;
+#endif
 }
 static int power_for(ninlil_esp_network_pump *p, uint16_t peer, uint64_t now)
 {
@@ -148,6 +156,8 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
     int rc, completion;
     if (!p || !p->radio || (!p->routed && !p->node))
         return NINLIL_ERR_INVALID;
+    if (p->adaptive_power == 2u && p->feedback.fault)
+        return p->feedback.fault;
     rc = receive(p);
     if (rc != NINLIL_OK)
         return rc;
@@ -204,9 +214,16 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
         return rc;
     }
     /* This driver returns OK only after TX_DONE and restoring reception. */
-    rc = power_for(p, job->peer, (uint64_t)now / 1000u);
-    if (rc != NINLIL_OK)
+    rc = p->adaptive_power == 2u
+             ? ninlil_esp_feedback_prepare(p, job, (uint64_t)now)
+             : power_for(p, job->peer, (uint64_t)now / 1000u);
+    if (rc != NINLIL_OK) {
+        if (p->adaptive_power == 2u) {
+            (void)ninlil_airtime_complete(
+                &p->scheduler, rc == NINLIL_ERR_BUSY ? rc : NINLIL_ERR_IO);
+        }
         return rc;
+    }
     rc = ninlil_sx1262_radio_send(p->radio, job->frame, job->length);
     if (rc == NINLIL_OK && p->transmitted != UINT32_MAX)
         p->transmitted++;
@@ -216,6 +233,14 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
             ninlil_node_transmitted(p->node, job->frame, job->length, rc,
                                     job->airtime_us,
                                     (uint64_t)completed / 1000u);
+        if (p->adaptive_power == 2u) {
+            int observed = completed >= now
+                               ? ninlil_esp_feedback_complete(
+                                     p, job, rc, (uint64_t)completed / 1000u)
+                               : NINLIL_ERR_IO;
+            if (observed != NINLIL_OK)
+                rc = p->feedback.fault = observed;
+        }
     }
     completion = ninlil_airtime_complete(
         &p->scheduler, rc == NINLIL_OK         ? NINLIL_OK

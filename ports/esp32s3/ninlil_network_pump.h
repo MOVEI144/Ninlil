@@ -2,6 +2,7 @@
 #define NINLIL_NETWORK_PUMP_H
 #include "ninlil_airtime.h"
 #include "ninlil_radio_adapt.h"
+#include "ninlil_radio_feedback.h"
 #include "ninlil_routed.h"
 #include "ninlil_sx1262_radio.h"
 typedef struct ninlil_node ninlil_node;
@@ -18,7 +19,13 @@ typedef struct ninlil_esp_network_pump {
     int last_receive_result;
     ninlil_radio_adapt power[16];
     uint16_t power_peer[16];
-    uint8_t adaptive_power;
+    uint8_t adaptive_power; /* 0 fixed, 1 legacy, 2 closed-window feedback */
+    ninlil_radio_feedback feedback;
+    uint64_t queued_at_us[NINLIL_AIRTIME_QUEUE_MAX];
+    uint64_t queued_token[NINLIL_AIRTIME_QUEUE_MAX];
+    uint64_t feedback_probe_token;
+    uint32_t feedback_queue_us;
+    int feedback_reply_result;
     int (*control_receive)(void *ctx, const uint8_t *frame, size_t length,
                            uint64_t now_ms);
     /* Revalidate a queued fragment or channel-1 frame against the current
@@ -46,5 +53,9 @@ int ninlil_esp_network_emit(void *ctx, uint16_t next,
  * The existing SX1262 driver retains CCA/pause/profile enforcement. */
 int ninlil_esp_network_step(ninlil_esp_network_pump *p);
 int ninlil_esp_node_adaptive_power(ninlil_esp_network_pump *p,
+                                   int8_t minimum_dbm);
+/* Opt-in before the first staged frame. Registers authenticated reply/suspend
+ * hooks on node. Min/max remain the existing reviewed radio bounds. */
+int ninlil_esp_node_feedback_open(ninlil_esp_network_pump *pump,
                                    int8_t minimum_dbm);
 #endif

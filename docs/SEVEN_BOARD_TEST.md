@@ -82,3 +82,16 @@ FAILは矛盾した証拠・型/設定違反、UNKNOWNはタイムアウト/観�
 identity-bound fanoutはまだnode/Coreへ未統合であり、このランナーのPASSをそれらの
 受入へ流用しない。7台は機能/復旧HILであって64/512台の収容性能証明ではない。
 Root交換、7台同時復電、sleep、電源断、長期運転はそれぞれ別の未受入gateに残す。
+
+## 5. 9月10日の確定観測・出力制御を比較する場合
+
+通常版とは別に `CONFIG_NINLIL_RADIO_FEEDBACK_EXPERIMENTAL=y` を指定して全台を
+再buildする。macの選択と独立に記録する。manifestへ
+`"power_mode": "closed-feedback"` を追加する。対照版は `"power_mode": "legacy"`。
+ランナーはsdkconfig.hのhash/defineと、全台起動直後のT応答のmodeを照合し、
+不一致なら配送を投入せずFAIL・停止処理へ移る。Tのmodeは制御選択の確認であり、
+電波品質・出力校正・全firmware imageのattestationではない。
+
+試験前に[統合範囲](RADIO_FEEDBACK_INTEGRATION_2026-09-10.md)の未実施gateを確認する。
+この追記時点でも7台HILは未実行。既存ランナーの12配送PASSだけでは24個の新鮮な
+probeや減力・loss復帰を直接観測した証拠にならない。それらは追加計測が必要。

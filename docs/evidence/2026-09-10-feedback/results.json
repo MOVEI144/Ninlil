@@ -1,0 +1,125 @@
+{
+  "base_sha": "4357286cf3cff58e9b3413eef45412dc28c4771e",
+  "date": "2026-09-10",
+  "scope": "isolated actual C source tests; declaration/Core/crypto/radio/clock doubles; not full SDK or RF",
+  "result": "PASS_WITH_SCOPE_LIMITS",
+  "components_per_configuration": 11,
+  "integration_modes_per_configuration": 2,
+  "python_cases_in_one_component_entry": 13,
+  "runs": [
+    {
+      "name": "gcc",
+      "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+      "sanitize": false,
+      "component_ctest": 0,
+      "pump_explicit": 0,
+      "pump_default": 0
+    },
+    {
+      "name": "gcc-sanitize",
+      "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+      "sanitize": true,
+      "component_ctest": 0,
+      "pump_explicit": 0,
+      "pump_default": 0
+    },
+    {
+      "name": "clang",
+      "compiler": "clang version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)",
+      "sanitize": false,
+      "component_ctest": 0,
+      "pump_explicit": 0,
+      "pump_default": 0
+    },
+    {
+      "name": "clang-sanitize",
+      "compiler": "clang version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)",
+      "sanitize": true,
+      "component_ctest": 0,
+      "pump_explicit": 0,
+      "pump_default": 0
+    }
+  ],
+  "source_sha256": {
+    "include/ninlil_node.h": "2254158af14b0d8e519ca97c979dd9c6c7f8b307810fcfc54946a185e663bbd0",
+    "include/ninlil_power_policy.h": "071391d5e24a1cf8f4d76408edd7702056b7200d76e577fc8b6fc4b89346c0be",
+    "include/ninlil_radio_feedback.h": "a9cf06fe11b9730549d5f3b9d3ee253c968b9c4c1110e5ecfa1f890d767573b7",
+    "src/ninlil_node_radio.c": "448985e59f12dc4460d482f23df1c2056c801c608eb848a5b8b75f227d1bdd30",
+    "src/ninlil_node_io.c": "c16345c711b927296a9d458c104efe5f1df62599b6a44d11a1af938c2f748157",
+    "src/ninlil_node_sleep.c": "e1470764819e2fd07dd114086d7cead479728e99d4fb00c7c94de5d8d22afef4",
+    "src/ninlil_power_policy.c": "67fc3dd026857bfb768b232568911461566ba17dc0496b797defc5d3f7160dde",
+    "src/ninlil_radio_feedback.c": "3db39fdab6cd52e775f020dea64c78221fdd4ad1bbf24c342f7704035603aeda",
+    "ports/esp32s3/ninlil_network_pump.h": "dbf2875397a0677aec742ad92d34a98be027d26249f49d731963b6f809f1fb65",
+    "ports/esp32s3/ninlil_network_pump.c": "cb964ebb6af6983e03700f2e0d5dbee19761b90d3fb1c370708cd1a1a5ea45d8",
+    "ports/esp32s3/ninlil_feedback_pump.h": "202fabcfdbbfa93c3d954a566dc8e9f662b339ca3be8a914128025098666dacc",
+    "ports/esp32s3/ninlil_feedback_pump.c": "11503a2af66dd083fd969a1417c045454c853239f7990fdfc5db3ebdec90cdd6",
+    "cmake/adaptive.cmake": "2176b6a4bf97a14fccf7f4ff81c78fdd2184b1209a25c8bf93e807a9a1b1aab8",
+    "embedded/esp32s3/components/ninlil_network/CMakeLists.txt": "a694e05458246a76501b1e092aab769a05333674922a2501095ec15b8f08e387",
+    "embedded/esp32s3/components/ninlil_network/Kconfig": "5110468b650a2d414dd42dc2285242a7253248355acc1df4faabe43e1a4dc20d",
+    "tests/test_radio_feedback.c": "7e4637847c2fe95061f0cd813c693eeffd05f4ab63701fd09138edca53393109",
+    "tests/test_feedback_pump.c": "2626b75b00749ea10fbed18e4544830e5fdb49887b25fb2d930f9f5fc0b40c7b",
+    "tools/node_hil/seven.py": "8e8fcfff90c1b7e0ef3096c18ef3f14fdaabd0cac5567266ee891dabd2e12b83",
+    "tests/test_seven_hil.py": "047ade1b93574d872208edb95b5574eb1ad1cb97554d14504182665cd8f2c841",
+    "tools/node_hil/seven.example.json": "f1483bd5dee25b29c0ed619ca6df28c75b238396e7968020934ec44dc3020354"
+  },
+  "unrun": [
+    "Full SDK build/regressions and actual SDK type/ABI verification",
+    "ESP-IDF build",
+    "7-board RF/HIL",
+    "full clang-format/LOC/package/fuzz gates",
+    "flash electrical power-cut/current/field"
+  ],
+  "static_analysis": [
+    {
+      "compiler": "gcc",
+      "translation_units": 11,
+      "diagnostic_bytes": 0,
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "compiler": "clang",
+      "translation_units": 11,
+      "diagnostic_bytes": 0,
+      "exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "raw_report_sha256": {
+    "gcc-run-002": "aacae4e4aa77b9ca721867f7eb9d7150066e6b46d5f104796d177794bc59afc1",
+    "clang-run-002": "8ef2bf05627d717198965baf608c8288b69556fc96061791facc752eb390b9a9",
+    "gcc-static-001": "84b7b55908e9e9762e63056470bfd409bacd1d728181ef5684bba054136418c2",
+    "clang-static-001": "6f5b2b275888383af3dcb17c7bf8ae1582ef21a87bd5a89b86769a13ba1a06c3"
+  },
+  "retrieved_baseline_git_blobs": {
+    "include/ninlil_node.h": "0515e91748916ca5db17b89661ac1185f6ad0621",
+    "src/ninlil_node_links.c": "e06dba4e13f04ed071b3d91bb047e596e5db8392",
+    "src/ninlil_node_io.c": "92aa70c4951fbfc83d6fb70bafc92ae2edf46dc1",
+    "src/ninlil_node_sleep.c": "8dd33627e4cd30d90cc7ad861aac973512e0cf38",
+    "src/ninlil_node_radio.c": "10448e36b751f52f55e37db6b195b9490c3d4fb0",
+    "ports/esp32s3/ninlil_network_pump.h": "72c6c2f0d5025969321804d7eb9b5cad5bcf46c7",
+    "ports/esp32s3/ninlil_network_pump.c": "c512cf6303c8e03954f149719c732af753c0d07c"
+  }
+}

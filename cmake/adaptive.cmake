@@ -1,6 +1,6 @@
 # Experimental algorithms with no hidden tasks, crypto or journal backend.
 get_filename_component(NINLIL_ADAPTIVE_ROOT "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
-set(adaptive_sources link_metrics power_policy route_search phy_plan fanout)
+set(adaptive_sources link_metrics power_policy route_search phy_plan fanout radio_feedback)
 set(adaptive_files "")
 foreach(module IN LISTS adaptive_sources)
   list(APPEND adaptive_files "${NINLIL_ADAPTIVE_ROOT}/src/ninlil_${module}.c")
@@ -45,4 +45,41 @@ if(NINLIL_BUILD_TESTS)
     add_test(NAME adaptive_seven_hil_protocol
       COMMAND "${Python3_EXECUTABLE}" "${NINLIL_ADAPTIVE_ROOT}/tests/test_seven_hil.py")
   endif()
+endif()
+
+# Native fake-hardware integration uses the real pump source and portable
+# feedback owner. Keep the ESP-only adapter out of the portable node archive.
+if(TARGET test_network_pump)
+  target_sources(test_network_pump PRIVATE
+    "${NINLIL_ADAPTIVE_ROOT}/ports/esp32s3/ninlil_feedback_pump.c")
+  target_link_libraries(test_network_pump PRIVATE ninlil_adaptive)
+endif()
+
+# Complete-checkout integration target: real node IO/link/sleep and pump code,
+# with named doubles for the remaining Core, crypto and hardware boundaries.
+# Vendor headers come from the normal identity target; no sliced ABI headers.
+if(NINLIL_BUILD_TESTS AND TARGET ninlil_identity)
+  foreach(mode explicit default)
+    set(target test_feedback_pump_${mode})
+    add_executable(${target}
+      "${NINLIL_ADAPTIVE_ROOT}/tests/test_feedback_pump.c"
+      "${NINLIL_ADAPTIVE_ROOT}/src/ninlil_node_io.c"
+      "${NINLIL_ADAPTIVE_ROOT}/src/ninlil_node_radio.c"
+      "${NINLIL_ADAPTIVE_ROOT}/src/ninlil_node_links.c"
+      "${NINLIL_ADAPTIVE_ROOT}/src/ninlil_node_sleep.c"
+      "${NINLIL_ADAPTIVE_ROOT}/ports/esp32s3/ninlil_network_pump.c"
+      "${NINLIL_ADAPTIVE_ROOT}/ports/esp32s3/ninlil_feedback_pump.c"
+      "${NINLIL_ADAPTIVE_ROOT}/src/ninlil_airtime.c"
+      "${NINLIL_ADAPTIVE_ROOT}/src/ninlil_radio_adapt.c")
+    target_include_directories(${target} PRIVATE
+      "${NINLIL_ADAPTIVE_ROOT}/src"
+      "${NINLIL_ADAPTIVE_ROOT}/tests/esp_stub"
+      "${NINLIL_ADAPTIVE_ROOT}/ports/esp32s3")
+    target_link_libraries(${target} PRIVATE ninlil_adaptive ninlil_identity)
+    if(mode STREQUAL "default")
+      target_compile_definitions(${target} PRIVATE NINLIL_FEEDBACK_DEFAULT=1)
+    endif()
+    ninlil_strict_target(${target})
+    add_test(NAME radio_feedback_pump_${mode} COMMAND ${target})
+  endforeach()
 endif()

@@ -1,5 +1,8 @@
 # 適応通信実装と7台試験 — 2026-09-09
 
+本書は9月9日の記録。9月10日のnode/pumpへの観測・出力統合と現在の残りは
+[RADIO_FEEDBACK_INTEGRATION_2026-09-10.md](RADIO_FEEDBACK_INTEGRATION_2026-09-10.md)を参照。
+
 基準はPR #17の `8c37df522b8cc4ccbd58010fb11f909d0049f9ed`。設計は
 [`design/2026-09-09/README.md`](design/2026-09-09/README.md)。これは段階的実装であり、
 S0〜S5すべての完了、全SDK統合、7台RF受入、512台自律通信を宣言しない。

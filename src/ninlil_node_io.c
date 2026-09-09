@@ -87,6 +87,16 @@ int ninlil_node_receive(ninlil_node *n, const uint8_t *frame, size_t length,
                                  plain, sizeof(plain), &size);
             if (rc == NINLIL_OK)
                 rc = ninlil_node_control_receive(n, peer, plain, size, 1);
+            /* Only this authenticated direct-neighbor ingress may feed RF
+             * feedback. A routed/E2E control reply is not a direct RF sample.
+             * The control handler has checked membership and the challenge. */
+            if (rc == NINLIL_OK && size == 9u &&
+                plain[0] == NODE_PROBE_REPLY && n->config.radio_observer.reply &&
+                now - n->peers[index].probe_sent_at < 3000u)
+                n->config.radio_observer.reply(
+                    n->config.radio_observer.ctx, peer,
+                    ninlil_node_get(plain + 1, 8u),
+                    n->peers[index].sessions[1].material.fingerprint, now);
             ninlil_secret_clear(plain, sizeof(plain));
         } else if (frame[31] == 0u && ninlil_node_lease(n, &lease) == NINLIL_OK)
             rc = ninlil_routed_receive(&n->routed, frame, length, lease);

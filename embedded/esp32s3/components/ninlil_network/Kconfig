@@ -9,4 +9,15 @@ config NINLIL_ADAPTIVE_MAC_EXPERIMENTAL
         urgent bypass while a large packet accumulates radio credit.
         Rebuild all consumers after the scheduler ABI extension.
         Seven-board RF and full firmware qualification remain required.
+config NINLIL_RADIO_FEEDBACK_EXPERIMENTAL
+    bool "Use confirmed, non-overlapping neighbor probe windows for TX power"
+    default n
+    help
+        Opt-in actual node/pump integration. The driver stages TX power;
+        only TX_DONE with matching applied output confirms a new generation.
+        Authenticated neighbor replies feed eight-trial, non-overlapping
+        windows. Sleep invalidates unfinished measurements without RF loss.
+        Bootstrap/control floods remain at the reviewed maximum output.
+        Does not change frequency, modulation, membership or remote routing
+        observation formats. Actual ESP-IDF and seven-board RF gates remain.
 endmenu

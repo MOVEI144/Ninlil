@@ -28,13 +28,13 @@ int ninlil_power_policy_open(ninlil_power_policy *p, const ninlil_link_context *
     p->opened = 1u;
     return NINLIL_OK;
 }
-int ninlil_power_policy_step(ninlil_power_policy *p, const ninlil_link_window *w,
-                              uint64_t now, ninlil_power_apply apply, void *ctx)
+int ninlil_power_policy_plan(const ninlil_power_policy *p,
+                              const ninlil_link_window *w, uint64_t now,
+                              ninlil_power_policy *out)
 {
     ninlil_power_policy next;
     int8_t power;
-    int rc;
-    if (!p || !p->opened || p->poisoned || !apply || now < p->now_ms)
+    if (!p || !out || out == p || !p->opened || p->poisoned || now < p->now_ms)
         return NINLIL_ERR_STATE;
     next = *p;
     next.now_ms = now;
@@ -79,16 +79,32 @@ int ninlil_power_policy_step(ninlil_power_policy *p, const ninlil_link_window *w
     if (power != p->context.power_dbm) {
         if (p->context.generation == UINT64_MAX)
             return NINLIL_ERR_CAPACITY;
-        rc = apply(ctx, power);
-        if (rc != NINLIL_OK) {
-            p->poisoned = 1u;
-            return rc;
-        }
         next.context.generation++;
         next.context.power_dbm = power;
         next.changed_ms = next.supported_ms = now;
         next.good = 0u;
         memset(&next.last, 0, sizeof(next.last));
+    }
+    *out = next;
+    return NINLIL_OK;
+}
+
+int ninlil_power_policy_step(ninlil_power_policy *p, const ninlil_link_window *w,
+                              uint64_t now, ninlil_power_apply apply, void *ctx)
+{
+    ninlil_power_policy next;
+    int rc;
+    if (!apply)
+        return NINLIL_ERR_STATE;
+    rc = ninlil_power_policy_plan(p, w, now, &next);
+    if (rc != NINLIL_OK)
+        return rc;
+    if (next.context.power_dbm != p->context.power_dbm) {
+        rc = apply(ctx, next.context.power_dbm);
+        if (rc != NINLIL_OK) {
+            p->poisoned = 1u;
+            return rc;
+        }
     }
     *p = next;
     return NINLIL_OK;

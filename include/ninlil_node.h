@@ -19,6 +19,23 @@ typedef struct ninlil_node_member {
     uint8_t public_key[65];
 } ninlil_node_member;
 
+/* Optional synchronous radio observation callbacks. These carry public probe
+ * metadata only. No payload/key access, reentrant node calls or RF effects.
+ * The context remains alive until node_close; copy, do not retain reply bytes. */
+typedef struct ninlil_node_radio_observer {
+    void (*reply)(void *ctx, uint16_t peer, uint64_t token,
+                   const uint8_t session[16], uint64_t now_ms);
+    int (*suspend)(void *ctx, uint64_t now_ms);
+    void *ctx;
+} ninlil_node_radio_observer;
+
+typedef struct ninlil_node_radio_tx {
+    uint16_t peer;
+    uint32_t profile;
+    uint64_t probe_token; /* zero for DATA, receipts and probe replies */
+    uint8_t session[16];
+} ninlil_node_radio_tx;
+
 typedef struct ninlil_node_config {
     uint16_t local;
     uint16_t root;
@@ -45,6 +62,7 @@ typedef struct ninlil_node_config {
     const uint8_t
         *authority_key; /* Optional 65-byte CA key, borrowed until close. */
     uint8_t offline;    /* Maintenance only: opens stores, never permits RF. */
+    ninlil_node_radio_observer radio_observer; /* optional; zero is legacy */
 } ninlil_node_config;
 
 typedef struct ninlil_node ninlil_node;
@@ -138,4 +156,16 @@ int ninlil_node_collect(ninlil_node *node);
 int ninlil_node_link_quality(ninlil_node *node, uint16_t peer, uint64_t now_ms,
                              uint64_t *observed_ms, uint16_t *delivered);
 
+/* Attach one copied observer after node open, before the port's first TX.
+ * Must use the same execution owner. Conflicting observers are rejected.
+ * Public config ABI extension: rebuild all consumers; no wire/journal change. */
+int ninlil_node_observe_radio(ninlil_node *node,
+                               const ninlil_node_radio_observer *observer);
+/* Read the current authenticated local hop context of a frame which has just
+ * passed frame_current. Never grants transmission permission itself. EMPTY for
+ * bootstrap/forwarded frames, which must not inherit an end-target's low power.
+ * Exactly the current, not-yet-transmitted probe gets a nonzero probe token.
+ * Output is unchanged on error. No nonce allocation or RX-window mutation. */
+int ninlil_node_radio_tx_context(ninlil_node *node, const uint8_t *frame,
+                                  size_t length, ninlil_node_radio_tx *context);
 #endif

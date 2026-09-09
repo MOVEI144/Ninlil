@@ -108,3 +108,59 @@ int ninlil_node_link_quality(ninlil_node *n, uint16_t peer, uint64_t now,
     }
     return NINLIL_OK;
 }
+
+int ninlil_node_observe_radio(ninlil_node *n,
+                               const ninlil_node_radio_observer *observer)
+{
+    const ninlil_node_radio_observer *old;
+    if (!n || !observer || !observer->reply || !observer->suspend ||
+        !observer->ctx || n->status.fault || n->sleeping)
+        return NINLIL_ERR_INVALID;
+    old = &n->config.radio_observer;
+    if ((old->reply || old->suspend || old->ctx) &&
+        (old->reply != observer->reply || old->suspend != observer->suspend ||
+         old->ctx != observer->ctx))
+        return NINLIL_ERR_CONFLICT;
+    n->config.radio_observer = *observer;
+    return NINLIL_OK;
+}
+
+int ninlil_node_radio_tx_context(ninlil_node *n, const uint8_t *frame,
+                                  size_t length, ninlil_node_radio_tx *out)
+{
+    ninlil_node_radio_tx context = {0};
+    node_peer *p;
+    int index;
+    if (!n || !frame || !out || length > NINLIL_SECURE_FRAME_MAX)
+        return NINLIL_ERR_INVALID;
+    if (length <= NINLIL_SECURE_OVERHEAD || memcmp(frame, "NS\001", 3u) ||
+        (frame[31] != 0u && frame[31] != 2u) ||
+        ninlil_node_get(frame + 4, 2u) != n->config.local)
+        return NINLIL_ERR_EMPTY;
+    context.peer = (uint16_t)ninlil_node_get(frame + 6, 2u);
+    index = ninlil_node_index(n, context.peer);
+    if (index < 0 || !n->joined || n->sleeping || n->status.fault ||
+        n->peers[n->local_index].revoked)
+        return NINLIL_ERR_STATE;
+    p = &n->peers[index];
+    if (!p->member_active || p->revoked || !p->sessions[1].ready ||
+        memcmp(frame + 8, p->sessions[1].material.fingerprint, 16u))
+        return NINLIL_ERR_UNAUTHORIZED;
+    context.profile = n->config.permitted_profile;
+    memcpy(context.session, p->sessions[1].material.fingerprint, 16u);
+    if (frame[31] == 2u) {
+        uint8_t plain[NINLIL_SECURE_PLAINTEXT_MAX];
+        size_t size = 0u;
+        int rc = ninlil_secure_inspect_tx(&p->sessions[1], frame, length,
+                                          plain, sizeof(plain), &size);
+        if (rc == NINLIL_OK && size == sizeof(plain) &&
+            plain[0] == NODE_PROBE && !p->probe_sent &&
+            ninlil_node_get(plain + 1, 8u) == p->probe_token)
+            context.probe_token = p->probe_token;
+        ninlil_secret_clear(plain, sizeof(plain));
+        if (rc != NINLIL_OK)
+            return rc;
+    }
+    *out = context;
+    return NINLIL_OK;
+}

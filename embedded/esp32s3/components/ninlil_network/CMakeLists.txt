@@ -1,6 +1,8 @@
 get_filename_component(NINLIL_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../.." ABSOLUTE)
 idf_component_register(
   SRCS "${NINLIL_ROOT}/ports/esp32s3/ninlil_network_pump.c"
+       "${NINLIL_ROOT}/ports/esp32s3/ninlil_feedback_pump.c"
+       "${NINLIL_ROOT}/src/ninlil_radio_feedback.c"
        "${NINLIL_ROOT}/ports/esp32s3/ninlil_sleep_esp.c"
        "${NINLIL_ROOT}/src/ninlil_secure.c"
        "${NINLIL_ROOT}/src/ninlil_secure_link.c"
@@ -67,4 +69,8 @@ target_link_libraries(${COMPONENT_LIB} INTERFACE
 
 if(CONFIG_NINLIL_ADAPTIVE_MAC_EXPERIMENTAL)
   target_compile_definitions(${COMPONENT_LIB} PRIVATE NINLIL_AIRTIME_DEFAULT_DRR=1)
+endif()
+
+if(CONFIG_NINLIL_RADIO_FEEDBACK_EXPERIMENTAL)
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE NINLIL_FEEDBACK_DEFAULT=1)
 endif()

@@ -34,6 +34,7 @@ class Fixture:
         self.bad_identity = self.start_timeout = self.no_receipt = self.stale = self.fail_stop = False
         self.direct = False
         self.expired = self.unready = False
+        self.power_mode = 1
 
     def record(self, address):
         n = self.m["nodes"][address-1]
@@ -80,6 +81,8 @@ class Fixture:
                     result[6:8] = (7).to_bytes(2, "big")
                     result[10:12] = parent.records[a].to_bytes(2, "big")
                     return bytes(result)
+                if cmd == "T":
+                    return bytes((253, 253, parent.power_mode))
                 if cmd == "G":
                     parent.running[a] = True
                     if parent.start_timeout:
@@ -199,6 +202,21 @@ class SevenTests(unittest.TestCase):
             f = Fixture(copy.deepcopy(m)); setattr(f, defect, True)
             self.assertEqual(f.run()["result"], "FAIL")
 
+    def test_feedback_mode_verification(self):
+        m = manifest(); m["power_mode"] = "closed-feedback"
+        f = Fixture(m); f.power_mode = 2
+        r = f.run()
+        self.assertEqual(r["result"], "PASS", r)
+        self.assertEqual(len(r["power_mode_observed"]), 7)
+        f = Fixture(m)
+        self.assertEqual(f.run()["result"], "FAIL")
+        self.assertFalse(any(cmd == "S" for _, cmd, _ in f.log))
+        self.assertFalse(any(f.running.values()))
+
+    def test_unknown_power_mode(self):
+        m = manifest(); m["power_mode"] = "unverified-automatic"
+        with self.assertRaises(ValueError): seven.validate(m)
+
     def test_build_mac_provenance(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
@@ -212,6 +230,16 @@ class SevenTests(unittest.TestCase):
             for node in m["nodes"]:
                 node.update(firmware="app.bin", firmware_sha256=image_hash)
             seven.verify_artifacts(m, folder)
+            m["power_mode"] = "closed-feedback"
+            with self.assertRaises(ValueError): seven.verify_artifacts(m, folder)
+            config.write_text("#define CONFIG_NINLIL_ADAPTIVE_MAC_EXPERIMENTAL 1\n"
+                              "#define CONFIG_NINLIL_RADIO_FEEDBACK_EXPERIMENTAL 1\n")
+            (folder/"hashes.json").write_text(json.dumps({"app.bin": image_hash,
+                "sdkconfig.h": hashlib.sha256(config.read_bytes()).hexdigest()}))
+            seven.verify_artifacts(m, folder)
+            m["power_mode"] = "legacy"
+            with self.assertRaises(ValueError): seven.verify_artifacts(m, folder)
+            del m["power_mode"]
             m["mac"] = "legacy"
             with self.assertRaises(ValueError): seven.verify_artifacts(m, folder)
             m["mac"] = "airtime-drr"

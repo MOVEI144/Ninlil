@@ -26,4 +26,11 @@ int ninlil_power_policy_step(ninlil_power_policy *policy,
                               const ninlil_link_window *window,
                               uint64_t now_ms, ninlil_power_apply apply,
                               void *apply_ctx);
+/* Pure proposal for staged drivers. No driver call, generation publication or
+ * mutation of policy. out must not alias policy and is unchanged on error.
+ * The owner may publish this proposal only after actual setting confirmation;
+ * discarded proposals never count another successful observation window. */
+int ninlil_power_policy_plan(const ninlil_power_policy *policy,
+                              const ninlil_link_window *window, uint64_t now_ms,
+                              ninlil_power_policy *out);
 #endif
