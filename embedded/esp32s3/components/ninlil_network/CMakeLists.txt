@@ -46,6 +46,7 @@ idf_component_register(
        "${NINLIL_ROOT}/src/ninlil_node_recovery.c"
        "${NINLIL_ROOT}/src/ninlil_node_lifecycle.c"
        "${NINLIL_ROOT}/src/ninlil_link_metrics.c"
+       "${NINLIL_ROOT}/src/ninlil_probe_monitor.c"
        "${NINLIL_ROOT}/src/ninlil_power_policy.c"
        "${NINLIL_ROOT}/src/ninlil_route_search.c"
        "${NINLIL_ROOT}/src/ninlil_phy_plan.c"

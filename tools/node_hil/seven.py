@@ -37,11 +37,12 @@ def validate(m: dict[str, Any]) -> None:
     require(isinstance(m, dict) and type(m.get("schema")) is int and m["schema"] == 1,
             "Expected manifest schema 1")
     require(not (set(m) - {"schema", "scenario", "mac", "source_commit", "seconds", "sequence",
-                          "root", "nodes", "radio_profile_reviewed", "stop_relay", "recovery_target"}),
+                          "root", "nodes", "radio_profile_reviewed", "stop_relay", "recovery_target", "closed_probes"}),
             "Unknown manifest field")
     integer(m.get("root"), 1, 65534, "root")
     require(m.get("scenario") in ("bidirectional", "relay-stop"), "Invalid scenario")
     require(m.get("mac") in ("legacy", "airtime-drr"), "Declare the firmware MAC build mode")
+    require(type(m.get("closed_probes", False)) is bool, "closed_probes must be a boolean")
     hex_bytes(m.get("source_commit"), 20, "source_commit")
     integer(m.get("seconds"), 120, 570, "seconds")
     integer(m.get("sequence"), 1, 2**32-14, "fresh sequence base")
@@ -150,7 +151,7 @@ def run(m: dict[str, Any], factory: Callable, emit: Callable,
     validate(m)
     result: dict[str, Any] = {"result": "UNKNOWN", "scope": "seven-MCU reference application delivery",
         "physical_range_claim": False, "field_acceptance": False, "firmware_attested_by_USB": False,
-        "mac_from_manifest": m["mac"], "source_commit": m["source_commit"], "deliveries": [],
+        "mac_from_manifest": m["mac"], "closed_probes_from_manifest": m.get("closed_probes", False), "source_commit": m["source_commit"], "deliveries": [],
         "errors": [], "cleanup": []}
     boards, controlled = {}, set()
     expected, baseline = {}, {}
@@ -322,6 +323,11 @@ def verify_artifacts(m: dict[str, Any], manifest_directory: Path) -> None:
                                  config.read_text(encoding="utf-8"), re.M)
         require(definitions in ([], ["1"]), "Unexpected or duplicate experimental MAC definition")
         require(bool(definitions) == (m["mac"] == "airtime-drr"), "MAC label disagrees with build")
+        measurements = re.findall(r"^#define CONFIG_NINLIL_CLOSED_PROBES_EXPERIMENTAL\s+(\S+)\s*$",
+                                  config.read_text(encoding="utf-8"), re.M)
+        require(measurements in ([], ["1"]), "Unexpected or duplicate closed-probe definition")
+        require(bool(measurements) == m.get("closed_probes", False),
+                "Closed-probe label disagrees with build")
 
 
 def main() -> int:

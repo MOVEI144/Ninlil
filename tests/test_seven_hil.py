@@ -144,7 +144,8 @@ class SevenTests(unittest.TestCase):
 
     def test_unknown_and_overflow(self):
         for key, value in (("schema", True), ("root", True), ("seconds", 601),
-                           ("sequence", 2**32), ("mac", "auto-everything")):
+                           ("sequence", 2**32), ("mac", "auto-everything"),
+                           ("closed_probes", 1), ("closed_probes", "true")):
             m = manifest(); m[key] = value
             with self.assertRaises(ValueError): seven.validate(m)
         with self.assertRaises(ValueError):
@@ -212,6 +213,16 @@ class SevenTests(unittest.TestCase):
             for node in m["nodes"]:
                 node.update(firmware="app.bin", firmware_sha256=image_hash)
             seven.verify_artifacts(m, folder)
+            m["closed_probes"] = True
+            with self.assertRaises(ValueError): seven.verify_artifacts(m, folder)
+            config.write_text("#define CONFIG_NINLIL_ADAPTIVE_MAC_EXPERIMENTAL 1\n"
+                              "#define CONFIG_NINLIL_CLOSED_PROBES_EXPERIMENTAL 1\n")
+            (folder/"hashes.json").write_text(json.dumps({"app.bin": image_hash,
+                "sdkconfig.h": hashlib.sha256(config.read_bytes()).hexdigest()}))
+            seven.verify_artifacts(m, folder)
+            m["closed_probes"] = False
+            with self.assertRaises(ValueError): seven.verify_artifacts(m, folder)
+            m["closed_probes"] = True
             m["mac"] = "legacy"
             with self.assertRaises(ValueError): seven.verify_artifacts(m, folder)
             m["mac"] = "airtime-drr"

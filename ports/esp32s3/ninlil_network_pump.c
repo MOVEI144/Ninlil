@@ -39,8 +39,13 @@ int ninlil_esp_network_emit(void *ctx, uint16_t next,
     rc = ninlil_sx1262_radio_airtime(p->radio, (uint16_t)length, &airtime);
     if (rc != NINLIL_OK)
         return rc;
-    return ninlil_airtime_enqueue(&p->scheduler, ++p->token, next, traffic,
-                                  airtime, frame, length);
+    {
+        int64_t queued = esp_timer_get_time();
+        if (queued < 0)
+            return NINLIL_ERR_IO;
+        return ninlil_airtime_enqueue_at(&p->scheduler, ++p->token, next, traffic,
+                                          airtime, frame, length, (uint64_t)queued);
+    }
 }
 
 int ninlil_esp_node_open(ninlil_esp_network_pump *p, ninlil_sx1262_radio *radio,
@@ -52,7 +57,26 @@ int ninlil_esp_node_open(ninlil_esp_network_pump *p, ninlil_sx1262_radio *radio,
     memset(p, 0, sizeof(*p));
     p->radio = radio;
     p->node = node;
-    return ninlil_airtime_open(&p->scheduler, (uint64_t)now, budget, 0u);
+    int rc = ninlil_airtime_open(&p->scheduler, (uint64_t)now, budget, 0u);
+#ifdef CONFIG_NINLIL_CLOSED_PROBES_EXPERIMENTAL
+    if (rc == NINLIL_OK)
+        rc = ninlil_esp_node_closed_probes(p, &p->probe_workspace);
+#endif
+    return rc;
+}
+
+int ninlil_esp_node_closed_probes(ninlil_esp_network_pump *p,
+                                 ninlil_probe_monitor *workspace)
+{
+    int rc;
+    if (!p || !p->node || !p->radio || !workspace || p->closed_probes)
+        return NINLIL_ERR_STATE;
+    rc = ninlil_node_enable_probe_monitor(p->node, workspace);
+    if (rc == NINLIL_OK) {
+        p->monitor = workspace;
+        p->closed_probes = 1u;
+    }
+    return rc;
 }
 
 static int control_frame(const uint8_t *frame, size_t length)
@@ -212,10 +236,20 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
         p->transmitted++;
     if (p->node) {
         int64_t completed = esp_timer_get_time();
-        if (completed >= now)
+        if (completed >= now) {
             ninlil_node_transmitted(p->node, job->frame, job->length, rc,
                                     job->airtime_us,
                                     (uint64_t)completed / 1000u);
+            if (p->closed_probes && rc == NINLIL_OK) {
+                uint64_t queue = job->queued_time_known &&
+                                 (uint64_t)now >= job->queued_at_us
+                                     ? (uint64_t)now - job->queued_at_us
+                                     : UINT64_MAX;
+                p->last_measurement_result = ninlil_node_probe_measured(
+                    p->node, job->frame, job->length, job->airtime_us, queue,
+                    p->radio->applied_power_dbm, (uint64_t)completed / 1000u);
+            }
+        }
     }
     completion = ninlil_airtime_complete(
         &p->scheduler, rc == NINLIL_OK         ? NINLIL_OK

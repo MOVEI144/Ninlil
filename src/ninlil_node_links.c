@@ -125,6 +125,10 @@ int ninlil_node_link_receive(ninlil_node *n, uint16_t peer,
         if (measured < 0)
             return NINLIL_ERR_INVALID;
         p = &n->peers[measured];
+        if (n->config.probe_monitor)
+            return ninlil_probe_monitor_ack(n->config.probe_monitor,
+                       n->members[measured].grant.node,
+                       ninlil_node_get(data + 2, 8u), data[10]);
         if (ninlil_node_get(data + 2, 8u) != p->probe_token ||
             data[10] != p->probe_window)
             return NINLIL_ERR_STATE;
@@ -148,6 +152,10 @@ int ninlil_node_link_receive(ninlil_node *n, uint16_t peer,
             ninlil_node_get(data, 8u) != p->probe_token ||
             n->now_ms - p->probe_sent_at > 3000u)
             return NINLIL_ERR_STATE;
+        if (n->config.probe_monitor)
+            (void)ninlil_probe_monitor_reply(n->config.probe_monitor, peer,
+                      p->sessions[1].material.fingerprint,
+                      ninlil_node_get(data, 8u), n->now_ms);
         p->probe_window |= 1u;
         p->probe_report = 1u;
         return NINLIL_OK;
@@ -159,11 +167,28 @@ int ninlil_node_link_receive(ninlil_node *n, uint16_t peer,
 static int report(ninlil_node *n, unsigned int index)
 {
     node_peer *p = &n->peers[index];
-    uint8_t data[41], bits = p->probe_window;
-    uint64_t lease, age = n->now_ms - p->observed_at;
-    uint16_t delivered = 0u;
+    uint8_t data[41], mask = p->probe_window, bits;
+    uint64_t lease, observed = p->observed_at, token = p->probe_token, age;
+    uint16_t delivered = 0u, attempts = p->attempts;
+    uint32_t airtime = p->probe_airtime_us, queue = 0u;
     int rc;
-    if (p->attempts < 8u || age > NINLIL_NETWORK_STALE_MS ||
+    if (n->config.probe_monitor) {
+        ninlil_link_window window;
+        rc = ninlil_probe_monitor_read(n->config.probe_monitor,
+                  n->members[index].grant.node,
+                  p->sessions[1].material.fingerprint, n->now_ms, 1, &window);
+        if (rc != NINLIL_OK)
+            return rc == NINLIL_ERR_EMPTY ? NINLIL_ERR_STATE : rc;
+        observed = window.closed_ms - NINLIL_METRIC_RESPONSE_MS;
+        token = window.last_token;
+        mask = window.success_bits;
+        attempts = window.attempts;
+        airtime = (window.airtime_sum_us + attempts - 1u) / attempts;
+        queue = window.queue_max_us;
+    }
+    age = n->now_ms - observed;
+    bits = mask;
+    if (attempts < 8u || age > NINLIL_NETWORK_STALE_MS ||
         ninlil_node_lease(n, &lease) != NINLIL_OK ||
         lease < age + NINLIL_LEASE_SYNC_ERROR_BOUND_MS)
         return NINLIL_ERR_STATE;
@@ -174,24 +199,28 @@ static int report(ninlil_node *n, unsigned int index)
     p->delivered = delivered;
     ninlil_node_put(data, n->config.local, 2u);
     ninlil_node_put(data + 2, n->members[index].grant.node, 2u);
-    ninlil_node_put(data + 4, p->attempts, 2u);
+    ninlil_node_put(data + 4, attempts, 2u);
     ninlil_node_put(data + 6, delivered, 2u);
-    ninlil_node_put(data + 8, p->probe_airtime_us, 4u);
-    ninlil_node_put(data + 12, 0u, 4u);
+    ninlil_node_put(data + 8, airtime, 4u);
+    ninlil_node_put(data + 12, queue, 4u);
     /* Conservative timestamp: bounded clock reply age must not make old RF
      * evidence appear fresh at the authority. */
     ninlil_node_put(data + 16, lease - age - NINLIL_LEASE_SYNC_ERROR_BOUND_MS,
                     8u);
     ninlil_node_put(data + 24,
                     n->members[n->local_index].grant.membership_epoch, 8u);
-    ninlil_node_put(data + 32, p->probe_token, 8u);
-    data[40] = p->probe_window;
+    ninlil_node_put(data + 32, token, 8u);
+    data[40] = mask;
     rc = n->config.local == n->config.root
              ? observation(n, n->config.local, data, sizeof(data))
              : ninlil_node_control_send(n, n->config.root, NODE_OBSERVATION,
                                         data, sizeof(data));
-    if (rc == NINLIL_OK && n->config.local == n->config.root)
+    if (rc == NINLIL_OK && n->config.local == n->config.root) {
+        if (n->config.probe_monitor)
+            return ninlil_probe_monitor_ack(n->config.probe_monitor,
+                       n->members[index].grant.node, token, mask);
         p->probe_report = 0u;
+    }
     return rc;
 }
 int ninlil_node_links_step(ninlil_node *n)
@@ -204,8 +233,10 @@ int ninlil_node_links_step(ninlil_node *n)
         node_peer *p = &n->peers[i];
         if (i == n->local_index || !allowed(n, (int)i) || !p->sessions[1].ready)
             continue;
-        if (p->probe_report && p->attempts == 8u && n->now_ms >= p->report_at &&
-            n->now_ms - p->probe_sent_at >= 1000u) {
+        if (n->now_ms >= p->report_at &&
+            (n->config.probe_monitor ||
+             (p->probe_report && p->attempts == 8u &&
+              n->now_ms - p->probe_sent_at >= 1000u))) {
             /* Six directed samples plus their ACKs share one slow channel.
              * A lost ACK must not turn every owner into a continuous reporter.
              */

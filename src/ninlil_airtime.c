@@ -156,6 +156,31 @@ int ninlil_airtime_enqueue(ninlil_airtime_scheduler *s, uint64_t token,
     return NINLIL_OK;
 }
 
+int ninlil_airtime_enqueue_at(ninlil_airtime_scheduler *s, uint64_t token,
+                              uint16_t peer, ninlil_traffic_class traffic,
+                              uint32_t airtime, const uint8_t *frame,
+                              size_t length, uint64_t now)
+{
+    int rc, existing = 0;
+    if (!s || now < s->last_refill_us)
+        return NINLIL_ERR_INVALID;
+    for (unsigned int i = 0u; i < NINLIL_AIRTIME_QUEUE_MAX; i++)
+        if (s->jobs[i].used && s->jobs[i].token == token)
+            existing = 1;
+    rc = ninlil_airtime_enqueue(s, token, peer, traffic, airtime, frame, length);
+    if (rc != NINLIL_OK || existing)
+        return rc;
+    for (unsigned int i = 0u; i < NINLIL_AIRTIME_QUEUE_MAX; i++) {
+        ninlil_airtime_job *job = &s->jobs[i];
+        if (job->used && job->token == token) {
+            job->queued_at_us = now;
+            job->queued_time_known = 1u;
+            return NINLIL_OK;
+        }
+    }
+    return NINLIL_ERR_FAULT;
+}
+
 static int take_selected(ninlil_airtime_scheduler *s, uint64_t now,
                          const ninlil_airtime_job **out)
 {

@@ -16,10 +16,10 @@ typedef struct ninlil_link_context {
 
 typedef struct ninlil_link_window {
     ninlil_link_context context;
-    uint64_t first_sequence, last_sequence;
+    uint64_t first_sequence, last_sequence, last_token;
     uint64_t first_tx_ms, closed_ms;
     uint32_t airtime_sum_us, queue_max_us;
-    uint8_t attempts, delivered;
+    uint8_t attempts, delivered, success_bits;
 } ninlil_link_window;
 
 typedef struct ninlil_link_metrics {
@@ -30,6 +30,7 @@ typedef struct ninlil_link_metrics {
     uint32_t pending_airtime_us, pending_queue_us;
     uint32_t airtime_sum_us, queue_max_us;
     uint8_t active, pending, replied, attempts, delivered, consecutive_losses;
+    uint8_t success_bits;
 } ninlil_link_metrics;
 
 /* Bounded, boot-local, no allocation or persistence. One pending probe/peer.

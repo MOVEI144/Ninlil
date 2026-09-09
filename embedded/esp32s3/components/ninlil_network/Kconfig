@@ -9,4 +9,15 @@ config NINLIL_ADAPTIVE_MAC_EXPERIMENTAL
         urgent bypass while a large packet accumulates radio credit.
         Rebuild all consumers after the scheduler ABI extension.
         Seven-board RF and full firmware qualification remain required.
+config NINLIL_CLOSED_PROBES_EXPERIMENTAL
+    bool "Route using finalized probe windows and measured queue residence"
+    default n
+    help
+        Connect actual TX completion, applied power, authenticated replies and
+        queue residence to the existing observation and Coordinator route cost.
+        No reply is classified before its three-second window closes. Routing
+        uses the latest eight completed trials; power-policy independent windows
+        remain separate. Legacy power adaptation is unchanged. Receive PHY,
+        credentials, packet formats and durable message ownership are unchanged.
+        Requires a full consumer rebuild and the seven-board acceptance gate.
 endmenu

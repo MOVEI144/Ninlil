@@ -1,0 +1,105 @@
+{
+  "date_jst": "2026-09-10",
+  "base_commit": "4357286cf3cff58e9b3413eef45412dc28c4771e",
+  "scope": "adaptation components, production node/pump boundary models, seven-board protocol fixtures",
+  "fixture_warning": "Crypto, radio, Core and Coordinator boundaries are doubles in probe_pipeline; not a full SDK or RF gate",
+  "result": "PASS",
+  "python": "3.13.5",
+  "python_tests_in_one_ctest_entry": 11,
+  "source_changed_during_run": [],
+  "matrix": [
+    {
+      "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+      "sanitize": false,
+      "result": "PASS",
+      "tests": 14,
+      "failures": 0,
+      "skipped": 0,
+      "returncodes": [
+        0,
+        0,
+        0
+      ],
+      "ctest_log_sha256": "041cd88533ea7e18fa0d442c3c7a553244cf9ffaaaf520fb0246cb6d9d939091",
+      "junit_sha256": "a349824a34f12ae2b88972b50bd7dea8155b314a322b9bc3f01870733c3f0304"
+    },
+    {
+      "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+      "sanitize": true,
+      "result": "PASS",
+      "tests": 14,
+      "failures": 0,
+      "skipped": 0,
+      "returncodes": [
+        0,
+        0,
+        0
+      ],
+      "ctest_log_sha256": "81c8ffa15fd987e392e7101d53f4db6082ea0289ef914ac5c7c89bbb486a9610",
+      "junit_sha256": "cd18db79ec6ed7318844dceb19951ab068ea385ede28d3c674a756fe2b95feac"
+    },
+    {
+      "compiler": "clang version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)",
+      "sanitize": false,
+      "result": "PASS",
+      "tests": 14,
+      "failures": 0,
+      "skipped": 0,
+      "returncodes": [
+        0,
+        0,
+        0
+      ],
+      "ctest_log_sha256": "f8b4b234920e88fed1e8c4296e72048302ec52d9f106fc868554994742971d8a",
+      "junit_sha256": "05c5c512cb4c46106352b67593e715003d5b24ca3a59c816a49fc0c72d020c0b"
+    },
+    {
+      "compiler": "clang version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)",
+      "sanitize": true,
+      "result": "PASS",
+      "tests": 14,
+      "failures": 0,
+      "skipped": 0,
+      "returncodes": [
+        0,
+        0,
+        0
+      ],
+      "ctest_log_sha256": "1a625df7c73a107d7b9d3d6b94d19a998d636703aaacb76cd66aa83564d8e1cc",
+      "junit_sha256": "f6daa515e0f3c48b548a64f20db2e1ea77f99e320ce72897b749a049d94e2aa9"
+    }
+  ],
+  "static_analysis": {
+    "scope": "Three direct C modules and four exact production node/pump units with typed dependency doubles; NOT full SDK static analysis",
+    "commands": 14,
+    "returncodes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "diagnostic_bytes": 0,
+    "result": "PASS"
+  },
+  "diff_check": "PASS (available exact-source subset; not the full checkout)",
+  "not_run": [
+    "full SDK regression and ABI validation",
+    "ESP-IDF configure/compile/link",
+    "full package/format/LOC gates",
+    "full protocol fuzz",
+    "seven physical boards/RF",
+    "power cuts/current/range/soak/field qualification"
+  ],
+  "raw_component_report_sha256": "1463a47f4702b81ea9b8d58a9992dd11163d34153ebd80748c30b9ac358bf69b",
+  "raw_static_report_sha256": "16d76fc52cf54503e47d69da3d5c45f55510b58b856eed0144af73c4c24aa286"
+}

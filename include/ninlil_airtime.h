@@ -3,7 +3,7 @@
 
 #include "ninlil.h"
 
-#define NINLIL_AIRTIME_API_VERSION 2u
+#define NINLIL_AIRTIME_API_VERSION 3u
 #define NINLIL_AIRTIME_QUEUE_MAX 32u
 #define NINLIL_AIRTIME_FRAME_MAX 240u
 
@@ -15,6 +15,8 @@ typedef struct ninlil_airtime_job {
     ninlil_traffic_class traffic;
     uint8_t frame[NINLIL_AIRTIME_FRAME_MAX];
     uint8_t used;
+    uint8_t queued_time_known;
+    uint64_t queued_at_us;
 } ninlil_airtime_job;
 
 typedef struct ninlil_airtime_scheduler {
@@ -64,6 +66,12 @@ int ninlil_airtime_enqueue(ninlil_airtime_scheduler *s, uint64_t token,
                            uint16_t peer, ninlil_traffic_class traffic,
                            uint32_t airtime_us, const uint8_t *frame,
                            size_t length);
+/* Timestamp the FIRST admission of this envelope. A duplicate/coalesced retry
+ * must retain that timestamp; epoch zero is a valid monotonic time. */
+int ninlil_airtime_enqueue_at(ninlil_airtime_scheduler *s, uint64_t token,
+                              uint16_t peer, ninlil_traffic_class traffic,
+                              uint32_t airtime_us, const uint8_t *frame,
+                              size_t length, uint64_t now_us);
 int ninlil_airtime_next(ninlil_airtime_scheduler *s, uint64_t now_us,
                         const ninlil_airtime_job **job);
 /* OK means real TX completion. BUSY/TIMEOUT/IO keep the job; no discard limit.

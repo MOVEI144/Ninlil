@@ -1,7 +1,11 @@
 #ifndef NINLIL_NETWORK_PUMP_H
 #define NINLIL_NETWORK_PUMP_H
+#ifdef ESP_PLATFORM
+#include "sdkconfig.h"
+#endif
 #include "ninlil_airtime.h"
 #include "ninlil_radio_adapt.h"
+#include "ninlil_probe_monitor.h"
 #include "ninlil_routed.h"
 #include "ninlil_sx1262_radio.h"
 typedef struct ninlil_node ninlil_node;
@@ -10,6 +14,12 @@ typedef struct ninlil_esp_network_pump {
     ninlil_routed *routed;
     ninlil_node *node;
     ninlil_airtime_scheduler scheduler;
+    ninlil_probe_monitor *monitor;
+#ifdef CONFIG_NINLIL_CLOSED_PROBES_EXPERIMENTAL
+    ninlil_probe_monitor probe_workspace;
+#endif
+    uint8_t closed_probes;
+    int last_measurement_result;
     uint64_t token;
     uint64_t tx_at_us;
     uint32_t transmitted;
@@ -39,6 +49,12 @@ int ninlil_esp_network_open(ninlil_esp_network_pump *p,
                             uint32_t budget_us);
 int ninlil_esp_node_open(ninlil_esp_network_pump *p, ninlil_sx1262_radio *radio,
                          ninlil_node *node, uint32_t budget_us);
+/* Before the first node step. Connect completed measurements to the existing
+ * observation/route path; retains legacy power policy, not the new v2 policy.
+ * Workspace remains caller-owned and borrowed until node_close. The default
+ * pump has only a pointer; Kconfig allocates embedded workspace only on opt-in. */
+int ninlil_esp_node_closed_probes(ninlil_esp_network_pump *p,
+                                 ninlil_probe_monitor *workspace);
 int ninlil_esp_network_emit(void *ctx, uint16_t next,
                             ninlil_traffic_class traffic, const uint8_t *frame,
                             size_t length);

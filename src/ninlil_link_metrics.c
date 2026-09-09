@@ -34,7 +34,7 @@ int ninlil_link_metrics_invalidate(ninlil_link_metrics *m, uint64_t now)
 }
 static void reset_window(ninlil_link_metrics *m)
 {
-    m->attempts = m->delivered = 0u;
+    m->attempts = m->delivered = m->success_bits = 0u;
     m->airtime_sum_us = m->queue_max_us = 0u;
 }
 int ninlil_link_metrics_tick(ninlil_link_metrics *m, uint64_t now)
@@ -53,6 +53,7 @@ int ninlil_link_metrics_tick(ninlil_link_metrics *m, uint64_t now)
     }
     m->attempts++;
     m->delivered += m->replied;
+    m->success_bits = (uint8_t)((m->success_bits << 1) | m->replied);
     m->airtime_sum_us += m->pending_airtime_us;
     if (m->pending_queue_us > m->queue_max_us)
         m->queue_max_us = m->pending_queue_us;
@@ -67,6 +68,8 @@ int ninlil_link_metrics_tick(ninlil_link_metrics *m, uint64_t now)
         m->window.context = m->context;
         m->window.first_sequence = m->first_sequence;
         m->window.last_sequence = m->sequence;
+        m->window.last_token = m->token;
+        m->window.success_bits = m->success_bits;
         m->window.first_tx_ms = m->first_tx_ms;
         m->window.closed_ms = m->due_ms;
         m->window.airtime_sum_us = m->airtime_sum_us;

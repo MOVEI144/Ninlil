@@ -78,5 +78,6 @@
       "firmware_sha256": "PLACEHOLDER_APP_SHA256_64_HEX",
       "firmware": "build/7/app.bin"
     }
-  ]
+  ],
+  "closed_probes": false
 }

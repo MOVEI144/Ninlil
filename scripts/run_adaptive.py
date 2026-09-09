@@ -24,12 +24,19 @@ def main() -> int:
     if logs is None:
         raise ValueError("Attempt directory limit reached")
     logs.mkdir()
-    report = {"scope": "actual C adaptation components and seven-board protocol fixtures",
+    report = {"fixture_warning": "Crypto, radio, Core and Coordinator boundaries are doubles in probe_pipeline; not a full SDK or RF gate",
+              "scope": "adaptation components, production node/pump boundary models, seven-board protocol fixtures",
               "full_sdk": "NOT_RUN", "ESP_IDF": "NOT_RUN", "HIL": "NOT_RUN",
               "python": platform.python_version(), "runs": [], "sources": {}}
     sources = list((root/"include").glob("ninlil_*.h")) + list((root/"src").glob("ninlil_*.c"))
     sources += list((root/"tests").glob("test_*"))
     sources += [root/"include/ninlil.h", root/"scripts/run_adaptive.py", root/"cmake/adaptive.cmake", root/"tests/adaptive/CMakeLists.txt", root/"tools/node_hil/seven.py"]
+    sources += list((root/"tests/probe_stub").glob("*.h"))
+    sources += list((root/"cmake").glob("probe_*.cmake"))
+    sources += [root/"CMakeLists.txt", root/"ports/esp32s3/ninlil_network_pump.c",
+                root/"ports/esp32s3/ninlil_network_pump.h",
+                root/"embedded/esp32s3/components/ninlil_network/CMakeLists.txt",
+                root/"embedded/esp32s3/components/ninlil_network/Kconfig"]
     for path in sources:
         if path.is_file():
             report["sources"][str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
