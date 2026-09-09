@@ -1,0 +1,95 @@
+{
+  "base_commit": "8c37df522b8cc4ccbd58010fb11f909d0049f9ed",
+  "scope": "actual C adaptation components and seven-board protocol fixtures",
+  "result": "PASS",
+  "python": "3.13.5",
+  "python_unit_tests_per_ctest_entry": 11,
+  "runs": [
+    {
+      "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+      "sanitize": false,
+      "tests_passed": 10,
+      "tests_total": 10,
+      "result": "PASS",
+      "command_exitcodes": [
+        0,
+        0,
+        0
+      ],
+      "ctest_log_sha256": "f2d44aacba824f6b626f10e6e60b5894a8cccff6e49ad6acfcf8300fdeebeedb"
+    },
+    {
+      "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+      "sanitize": true,
+      "tests_passed": 10,
+      "tests_total": 10,
+      "result": "PASS",
+      "command_exitcodes": [
+        0,
+        0,
+        0
+      ],
+      "ctest_log_sha256": "03c26425b02364a4f36b2a67ca2f7a984fc8097b885d1e0670aeae8debd5d5f7"
+    },
+    {
+      "compiler": "clang version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)",
+      "sanitize": false,
+      "tests_passed": 10,
+      "tests_total": 10,
+      "result": "PASS",
+      "command_exitcodes": [
+        0,
+        0,
+        0
+      ],
+      "ctest_log_sha256": "c832a8e1336675aa0f7bbd1ca67e399b503fbf2068b9b05931c63ba04950bf8d"
+    },
+    {
+      "compiler": "clang version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)",
+      "sanitize": true,
+      "tests_passed": 10,
+      "tests_total": 10,
+      "result": "PASS",
+      "command_exitcodes": [
+        0,
+        0,
+        0
+      ],
+      "ctest_log_sha256": "d978f25f9646695465fbd377b8e01b6502a59969d2ff70a7c90600b8ff95a0a5"
+    }
+  ],
+  "source_changed_during_run": [],
+  "original_report_sha256": "e98b158e5c481476e9d8ea05cff15738f41dee682a6a424f4508c4039c827686",
+  "static_analysis": {
+    "scope": "six changed/new component C translation units only",
+    "gcc": "14.2.0 -fanalyzer -c",
+    "clang": "17.0.0 --analyze",
+    "commands": 12,
+    "exitcodes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "diagnostic_bytes": 0
+  },
+  "unrun": [
+    "full SDK CTest/Python",
+    "full SDK static analysis and fuzz",
+    "clang-format",
+    "full checkout LOC gate",
+    "package consumer integration",
+    "ESP-IDF build",
+    "seven physical devices",
+    "RF/hard power cuts/current/field"
+  ],
+  "raw_logs": "Delivered change bundle: evidence/full-component-run and evidence/static-analysis; not hardware logs"
+}

@@ -45,6 +45,11 @@ idf_component_register(
        "${NINLIL_ROOT}/src/ninlil_node_links.c"
        "${NINLIL_ROOT}/src/ninlil_node_recovery.c"
        "${NINLIL_ROOT}/src/ninlil_node_lifecycle.c"
+       "${NINLIL_ROOT}/src/ninlil_link_metrics.c"
+       "${NINLIL_ROOT}/src/ninlil_power_policy.c"
+       "${NINLIL_ROOT}/src/ninlil_route_search.c"
+       "${NINLIL_ROOT}/src/ninlil_phy_plan.c"
+       "${NINLIL_ROOT}/src/ninlil_fanout.c"
   INCLUDE_DIRS "${NINLIL_ROOT}/include" "${NINLIL_ROOT}/ports/crypto" "${NINLIL_ROOT}/ports/flash"
   PRIV_INCLUDE_DIRS "${NINLIL_ROOT}/src"
   REQUIRES ninlil_radio esp_timer ninlil_core ninlil_edhoc_vendor mbedtls
@@ -59,3 +64,7 @@ target_link_libraries(${COMPONENT_LIB} INTERFACE
   "-Wl,--undefined=ninlil_identity_open" "-Wl,--undefined=ninlil_lease_root_open"
   "-Wl,--undefined=ninlil_esp_network_step" "-Wl,--undefined=ninlil_routed_receive" "-Wl,--undefined=ninlil_routed_poll"
   "-Wl,--undefined=ninlil_control_log_open" "-Wl,--undefined=ninlil_coordinator_stage" "-Wl,--undefined=ninlil_coordinator_tick")
+
+if(CONFIG_NINLIL_ADAPTIVE_MAC_EXPERIMENTAL)
+  target_compile_definitions(${COMPONENT_LIB} PRIVATE NINLIL_AIRTIME_DEFAULT_DRR=1)
+endif()

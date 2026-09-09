@@ -3,6 +3,7 @@
 
 #include "ninlil.h"
 
+#define NINLIL_AIRTIME_API_VERSION 2u
 #define NINLIL_AIRTIME_QUEUE_MAX 32u
 #define NINLIL_AIRTIME_FRAME_MAX 240u
 
@@ -29,6 +30,14 @@ typedef struct ninlil_airtime_scheduler {
     uint8_t active;
     uint8_t busy;
     uint8_t waiting;
+    /* Optional DRR policy; volatile scheduling state, never delivery evidence. */
+    int64_t deficit_us[4];
+    uint64_t queued_sequence[NINLIL_AIRTIME_QUEUE_MAX];
+    uint64_t next_sequence;
+    uint64_t peer_service_us[NINLIL_AIRTIME_QUEUE_MAX][4];
+    uint16_t peer_ids[NINLIL_AIRTIME_QUEUE_MAX];
+    uint32_t quantum_us, bypass_limit_us, bypass_left_us;
+    uint8_t drr_enabled, drr_class, drr_enter, reserved;
 } ninlil_airtime_scheduler;
 
 /* Explicit one-radio queue; all jobs are derived from owners above this layer.
@@ -41,6 +50,16 @@ typedef struct ninlil_airtime_scheduler {
  * second of refill). Smaller later jobs cannot consume that reservation. */
 int ninlil_airtime_open(ninlil_airtime_scheduler *s, uint64_t now_us,
                         uint32_t budget_us_per_second, uint32_t pause_us);
+/* Enable only on an opened, empty queue. The baseline remains the default.
+ * Class quanta are 8:4:3:1 in microseconds. Each peer has one FIFO per class,
+ * scheduled by its accounted airtime, not by its number of queued frames.
+ * A credit-waiting job allows at most urgent_bypass_us of CRITICAL overtaking;
+ * that debt is charged to CRITICAL. This bounds, rather than eliminates, the
+ * tradeoff between large-frame progress and urgent latency. No TX preemption.
+ * quantum is 1000..50000 us; bypass is 0..min(budget,400000) us.
+ * Struct ABI changed: recompile all consumers. No wire/journal changes. */
+int ninlil_airtime_enable_drr(ninlil_airtime_scheduler *s,
+                             uint32_t quantum_us, uint32_t urgent_bypass_us);
 int ninlil_airtime_enqueue(ninlil_airtime_scheduler *s, uint64_t token,
                            uint16_t peer, ninlil_traffic_class traffic,
                            uint32_t airtime_us, const uint8_t *frame,

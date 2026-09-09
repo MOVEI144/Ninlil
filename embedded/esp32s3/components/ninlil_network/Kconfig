@@ -1,0 +1,12 @@
+menu "Ninlil experimental adaptation"
+config NINLIL_ADAPTIVE_MAC_EXPERIMENTAL
+    bool "Enable airtime DRR instead of legacy packet-count scheduling"
+    default n
+    help
+        Experimental opt-in for the reference radio pump. Changes local queue
+        scheduling only; not frequency, output limits, security or membership.
+        Uses 10 ms base quantum, 8:4:3:1 airtime weights, and at most 50 ms
+        urgent bypass while a large packet accumulates radio credit.
+        Rebuild all consumers after the scheduler ABI extension.
+        Seven-board RF and full firmware qualification remain required.
+endmenu
