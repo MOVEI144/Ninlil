@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-09",
+  "source_commit": "a950f7cb4628fe8b9c579794ab4bcb04c9b1f05d",
+  "scope": "Isolated baseline witnesses, not full repository integration or acceptance",
+  "environment": "Linux x86_64; direct git clone failed DNS; source read through GitHub connector",
+  "base_header": "Reduced ninlil.h declarations: standard types, original error constants and traffic enum only. The two C modules and their two public headers match original Git blob hashes.",
+  "source_blobs": {
+    "src/ninlil_airtime.c": "1f25fbae67edae9d92c96048223af4c0a787bff4",
+    "src/ninlil_radio_adapt.c": "fc6f5f0a035bce7ef8c779a48dd5a8d70df997b3",
+    "include/ninlil_airtime.h": "4c87e0c0c52c7106f8eea53ed35ac3842a0e3001",
+    "include/ninlil_radio_adapt.h": "2f1691a2c4182b5493d50a3301dc77ed494bc9bb"
+  },
+  "matrix": [
+    {"compiler": "GCC 14.2.0", "mode": "strict C11", "result": "PASS"},
+    {"compiler": "Clang 17.0.0", "mode": "strict C11", "result": "PASS"},
+    {"compiler": "GCC 14.2.0", "mode": "ASan/UBSan with leak detection", "result": "PASS"},
+    {"compiler": "Clang 17.0.0", "mode": "ASan/UBSan with leak detection", "result": "PASS"}
+  ],
+  "output": [
+    "class_frames=8,4,3,1 class_airtime_us=80000,40000,30000,400000",
+    "waiting_rc=-7 credit_us=44000 critical_cost_us=10000 selected_class=3",
+    "power_drop_dbm=-6 loss_fallback_dbm=-3 stale_fallback_dbm=-3 duplicate_not_recounted=1",
+    "baseline_witnesses=PASS (not full CI, RF or future-profile acceptance)"
+  ],
+  "unrun": ["full CTest", "Python suite", "static analysis", "fuzz", "package", "full source budget", "ESP-IDF build", "HIL", "electrical power cuts", "current and battery lifetime", "field qualification"],
+  "interpretation": "Frame-weight scheduling and waiting reservation reproduce documented baseline behavior; they are future-profile design gaps, not newly proven violations of the current contract."
+}
