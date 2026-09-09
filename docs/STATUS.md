@@ -12,8 +12,8 @@ site/role transfer and guarded address reuse. The completed-message transport
 history can be retired only after pending ownership is empty; application data
 and device identity remain separate. New tests cover interrupted transfer and
 fresh Join/delivery after address reuse. Battery timer sleep still fails its
-physical recovery gate, including a CPU-retained diagnostic build. The next
-checkpoint probe is built; the bench device needs USB reconnection to install it. [The lifecycle record](evidence/2026-09-09-maintenance/README.md)
+physical recovery gate, including a CPU-retained diagnostic build. The checkpoint
+probe is installed; USB reconnection is needed to read its retained diagnostic. [The lifecycle record](evidence/2026-09-09-maintenance/README.md)
 separates completed local checks, passing physical checks and failed sleep tests.
 The runtime remains an alpha with separate field qualification gates.
 

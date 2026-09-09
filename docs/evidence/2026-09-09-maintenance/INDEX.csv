@@ -43,3 +43,9 @@ local_path,sha256,bytes
 .verify-m1-evidence/maintenance-local/sleep-probe-flash-attempt.log,7452aa943c9440457b9ba867909daa6ceaf883181f97d0c8201c2464ff148c52,1045
 .verify-m1-evidence/maintenance-local/probe-accounting-final.log,0fd0218c9907e3a68ee7e4f20ddc50578c5717440a41e1f9d75b88c12f650ef2,1331
 .verify-m1-evidence/maintenance-local/probe-accounting-checked.log,0f4a8288689ec33c7447dd71089933b9ec22e2ee3a7ffad624139612cc778198,27929
+.verify-m1-evidence/maintenance-local/sleep-probe-flash-restored.log,e205b63ab24d7e9f71be31ab18e870b2fc7412b7f216f594b3aaa84a9e709a96,1536
+.verify-m1-evidence/maintenance-sleep-probe-r3/2/device-verification.json,998efa2da5959c53fe92868c6305709049678278acb92a945f10c6a340543ed3,596
+.verify-m1-evidence/maintenance-local/probe-boot-initial.json,e8ab00f90fcc7a6ac86a398d22bc18efdbc77ab6ac1177497dc3c5e068db5876,4683
+.verify-m1-evidence/maintenance-sleep-checkpoint/result.json,0ac33dcfcf79eb31c893e47ff67a6e44708dac0d14ac40b1e4555e2c3a5c28f0,10375
+.verify-m1-evidence/maintenance-sleep-checkpoint/console.jsonl,9763cf9a4c34ba4a74cad235aa78032e9535854a096d5e9b108dde09c707056c,3652
+.verify-m1-evidence/maintenance-local/sleep-probe-reset-attempt.log,8917c5b09d8cc28072f0c4cf9443264cb5de4d45fa51df7d25be6186203fcf45,854

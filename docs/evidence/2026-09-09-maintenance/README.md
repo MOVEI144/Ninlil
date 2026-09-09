@@ -70,6 +70,12 @@ flashing. No identity/store erase or device private-key export was performed.
   same cache removes them. Three Python tests pass. The probe is not flashed:
   esptool again receives no serial response. Physical reconnect is required.
   NVS checkpoints diagnose progress, not release behavior or sleep/current proof.
+- After another user reconnect, all three boards respond stopped/fault-free.
+  The checkpoint image `bf3591fc03f18213363653a749cf719757f35b7d1a83c14f133c3476fea68f8c`
+  is additively installed on board 2; protected stores match. Initial reboot
+  prints stage 0. Join succeeds, then E5000 again times out; no S occurs.
+  USB reset fails. The recorded checkpoint has not yet been read: another
+  physical reconnect is needed. Diagnostic progress is not yet established.
 
 Probe command (inside the IDF container, `/work`):
 `python tools/node_hil/build.py .verify-m1-evidence/sleep-cpu-retained-sdkconfig - .verify-m1-evidence/maintenance-sleep-probe-r3 --nodes 2 --build-directory /tmp/ninlil-retained-cpu-builds --sleep-probe`.
@@ -81,8 +87,8 @@ project/scoped budgets and diff checks pass after recording the new file in the 
 
 Board 1 and board 3 are stopped with autorun false, setup revision 19. Board 2's
 last confirmed settings are battery role, autorun false, revision 20; its current
-runtime state is again unobservable. Its installed image is the CPU-retained
-diagnostic variant above. Restore it before installing the checkpoint probe.
+runtime state is again unobservable. Its installed image is now the checkpoint
+probe above. Restore it and read `SLEEP_PROBE` before any further sleep attempt.
 A fresh, unregistered spare is still needed for physical Root replacement.
 Timed electrical power cuts, current/lifetime and field/long-duration gates
 remain unrun. No PR, push or field release was performed.
