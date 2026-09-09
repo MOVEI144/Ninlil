@@ -21,3 +21,4 @@ tests/test_sleep_esp.c
 tools/node_hil/issuer.py
 tools/node_hil/requirements.txt
 tools/node_hil/sleep_test.py
+tools/node_hil/sleep_probe.c

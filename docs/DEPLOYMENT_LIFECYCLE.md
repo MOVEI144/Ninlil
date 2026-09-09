@@ -116,3 +116,15 @@ not its reusable radio number. Root address replacement follows the separate
 Root procedure above. Delayed/out-of-range peers adopt the new certificate when
 reachable; a radio address change is not permission to deliver old work to a
 different device.
+
+## Sleep failure diagnosis
+
+For bench diagnosis only, `build.py --sleep-probe` links checkpoint wrappers.
+They write one bounded record to NVS namespace `ninlil_sleep`, without erasing
+NVS or accessing device keys/application stores. Boot prints `SLEEP_PROBE`:
+stage 0 means no retained checkpoint; 1/2 surround the SDK sleep call, 3/4 surround
+radio recovery, and 5/6 surround entropy restoration. A nonzero result retains
+the first error until the next sleep attempt. Interrupted record publication
+and timing disturbed by Flash writes are not sleep evidence. Read the boot line
+after reconnect/reset. Ordinary builds explicitly disable these wrappers,
+including when reusing a cache previously built with the probe.

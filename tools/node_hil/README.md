@@ -40,3 +40,6 @@ checks retained custody across an MCU reset; `--drain` checks removal readiness.
 These software RF masks do not prove physical out-of-range coverage. Record exact
 image hashes, hardware/wiring revision, date, console results and protected-store
 checksums. Mid-program electrical cuts need a separate controlled power fixture.
+
+The optional `build.py --sleep-probe` records diagnostic checkpoints; see
+[sleep diagnosis](../../docs/DEPLOYMENT_LIFECYCLE.md#sleep-failure-diagnosis).

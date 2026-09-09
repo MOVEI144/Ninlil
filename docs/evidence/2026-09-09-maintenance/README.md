@@ -58,13 +58,31 @@ flashing. No identity/store erase or device private-key export was performed.
   and a separate 200-second Root radio observation do not recover communication.
   No new application submission occurs; sequence 26090881 remains unused.
   This is a failure, not proof of sleep duration or successful wake.
-- OS USB restart is denied and esptool USB reset receives no response. A request
-  to unplug/reconnect only board 2 is pending. CPU-retained Light-sleep firmware
-  is built as a diagnostic variant only; it has not been flashed or verified.
+- OS USB restart is denied and esptool USB reset receives no response.
+- The user reconnects all three boards; all respond stopped, autorun false.
+  CPU-retained Light-sleep image `7b4d5dba31a3d74f1c07b10d068fb955ea167d7b9f124bdcd501756f5056acbe`
+  is additively flashed on board 2 with protected-store hashes unchanged.
+  Join succeeds, but the 5-second E request again loses USB response. A further
+  202.63-second Root observation receives no child traffic. CPU retention alone
+  does not fix recovery. No message is submitted; sequence 26090881 stays unused.
+- A bench-only NVS checkpoint probe is built with strict warnings. Three wrapper
+  symbols are present only in the diagnostic image; an ordinary rebuild in the
+  same cache removes them. Three Python tests pass. The probe is not flashed:
+  esptool again receives no serial response. Physical reconnect is required.
+  NVS checkpoints diagnose progress, not release behavior or sleep/current proof.
+
+Probe command (inside the IDF container, `/work`):
+`python tools/node_hil/build.py .verify-m1-evidence/sleep-cpu-retained-sdkconfig - .verify-m1-evidence/maintenance-sleep-probe-r3 --nodes 2 --build-directory /tmp/ninlil-retained-cpu-builds --sleep-probe`.
+The same command without `--sleep-probe`, output `maintenance-sleep-probe-disabled`,
+verifies removal from that cache. `xtensa-esp32s3-elf-nm` checks the three named
+wrappers. The first symbol check incorrectly included unrelated SDK wrappers;
+the corrected check matches only the three diagnostic symbols. Final format,
+project/scoped budgets and diff checks pass after recording the new file in the union.
 
 Board 1 and board 3 are stopped with autorun false, setup revision 19. Board 2's
 last confirmed settings are battery role, autorun false, revision 20; its current
-runtime state is unobservable. Restore it before more sleep/role testing.
+runtime state is again unobservable. Its installed image is the CPU-retained
+diagnostic variant above. Restore it before installing the checkpoint probe.
 A fresh, unregistered spare is still needed for physical Root replacement.
 Timed electrical power cuts, current/lifetime and field/long-duration gates
 remain unrun. No PR, push or field release was performed.
