@@ -74,7 +74,7 @@ Light-sleepでは既存のnonce保持・clock/lease無効化・radio回復を維
 
 | offset | field | bytes |
 |---|---|---:|
-| 0 | format_version / kind | 1 / 1 |
+| 0 | dispatch kind / format_version | 1 / 1 |
 | 2 | flags（v1は0） | 2 |
 | 4 | operation ID | 16 |
 | 20 | authority epoch | 8 |
@@ -85,6 +85,8 @@ Light-sleepでは既存のnonce保持・clock/lease無効化・radio回復を維
 | 92 | fragment index / count | 1 / 1 |
 | 94 | fragment payload length | 2 |
 | 96 | fragment payload | 0..88 |
+
+96-byte record headerはdispatch kindを含む完全なNS plaintextの先頭である。現行のようにsend helperがkindを先頭へ追加するAPIでは、helperへ渡すbodyからこの一byteを除き、二重にprefixしない。受信dispatcherがkindを消費した場合も、codecのoffsetは完全record基準へ戻して検査する。Python 3.13.5の `struct.calcsize('>BBH16sQQIIQQ32sBBH')` で96bytesと各offsetを確認した。これは設計の算術検証で、未実装codecや実RFの合格ではない。
 
 NB16+NS40+record96+payload88=240。countは1..16、index<count、全体は最大1408bytes、非最終fragmentは88bytes、最終fragmentだけ短縮可能。indexの乗算・長さ・countを検査してからcopyする。重複fragmentはbyte一致のみ許し、矛盾はoperationを隔離する。完全再構成・digest・profile/clock検査が終わるまで適用しない。
 
