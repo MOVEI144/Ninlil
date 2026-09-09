@@ -2,10 +2,12 @@
 #define NINLIL_NODE_H
 
 #include "ninlil_join.h"
+#include "ninlil_probe_monitor.h"
 #include "ninlil_lease_clock.h"
 #include "ninlil_routed.h"
 typedef struct ninlil_identity ninlil_identity;
 
+#define NINLIL_NODE_CONFIG_API_VERSION 2u
 #define NINLIL_NODE_MEMBERS_MAX 16u
 #define NINLIL_NODE_BOOTSTRAP_HEADER 16u
 #define NINLIL_NODE_BOOTSTRAP_PAYLOAD 224u
@@ -45,6 +47,9 @@ typedef struct ninlil_node_config {
     const uint8_t
         *authority_key; /* Optional 65-byte CA key, borrowed until close. */
     uint8_t offline;    /* Maintenance only: opens stores, never permits RF. */
+    /* Optional borrowed telemetry owner. Prefer enable_probe_monitor before
+     * the first step. Rebuild consumers after this config ABI extension. */
+    ninlil_probe_monitor *probe_monitor;
 } ninlil_node_config;
 
 typedef struct ninlil_node ninlil_node;
@@ -108,6 +113,18 @@ int ninlil_node_frame_equal(ninlil_node *node, const uint8_t *a,
 void ninlil_node_transmitted(ninlil_node *node, const uint8_t *frame,
                              size_t length, int driver_result,
                              uint32_t airtime_us, uint64_t monotonic_ms);
+/* Initialize/borrow monitor before any probes; no RF, storage or authority
+ * effects. The monitor must outlive the node and not be shared with another. */
+int ninlil_node_enable_probe_monitor(ninlil_node *node,
+                                      ninlil_probe_monitor *monitor);
+/* Supplement the matching successful transmitted() call, same owner/time.
+ * Reads actual applied TX power, not a staged radio_power() request.
+ * Unknown queue residence is UINT64_MAX and cannot become a zero-cost sample.
+ * Telemetry errors do not retract TX or change a delivery's evidence. */
+int ninlil_node_probe_measured(ninlil_node *node, const uint8_t *frame,
+                               size_t length, uint32_t airtime_us,
+                               uint64_t queue_us, int8_t applied_power_dbm,
+                               uint64_t monotonic_ms);
 ninlil_runtime *ninlil_node_core(ninlil_node *node);
 int ninlil_node_inspect(const ninlil_node *node, ninlil_node_status *status);
 /* Public context fingerprints only; authority fields are zero on participants.

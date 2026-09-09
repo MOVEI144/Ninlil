@@ -108,3 +108,60 @@ int ninlil_node_link_quality(ninlil_node *n, uint16_t peer, uint64_t now,
     }
     return NINLIL_OK;
 }
+
+int ninlil_node_enable_probe_monitor(ninlil_node *n, ninlil_probe_monitor *m)
+{
+    int rc;
+    if (!n || !m || n->status.fault || n->sleeping || n->config.offline ||
+        n->config.probe_monitor)
+        return NINLIL_ERR_STATE;
+    for (unsigned int i = 0u; i < n->config.member_count; i++)
+        if (n->peers[i].attempts || n->peers[i].probe_token)
+            return NINLIL_ERR_STATE;
+    rc = ninlil_probe_monitor_open(m, n->config.permitted_profile);
+    if (rc == NINLIL_OK)
+        n->config.probe_monitor = m;
+    return rc;
+}
+
+int ninlil_node_probe_measured(ninlil_node *n, const uint8_t *frame,
+                               size_t length, uint32_t airtime, uint64_t queue,
+                               int8_t power, uint64_t now)
+{
+    uint8_t plain[NINLIL_SECURE_PLAINTEXT_MAX];
+    size_t size = 0u;
+    int index, rc;
+    uint64_t token;
+    node_peer *p;
+    if (!n || !n->config.probe_monitor || n->status.fault || n->sleeping ||
+        now != n->now_ms || !frame || length <= NINLIL_SECURE_OVERHEAD ||
+        length > NINLIL_SECURE_FRAME_MAX)
+        return NINLIL_ERR_INVALID;
+    if (memcmp(frame, "NS\001", 3u) || frame[31] != 2u ||
+        ninlil_node_get(frame + 4, 2u) != n->config.local)
+        return NINLIL_ERR_EMPTY;
+    index = ninlil_node_index(n, (uint16_t)ninlil_node_get(frame + 6, 2u));
+    if (index < 0)
+        return NINLIL_ERR_UNAUTHORIZED;
+    p = &n->peers[index];
+    if (!n->joined || !p->member_active || p->revoked ||
+        n->peers[n->local_index].revoked || !p->sessions[1].ready)
+        return NINLIL_ERR_STATE;
+    rc = ninlil_secure_inspect_tx(&p->sessions[1], frame, length,
+                                  plain, sizeof(plain), &size);
+    if (rc == NINLIL_OK) {
+        if (size != sizeof(plain) || plain[0] != NODE_PROBE)
+            rc = NINLIL_ERR_EMPTY;
+        else {
+            token = ninlil_node_get(plain + 1, 8u);
+            rc = !p->probe_sent || p->probe_sent_at != now || token != p->probe_token
+                     ? NINLIL_ERR_STATE
+                     : ninlil_probe_monitor_tx(n->config.probe_monitor,
+                           n->members[index].grant.node,
+                           p->sessions[1].material.fingerprint, power, token,
+                           now, airtime, queue);
+        }
+    }
+    ninlil_secret_clear(plain, sizeof(plain));
+    return rc;
+}
