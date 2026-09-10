@@ -19,12 +19,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
       - name: Install build tools
         run: |
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
-            build-essential clang clang-format cmake ninja-build
+            build-essential clang clang-format-18 cmake ninja-build libssl-dev
+      - name: Fetch and verify pinned dependencies
+        run: |
+          bash scripts/fetch_edhoc.sh
+          bash scripts/fetch_sx126x_driver.sh
+          python3 scripts/check_edhoc.py
+          bash scripts/check_sx126x_driver.sh
       - name: Run full host CI
+        env:
+          CLANG_FORMAT: clang-format-18
         run: ./scripts/ci.sh
 
   esp32s3:
@@ -34,6 +44,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Fetch and verify pinned protocol dependencies
+        run: |
+          bash scripts/fetch_edhoc.sh
+          python3 scripts/check_edhoc.py
       - name: Fetch pinned Semtech driver
         run: ./scripts/fetch_sx126x_driver.sh
       - name: Verify pinned Semtech driver
