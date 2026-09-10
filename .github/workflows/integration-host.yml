@@ -11,12 +11,20 @@ concurrency:
 jobs:
   source:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Archive tracked source only, without credentials or git metadata
+      - name: Fetch and verify the repository's exact dependency pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/fetch_edhoc.sh
+          bash scripts/fetch_sx126x_driver.sh
+          python3 scripts/check_edhoc.py
+          bash scripts/check_sx126x_driver.sh
+      - name: Archive tracked source and public dependency checkouts
         shell: bash
         run: |
           set -euo pipefail
@@ -24,8 +32,11 @@ jobs:
           git rev-parse HEAD > "$RUNNER_TEMP/ninlil-source/commit.txt"
           git ls-tree -r HEAD > "$RUNNER_TEMP/ninlil-source/tree.txt"
           git archive --format=tar HEAD | gzip -n > "$RUNNER_TEMP/ninlil-source/source.tar.gz"
+          # These public clones contain no checkout token; preserve their pins
+          # for check_edhoc.py. Never archive the main checkout's .git or HOME.
+          tar -czf "$RUNNER_TEMP/ninlil-source/dependencies.tar.gz" third_party/libedhoc third_party/sx126x_driver
           cd "$RUNNER_TEMP/ninlil-source"
-          sha256sum source.tar.gz tree.txt commit.txt > SHA256SUMS
+          sha256sum source.tar.gz dependencies.tar.gz tree.txt commit.txt > SHA256SUMS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ninlil-complete-source-${{ github.sha }}
