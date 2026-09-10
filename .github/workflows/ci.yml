@@ -15,7 +15,7 @@ jobs:
   host:
     name: Host, sanitizers, static analysis
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -32,10 +32,44 @@ jobs:
           bash scripts/fetch_sx126x_driver.sh
           python3 scripts/check_edhoc.py
           bash scripts/check_sx126x_driver.sh
+      - name: Capture reproducible verification inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/ninlil-inputs"
+          mkdir -p "$out" "$out/formatter"
+          git rev-parse HEAD > "$out/commit.txt"
+          git ls-tree -r HEAD > "$out/tree.txt"
+          git archive --format=tar HEAD | gzip -n > "$out/source.tar.gz"
+          tar --exclude=.git -czf "$out/dependencies.tar.gz" \
+            third_party/libedhoc third_party/sx126x_driver
+          cp /usr/bin/clang-format-18 "$out/formatter/clang-format"
+          ldd /usr/bin/clang-format-18 | awk '/=> \/.*(LLVM|clang)/ {print $3}' | \
+            while IFS= read -r library; do cp -L "$library" "$out/formatter/"; done
+          tar -czf "$out/formatter.tar.gz" -C "$out" formatter
+          rm -r "$out/formatter"
+          (cd "$out" && sha256sum source.tar.gz dependencies.tar.gz formatter.tar.gz > SHA256SUMS)
+      - name: Upload reproducible inputs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: verification-inputs
+          path: ${{ runner.temp }}/ninlil-inputs/
+          retention-days: 3
+          if-no-files-found: error
       - name: Run full host CI
         env:
           CLANG_FORMAT: clang-format-18
         run: ./scripts/ci.sh
+      - name: Upload verification diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: host-verification
+          path: |
+            build-ci/*/Testing/Temporary/*.log
+            build-ci/artifacts/**
+          retention-days: 7
+          if-no-files-found: warn
 
   esp32s3:
     name: ESP-IDF v6.0.2 / ESP32-S3
