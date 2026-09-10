@@ -146,6 +146,12 @@ int ninlil_transmit_check(ninlil_runtime *r, const uint8_t *packet,
     entry = ninlil_find_outbound(r, &view.message_id);
     if (!entry || !entry->attempted)
         return NINLIL_ERR_STATE;
+    /* A pause must stop DATA already staged in the Link as well as new retries.
+     * Receipts and durable ownership are unaffected. */
+    if (r->service_wait &&
+        r->service_wait[(size_t)(entry - r->outbound)].state ==
+            NINLIL_SERVICE_PAUSED)
+        return NINLIL_ERR_BUSY;
     rc = ninlil_read_payload(r, &entry->record_ref, NINLIL_JRN_OUT_HEADER,
                              payload, entry->payload_len);
     if (rc != NINLIL_OK)
@@ -155,25 +161,20 @@ int ninlil_transmit_check(ninlil_runtime *r, const uint8_t *packet,
                                       &entry->message_id, payload);
     if (encoded != length || memcmp(packet, expected, length) != 0)
         return NINLIL_ERR_CONFLICT;
-    return ninlil_deadline_check(r, entry->absolute_deadline_ms);
+    rc = ninlil_binding_check_outbound(r, entry);
+    return rc == NINLIL_OK
+               ? ninlil_deadline_check(r, entry->absolute_deadline_ms)
+               : rc;
 }
 
-int ninlil_process_outbound(ninlil_runtime *runtime, int *worked)
+static int send_entry(ninlil_runtime *runtime, ninlil_outbound_entry *entry)
 {
-    ninlil_outbound_entry *entry;
     ninlil_submission submission;
     uint8_t payload[NINLIL_MAX_PAYLOAD];
     uint8_t packet[NINLIL_WIRE_DATA_MAX];
     size_t length;
     int rc;
 
-    rc = ninlil_expire_outbound(runtime, worked);
-    if (rc != NINLIL_OK || *worked)
-        return rc;
-    entry = select_outbound(runtime);
-    if (!entry)
-        return NINLIL_OK;
-    *worked = 1;
     rc = ninlil_read_payload(runtime, &entry->record_ref, NINLIL_JRN_OUT_HEADER,
                              payload, entry->payload_len);
     if (rc != NINLIL_OK)
@@ -192,6 +193,9 @@ int ninlil_process_outbound(ninlil_runtime *runtime, int *worked)
                                           NINLIL_OUTCOME_EXPIRED);
         }
     }
+    rc = ninlil_binding_check_outbound(runtime, entry);
+    if (rc != NINLIL_OK)
+        return rc;
     entry_submission(entry, payload, &submission);
     length = ninlil_wire_encode_data(packet, runtime->config.node_id,
                                      &submission, &entry->message_id, payload);
@@ -204,5 +208,30 @@ int ninlil_process_outbound(ninlil_runtime *runtime, int *worked)
     rc = runtime->config.link.send(runtime->config.link.ctx, packet, length);
     if (rc == NINLIL_OK)
         entry->last_sent_step = runtime->step_count;
+    return rc;
+}
+
+int ninlil_process_outbound(ninlil_runtime *runtime, int *worked)
+{
+    ninlil_outbound_entry *entry;
+    int rc = ninlil_expire_outbound(runtime, worked);
+    if (rc != NINLIL_OK || *worked)
+        return rc;
+    entry = runtime->service_wait ? ninlil_service_select(runtime)
+                                  : select_outbound(runtime);
+    if (!entry)
+        return NINLIL_OK;
+    *worked = 1;
+    if (runtime->service_wait && entry->absolute_deadline_ms) {
+        rc = ninlil_deadline_check(runtime, entry->absolute_deadline_ms);
+        if (rc != NINLIL_OK) {
+            ninlil_service_result(runtime, entry, rc);
+            return NINLIL_OK; /* No invented outcome for an attempted deadline.
+                               */
+        }
+    }
+    rc = send_entry(runtime, entry);
+    if (entry->used)
+        ninlil_service_result(runtime, entry, rc);
     return rc;
 }

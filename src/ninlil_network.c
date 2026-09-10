@@ -1,4 +1,5 @@
 #include "ninlil_network_internal.h"
+#include "ninlil_route_optimizer.h"
 
 #include <string.h>
 
@@ -130,6 +131,20 @@ int ninlil_coordinator_stage(ninlil_coordinator *c,
         c->last_epoch == UINT64_MAX || c->pending.epoch != 0u ||
         now < c->last_change_ms)
         return NINLIL_ERR_STATE;
+    /* An epoch-bearing proposal must not silently bind the same address to a
+     * newer participant between selection and durable staging. Legacy callers
+     * with no snapshot still obtain the current epochs below. */
+    for (unsigned int i = 0u; i < path->count; i++)
+        if (path->membership_epochs[i] &&
+            !ninlil_network_policy(c, path->nodes[i],
+                                   i > 0u && i + 1u < path->count,
+                                   path->membership_epochs[i]))
+            return NINLIL_ERR_UNAUTHORIZED;
+    if (c->optimizer) {
+        rc = ninlil_route_optimizer_validate(c->optimizer, c, path, now);
+        if (rc != NINLIL_OK)
+            return rc;
+    }
     cost = ninlil_network_path_cost(c, path, now);
     if (cost == UINT64_MAX)
         return NINLIL_ERR_NOT_FOUND;
@@ -231,6 +246,7 @@ static int acknowledge(ninlil_coordinator *c, uint16_t peer, uint64_t epoch,
                 return NINLIL_ERR_CORRUPT;
             }
             f->active = p;
+            f->changed_ms = c->last_change_ms;
             f->reconciled = all(&p);
             c->active = p;
             clear_pending(c);
@@ -373,6 +389,7 @@ int ninlil_coordinator_restore(ninlil_coordinator *c,
         if (!f)
             return NINLIL_ERR_CAPACITY;
         f->active = *p;
+        f->changed_ms = 0u;
         f->reconciled = 0u;
         c->active = *p;
         clear_pending(c);

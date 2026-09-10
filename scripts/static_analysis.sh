@@ -20,6 +20,20 @@ common=(
 )
 host_sources=(
   "$root/src/ninlil.c"
+  "$root/src/ninlil_binding.c"
+  "$root/src/ninlil_service.c"
+  "$root/src/ninlil_fanout.c"
+  "$root/src/ninlil_fanout_core.c"
+  "$root/src/ninlil_fanout_codec.c"
+  "$root/src/ninlil_fanout_store.c"
+  "$root/src/ninlil_fanout_store_log.c"
+  "$root/src/ninlil_link_metrics.c"
+  "$root/src/ninlil_probe_monitor.c"
+  "$root/src/ninlil_power_policy.c"
+  "$root/src/ninlil_radio_feedback.c"
+  "$root/src/ninlil_phy_plan.c"
+  "$root/src/ninlil_route_optimizer.c"
+  "$root/src/ninlil_route_search.c"
   "$root/src/ninlil_authorization.c"
   "$root/src/ninlil_custody.c"
   "$root/src/ninlil_group.c"
@@ -62,6 +76,7 @@ host_sources=(
 )
 esp_sources=(
   "$root/ports/esp32s3/ninlil_network_pump.c"
+  "$root/ports/esp32s3/ninlil_feedback_pump.c"
   "$root/ports/esp32s3/ninlil_sx1262_hal.c"
   "$root/ports/esp32s3/ninlil_sx1262_radio.c"
   "$root/ports/esp32s3/ninlil_flash_journal.c"

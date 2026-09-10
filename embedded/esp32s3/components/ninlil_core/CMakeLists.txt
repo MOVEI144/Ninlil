@@ -5,6 +5,8 @@ idf_component_register(
         "${NINLIL_CORE_ROOT}/src/ninlil_collect.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_maintenance.c"
         "${NINLIL_CORE_ROOT}/src/ninlil.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil_binding.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil_service.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_authorization.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_custody.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_group.c"

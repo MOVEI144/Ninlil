@@ -40,11 +40,12 @@ typedef struct ninlil_link_metrics {
 void ninlil_link_metrics_open(ninlil_link_metrics *metrics);
 /* Sleep/receiver-plan changes invalidate provisional measurements without
  * manufacturing an RF loss. Logical observation sequence is never rewound. */
-int ninlil_link_metrics_invalidate(ninlil_link_metrics *metrics, uint64_t now_ms);
+int ninlil_link_metrics_invalidate(ninlil_link_metrics *metrics,
+                                   uint64_t now_ms);
 int ninlil_link_metrics_tx(ninlil_link_metrics *metrics,
-                           const ninlil_link_context *context,
-                           uint64_t token, uint64_t tx_done_ms,
-                           uint32_t airtime_us, uint32_t queue_us);
+                           const ninlil_link_context *context, uint64_t token,
+                           uint64_t tx_done_ms, uint32_t airtime_us,
+                           uint32_t queue_us);
 /* Reply interval is [TX_DONE, TX_DONE+3000ms); tick finalizes at its endpoint.
  * A duplicate reply is idempotent; a wrong/late reply is not counted. */
 int ninlil_link_metrics_reply(ninlil_link_metrics *metrics, uint64_t token,
@@ -52,6 +53,6 @@ int ninlil_link_metrics_reply(ninlil_link_metrics *metrics, uint64_t token,
 int ninlil_link_metrics_tick(ninlil_link_metrics *metrics, uint64_t now_ms);
 /* Only complete, non-overlapping eight-trial windows, with every sample fresh.
  * EMPTY does not mean zero loss or zero cost. Output unchanged on error. */
-int ninlil_link_metrics_read(const ninlil_link_metrics *metrics, uint64_t now_ms,
-                             ninlil_link_window *window);
+int ninlil_link_metrics_read(const ninlil_link_metrics *metrics,
+                             uint64_t now_ms, ninlil_link_window *window);
 #endif

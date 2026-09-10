@@ -34,6 +34,7 @@ class Fixture:
         self.bad_identity = self.start_timeout = self.no_receipt = self.stale = self.fail_stop = False
         self.direct = False
         self.expired = self.unready = False
+        self.power_mode = 1
 
     def record(self, address):
         n = self.m["nodes"][address-1]
@@ -80,6 +81,8 @@ class Fixture:
                     result[6:8] = (7).to_bytes(2, "big")
                     result[10:12] = parent.records[a].to_bytes(2, "big")
                     return bytes(result)
+                if cmd == "T":
+                    return bytes((253, 253, parent.power_mode))
                 if cmd == "G":
                     parent.running[a] = True
                     if parent.start_timeout:
@@ -144,8 +147,7 @@ class SevenTests(unittest.TestCase):
 
     def test_unknown_and_overflow(self):
         for key, value in (("schema", True), ("root", True), ("seconds", 601),
-                           ("sequence", 2**32), ("mac", "auto-everything"),
-                           ("closed_probes", 1), ("closed_probes", "true")):
+                           ("sequence", 2**32), ("mac", "auto-everything")):
             m = manifest(); m[key] = value
             with self.assertRaises(ValueError): seven.validate(m)
         with self.assertRaises(ValueError):
@@ -200,6 +202,63 @@ class SevenTests(unittest.TestCase):
             f = Fixture(copy.deepcopy(m)); setattr(f, defect, True)
             self.assertEqual(f.run()["result"], "FAIL")
 
+    def test_feedback_mode_verification(self):
+        m = manifest(); m["power_mode"] = "closed-feedback"
+        f = Fixture(m); f.power_mode = 2
+        r = f.run()
+        self.assertEqual(r["result"], "PASS", r)
+        self.assertEqual(len(r["power_mode_observed"]), 7)
+        f = Fixture(m)
+        self.assertEqual(f.run()["result"], "FAIL")
+        self.assertFalse(any(cmd == "S" for _, cmd, _ in f.log))
+        self.assertFalse(any(f.running.values()))
+
+    def test_unknown_power_mode(self):
+        m = manifest(); m["power_mode"] = "unverified-automatic"
+        with self.assertRaises(ValueError): seven.validate(m)
+
+    def test_closed_probe_mode_validation(self):
+        m = manifest()
+        m["closed_probes"] = 1
+        with self.assertRaises(ValueError): seven.validate(m)
+        m["closed_probes"] = True
+        seven.validate(m)
+
+    def test_all_experiment_artifacts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            folder=Path(directory)
+            image, config=folder/"app.bin", folder/"sdkconfig.h"
+            image.write_bytes(b"explicit fixture, not MCU firmware")
+            m=manifest();m.update(closed_probes=True, power_mode="closed-feedback", route_candidates=True)
+            defines="".join(f"#define CONFIG_NINLIL_{key}_EXPERIMENTAL 1\n" for key in
+                           ("ADAPTIVE_MAC", "CLOSED_PROBES", "RADIO_FEEDBACK", "ROUTE_CANDIDATES"))
+            config.write_text(defines)
+            hashes={p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in (image,config)}
+            (folder/"hashes.json").write_text(json.dumps(hashes))
+            for node in m["nodes"]: node.update(firmware="app.bin",firmware_sha256=hashes["app.bin"])
+            seven.verify_artifacts(m,folder)
+            for key, value in (("closed_probes",False),("power_mode","legacy"),("route_candidates",False)):
+                bad=copy.deepcopy(m);bad[key]=value
+                with self.assertRaises(ValueError): seven.verify_artifacts(bad,folder)
+
+    def test_relay_fields_are_integers(self):
+        for key in ("stop_relay","recovery_target"):
+            m=manifest();m.update(scenario="relay-stop",stop_relay=2,recovery_target=4)
+            m[key]=True
+            with self.assertRaises(ValueError): seven.validate(m)
+        m=manifest();m["route_candidates"]=1
+        with self.assertRaises(ValueError): seven.validate(m)
+
+    def test_interrupt_still_stops_owners(self):
+        f=Fixture(manifest())
+        def interrupt(seconds):
+            raise KeyboardInterrupt("test interruption")
+        f.no_receipt=True
+        r=seven.run(f.m,f.factory,lambda x:None,f.now,interrupt)
+        self.assertEqual(r["result"],"UNKNOWN")
+        self.assertFalse(any(f.running.values()))
+        self.assertEqual(len(f.closed),7)
+
     def test_build_mac_provenance(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
@@ -213,16 +272,16 @@ class SevenTests(unittest.TestCase):
             for node in m["nodes"]:
                 node.update(firmware="app.bin", firmware_sha256=image_hash)
             seven.verify_artifacts(m, folder)
-            m["closed_probes"] = True
+            m["power_mode"] = "closed-feedback"
             with self.assertRaises(ValueError): seven.verify_artifacts(m, folder)
             config.write_text("#define CONFIG_NINLIL_ADAPTIVE_MAC_EXPERIMENTAL 1\n"
-                              "#define CONFIG_NINLIL_CLOSED_PROBES_EXPERIMENTAL 1\n")
+                              "#define CONFIG_NINLIL_RADIO_FEEDBACK_EXPERIMENTAL 1\n")
             (folder/"hashes.json").write_text(json.dumps({"app.bin": image_hash,
                 "sdkconfig.h": hashlib.sha256(config.read_bytes()).hexdigest()}))
             seven.verify_artifacts(m, folder)
-            m["closed_probes"] = False
+            m["power_mode"] = "legacy"
             with self.assertRaises(ValueError): seven.verify_artifacts(m, folder)
-            m["closed_probes"] = True
+            del m["power_mode"]
             m["mac"] = "legacy"
             with self.assertRaises(ValueError): seven.verify_artifacts(m, folder)
             m["mac"] = "airtime-drr"

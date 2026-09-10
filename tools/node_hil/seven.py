@@ -37,12 +37,18 @@ def validate(m: dict[str, Any]) -> None:
     require(isinstance(m, dict) and type(m.get("schema")) is int and m["schema"] == 1,
             "Expected manifest schema 1")
     require(not (set(m) - {"schema", "scenario", "mac", "source_commit", "seconds", "sequence",
-                          "root", "nodes", "radio_profile_reviewed", "stop_relay", "recovery_target", "closed_probes"}),
+                          "root", "nodes", "radio_profile_reviewed", "stop_relay", "recovery_target", "power_mode", "closed_probes", "route_candidates"}),
             "Unknown manifest field")
+    if "route_candidates" in m:
+        require(type(m["route_candidates"]) is bool, "route_candidates must be boolean")
+        require(not m["route_candidates"] or m.get("closed_probes") is True,
+                "Candidate route experiment requires closed probes on all seven builds")
     integer(m.get("root"), 1, 65534, "root")
     require(m.get("scenario") in ("bidirectional", "relay-stop"), "Invalid scenario")
     require(m.get("mac") in ("legacy", "airtime-drr"), "Declare the firmware MAC build mode")
-    require(type(m.get("closed_probes", False)) is bool, "closed_probes must be a boolean")
+    if "power_mode" in m:
+        require(m["power_mode"] in ("legacy", "closed-feedback"), "Invalid power_mode")
+    require(type(m.get("closed_probes", False)) is bool, "closed_probes must be boolean")
     hex_bytes(m.get("source_commit"), 20, "source_commit")
     integer(m.get("seconds"), 120, 570, "seconds")
     integer(m.get("sequence"), 1, 2**32-14, "fresh sequence base")
@@ -70,6 +76,8 @@ def validate(m: dict[str, Any]) -> None:
             roots.append(n["address"])
     require(len(roots) == 1 and roots[0] == m.get("root"), "Exactly one declared Root")
     if m["scenario"] == "relay-stop":
+        integer(m.get("stop_relay"), 1, 65534, "stop_relay")
+        integer(m.get("recovery_target"), 1, 65534, "recovery_target")
         relays = {n["address"] for n in nodes if n["role"] == 3}
         require(m.get("stop_relay") in relays, "stop_relay must be a powered Relay")
         require(m.get("recovery_target") in seen["address"] - {m["root"], m["stop_relay"]},
@@ -151,7 +159,10 @@ def run(m: dict[str, Any], factory: Callable, emit: Callable,
     validate(m)
     result: dict[str, Any] = {"result": "UNKNOWN", "scope": "seven-MCU reference application delivery",
         "physical_range_claim": False, "field_acceptance": False, "firmware_attested_by_USB": False,
-        "mac_from_manifest": m["mac"], "closed_probes_from_manifest": m.get("closed_probes", False), "source_commit": m["source_commit"], "deliveries": [],
+        "mac_from_manifest": m["mac"], "source_commit": m["source_commit"], "deliveries": [],
+        "route_candidates_from_manifest": m.get("route_candidates"),
+        "power_mode_from_manifest": m.get("power_mode"), "power_mode_observed": {},
+        "closed_probes_from_manifest": m.get("closed_probes", False),
         "errors": [], "cleanup": []}
     boards, controlled = {}, set()
     expected, baseline = {}, {}
@@ -168,6 +179,14 @@ def run(m: dict[str, Any], factory: Callable, emit: Callable,
         for address, board in boards.items():
             controlled.add(address)  # G may succeed even if its reply is lost.
             board.call("G", struct.pack(">I", (m["seconds"]+20)*1000))
+        if "power_mode" in m:
+            expected_mode = 2 if m["power_mode"] == "closed-feedback" else 1
+            for address, board in boards.items():
+                data = board.call("T")
+                require(len(data) == 3 and data[2] == expected_mode,
+                        "Running power mode disagrees with the experiment manifest")
+                # T confirms the selected owner, not delivery or RF calibration.
+                result["power_mode_observed"][address] = data[2]
         while True:
             snapshots = {a: status(b) for a, b in boards.items()}
             emit({"phase": "join", "nodes": snapshots})
@@ -245,8 +264,8 @@ def run(m: dict[str, Any], factory: Callable, emit: Callable,
                     "Receiver ledger growth mismatch: stale sequence, missing or unrelated work")
         result["initial_records"], result["final_status"] = baseline, final
         result["result"] = "PASS"
-    except Exception as error:
-        result["result"] = "UNKNOWN" if isinstance(error, (TimeoutError, OSError)) else "FAIL"
+    except (Exception, KeyboardInterrupt) as error:
+        result["result"] = "UNKNOWN" if isinstance(error, (TimeoutError, OSError, KeyboardInterrupt)) else "FAIL"
         result["errors"].append(f"{type(error).__name__}: {error}")
     finally:
         for address, board in boards.items():
@@ -323,11 +342,22 @@ def verify_artifacts(m: dict[str, Any], manifest_directory: Path) -> None:
                                  config.read_text(encoding="utf-8"), re.M)
         require(definitions in ([], ["1"]), "Unexpected or duplicate experimental MAC definition")
         require(bool(definitions) == (m["mac"] == "airtime-drr"), "MAC label disagrees with build")
-        measurements = re.findall(r"^#define CONFIG_NINLIL_CLOSED_PROBES_EXPERIMENTAL\s+(\S+)\s*$",
-                                  config.read_text(encoding="utf-8"), re.M)
-        require(measurements in ([], ["1"]), "Unexpected or duplicate closed-probe definition")
-        require(bool(measurements) == m.get("closed_probes", False),
+        closed = re.findall(r"^#define CONFIG_NINLIL_CLOSED_PROBES_EXPERIMENTAL\s+(\S+)\s*$",
+                            config.read_text(encoding="utf-8"), re.M)
+        require(closed in ([], ["1"]), "Unexpected or duplicate closed probe definition")
+        require(bool(closed) == m.get("closed_probes", False),
                 "Closed-probe label disagrees with build")
+        if "power_mode" in m:
+            feedback = re.findall(r"^#define CONFIG_NINLIL_RADIO_FEEDBACK_EXPERIMENTAL\s+(\S+)\s*$",
+                                  config.read_text(encoding="utf-8"), re.M)
+            require(feedback in ([], ["1"]), "Unexpected or duplicate feedback definition")
+            require(bool(feedback) == (m["power_mode"] == "closed-feedback"),
+                    "Power mode label disagrees with build")
+        if "route_candidates" in m:
+            candidates = re.findall(r"^#define CONFIG_NINLIL_ROUTE_CANDIDATES_EXPERIMENTAL\s+(\S+)\s*$",
+                                    config.read_text(encoding="utf-8"), re.M)
+            require(candidates in ([], ["1"]), "Unexpected or duplicate route candidate definition")
+            require(bool(candidates) == m["route_candidates"], "Route candidate label disagrees with build")
 
 
 def main() -> int:

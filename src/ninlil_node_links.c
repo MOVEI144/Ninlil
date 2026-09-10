@@ -126,9 +126,9 @@ int ninlil_node_link_receive(ninlil_node *n, uint16_t peer,
             return NINLIL_ERR_INVALID;
         p = &n->peers[measured];
         if (n->config.probe_monitor)
-            return ninlil_probe_monitor_ack(n->config.probe_monitor,
-                       n->members[measured].grant.node,
-                       ninlil_node_get(data + 2, 8u), data[10]);
+            return ninlil_probe_monitor_ack(
+                n->config.probe_monitor, n->members[measured].grant.node,
+                ninlil_node_get(data + 2, 8u), data[10]);
         if (ninlil_node_get(data + 2, 8u) != p->probe_token ||
             data[10] != p->probe_window)
             return NINLIL_ERR_STATE;
@@ -152,10 +152,6 @@ int ninlil_node_link_receive(ninlil_node *n, uint16_t peer,
             ninlil_node_get(data, 8u) != p->probe_token ||
             n->now_ms - p->probe_sent_at > 3000u)
             return NINLIL_ERR_STATE;
-        if (n->config.probe_monitor)
-            (void)ninlil_probe_monitor_reply(n->config.probe_monitor, peer,
-                      p->sessions[1].material.fingerprint,
-                      ninlil_node_get(data, 8u), n->now_ms);
         p->probe_window |= 1u;
         p->probe_report = 1u;
         return NINLIL_OK;
@@ -174,9 +170,9 @@ static int report(ninlil_node *n, unsigned int index)
     int rc;
     if (n->config.probe_monitor) {
         ninlil_link_window window;
-        rc = ninlil_probe_monitor_read(n->config.probe_monitor,
-                  n->members[index].grant.node,
-                  p->sessions[1].material.fingerprint, n->now_ms, 1, &window);
+        rc = ninlil_probe_monitor_read(
+            n->config.probe_monitor, n->members[index].grant.node,
+            p->sessions[1].material.fingerprint, n->now_ms, 1, &window);
         if (rc != NINLIL_OK)
             return rc == NINLIL_ERR_EMPTY ? NINLIL_ERR_STATE : rc;
         observed = window.closed_ms - NINLIL_METRIC_RESPONSE_MS;
@@ -218,7 +214,8 @@ static int report(ninlil_node *n, unsigned int index)
     if (rc == NINLIL_OK && n->config.local == n->config.root) {
         if (n->config.probe_monitor)
             return ninlil_probe_monitor_ack(n->config.probe_monitor,
-                       n->members[index].grant.node, token, mask);
+                                            n->members[index].grant.node, token,
+                                            mask);
         p->probe_report = 0u;
     }
     return rc;

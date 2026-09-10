@@ -1,6 +1,7 @@
 #include "ninlil_network_pump.h"
 #include "esp_random.h"
 #include "esp_timer.h"
+#include "ninlil_feedback_pump.h"
 #include "ninlil_node.h"
 #include <string.h>
 
@@ -43,8 +44,9 @@ int ninlil_esp_network_emit(void *ctx, uint16_t next,
         int64_t queued = esp_timer_get_time();
         if (queued < 0)
             return NINLIL_ERR_IO;
-        return ninlil_airtime_enqueue_at(&p->scheduler, ++p->token, next, traffic,
-                                          airtime, frame, length, (uint64_t)queued);
+        return ninlil_airtime_enqueue_at(&p->scheduler, ++p->token, next,
+                                         traffic, airtime, frame, length,
+                                         (uint64_t)queued);
     }
 }
 
@@ -62,11 +64,23 @@ int ninlil_esp_node_open(ninlil_esp_network_pump *p, ninlil_sx1262_radio *radio,
     if (rc == NINLIL_OK)
         rc = ninlil_esp_node_closed_probes(p, &p->probe_workspace);
 #endif
+#ifdef CONFIG_NINLIL_ROUTE_CANDIDATES_EXPERIMENTAL
+    if (rc == NINLIL_OK) {
+        rc = ninlil_route_optimizer_open(&p->route_workspace, p->route_nodes,
+                                         16u, p->route_edges, 64u, 4096u, NULL,
+                                         NULL);
+        if (rc == NINLIL_OK)
+            rc = ninlil_node_enable_route_optimizer(node, &p->route_workspace);
+        if (rc == NINLIL_ERR_EMPTY)
+            rc = NINLIL_OK; /* Only Root drives selection; other nodes keep
+                               plans. */
+    }
+#endif
     return rc;
 }
 
 int ninlil_esp_node_closed_probes(ninlil_esp_network_pump *p,
-                                 ninlil_probe_monitor *workspace)
+                                  ninlil_probe_monitor *workspace)
 {
     int rc;
     if (!p || !p->node || !p->radio || !workspace || p->closed_probes)
@@ -87,8 +101,12 @@ static int control_frame(const uint8_t *frame, size_t length)
 
 int ninlil_esp_node_adaptive_power(ninlil_esp_network_pump *p, int8_t minimum)
 {
+#ifdef CONFIG_NINLIL_RADIO_FEEDBACK_EXPERIMENTAL
+    return p ? ninlil_esp_node_feedback_open(p, minimum, &p->feedback_workspace)
+             : NINLIL_ERR_INVALID;
+#else
     ninlil_radio_adapt initial;
-    if (!p || !p->node || !p->radio ||
+    if (!p || !p->node || !p->radio || p->adaptive_power ||
         ninlil_radio_adapt_open(&initial, minimum,
                                 p->radio->profile.tx_power_dbm) != NINLIL_OK)
         return NINLIL_ERR_INVALID;
@@ -97,6 +115,7 @@ int ninlil_esp_node_adaptive_power(ninlil_esp_network_pump *p, int8_t minimum)
         p->power[i] = initial;
     p->adaptive_power = 1u;
     return NINLIL_OK;
+#endif
 }
 static int power_for(ninlil_esp_network_pump *p, uint16_t peer, uint64_t now)
 {
@@ -172,6 +191,8 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
     int rc, completion;
     if (!p || !p->radio || (!p->routed && !p->node))
         return NINLIL_ERR_INVALID;
+    if (p->adaptive_power == 2u && (!p->feedback || p->feedback->fault))
+        return p->feedback ? p->feedback->fault : NINLIL_ERR_STATE;
     rc = receive(p);
     if (rc != NINLIL_OK)
         return rc;
@@ -228,9 +249,16 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
         return rc;
     }
     /* This driver returns OK only after TX_DONE and restoring reception. */
-    rc = power_for(p, job->peer, (uint64_t)now / 1000u);
-    if (rc != NINLIL_OK)
+    rc = p->adaptive_power == 2u
+             ? ninlil_esp_feedback_prepare(p, job, (uint64_t)now)
+             : power_for(p, job->peer, (uint64_t)now / 1000u);
+    if (rc != NINLIL_OK) {
+        if (p->adaptive_power == 2u) {
+            (void)ninlil_airtime_complete(
+                &p->scheduler, rc == NINLIL_ERR_BUSY ? rc : NINLIL_ERR_IO);
+        }
         return rc;
+    }
     rc = ninlil_sx1262_radio_send(p->radio, job->frame, job->length);
     if (rc == NINLIL_OK && p->transmitted != UINT32_MAX)
         p->transmitted++;
@@ -240,15 +268,25 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
             ninlil_node_transmitted(p->node, job->frame, job->length, rc,
                                     job->airtime_us,
                                     (uint64_t)completed / 1000u);
+            if (p->adaptive_power == 2u) {
+                int observed = ninlil_esp_feedback_complete(
+                    p, job, rc, (uint64_t)completed / 1000u);
+                if (observed != NINLIL_OK)
+                    rc = p->feedback->fault = observed;
+            }
             if (p->closed_probes && rc == NINLIL_OK) {
-                uint64_t queue = job->queued_time_known &&
-                                 (uint64_t)now >= job->queued_at_us
-                                     ? (uint64_t)now - job->queued_at_us
-                                     : UINT64_MAX;
+                uint64_t queue =
+                    job->queued_time_known && (uint64_t)now >= job->queued_at_us
+                        ? (uint64_t)now - job->queued_at_us
+                        : UINT64_MAX;
                 p->last_measurement_result = ninlil_node_probe_measured(
                     p->node, job->frame, job->length, job->airtime_us, queue,
                     p->radio->applied_power_dbm, (uint64_t)completed / 1000u);
             }
+        } else {
+            rc = NINLIL_ERR_IO;
+            if (p->adaptive_power == 2u)
+                p->feedback->fault = rc;
         }
     }
     completion = ninlil_airtime_complete(

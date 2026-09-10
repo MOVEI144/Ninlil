@@ -262,6 +262,9 @@ static int open_layers(ninlil_node *n, int initialize)
     core.clock = n->config.utc;
     core.policy_lookup = ninlil_node_policy;
     core.policy_ctx = n;
+    core.binding_lookup = ninlil_node_binding_lookup;
+    core.binding_ctx = n;
+    core.spool = n->config.spool;
     ninlil_node_delivery_link(n, &core.link);
     rc = ninlil_open(&n->core, &core);
     if (rc == NINLIL_OK)

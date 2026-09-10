@@ -18,6 +18,41 @@ static ninlil_journal_ref *owned(ninlil_runtime *r, const ninlil_id *id)
            : rejection && rejection->durable ? &rejection->record_ref
                                              : NULL;
 }
+static uint64_t *binding_offset(ninlil_runtime *r, const ninlil_id *id)
+{
+    ninlil_outbound_entry *out = ninlil_find_outbound(r, id);
+    ninlil_archive_entry *archive = ninlil_find_archive_id(r, id);
+    return out ? &out->binding_offset
+           : archive && archive->kind == NINLIL_ARCHIVE_OUTBOUND
+               ? &archive->binding_offset
+               : NULL;
+}
+static int binding_record(collection *c, const uint8_t *data, uint16_t length,
+                          const ninlil_journal_ref *ref, int relocate)
+{
+    ninlil_id id;
+    ninlil_delivery_binding binding;
+    uint64_t *offset;
+    ninlil_journal_ref *live;
+    if (ninlil_binding_decode(data, length, &id, &binding) != NINLIL_OK ||
+        !c->runtime->storage_bound ||
+        memcmp(binding.source_identity, c->runtime->storage_identity, 32u))
+        return NINLIL_ERR_CORRUPT;
+    offset = binding_offset(c->runtime, &id);
+    live = owned(c->runtime, &id);
+    if (!offset || !*offset || !live || (!relocate && ref->offset != *offset))
+        return NINLIL_OK; /* Unaccepted prefix or reclaimed history. */
+    if ((relocate && live->generation == ref->generation) ||
+        (!relocate && live->generation != ref->generation))
+        return NINLIL_ERR_CORRUPT;
+    c->copied++;
+    if (relocate) {
+        *offset = ref->offset;
+        return NINLIL_OK;
+    }
+    return ninlil_journal_append(c->replacement, NINLIL_JRN_OUT_BINDING, data,
+                                 length, NULL);
+}
 static int current_record(collection *c, uint8_t type, const uint8_t *data,
                           uint16_t length, const ninlil_journal_ref *ref,
                           int relocate)
@@ -36,9 +71,15 @@ static int current_record(collection *c, uint8_t type, const uint8_t *data,
                         : ninlil_journal_append(c->replacement, type, data,
                                                 length, NULL);
     }
-    if (type < NINLIL_JRN_OUT_CREATE || type > NINLIL_JRN_IN_EXPIRED ||
-        length < offset + NINLIL_ID_BYTES ||
-        data[0] != NINLIL_JRN_RECORD_VERSION)
+    if (type == NINLIL_JRN_OUT_BINDING)
+        return binding_record(c, data, length, ref, relocate);
+    if ((type < NINLIL_JRN_OUT_CREATE || type > NINLIL_JRN_IN_EXPIRED) &&
+        type != NINLIL_JRN_BOUND_RELEASE)
+        return NINLIL_ERR_CORRUPT;
+    if (length < offset + NINLIL_ID_BYTES ||
+        (data[0] != NINLIL_JRN_RECORD_VERSION &&
+         !(type == NINLIL_JRN_OUT_CREATE &&
+           data[0] == NINLIL_JRN_BOUND_CREATE_VERSION)))
         return NINLIL_ERR_CORRUPT;
     memcpy(id.bytes, data + offset, NINLIL_ID_BYTES);
     live = owned(c->runtime, &id);
@@ -92,8 +133,12 @@ int ninlil_collect(ninlil_runtime *r)
         return rc;
     c.runtime = r;
     c.expected = (size_t)r->outbound_live + r->inbound_live;
+    for (uint16_t i = 0u; i < r->outbound_capacity; i++)
+        c.expected +=
+            r->outbound[i].used && r->outbound[i].binding_offset ? 1u : 0u;
     for (uint16_t i = 0u; i < r->archive_capacity; i++)
-        c.expected += r->archive[i].used ? 1u : 0u;
+        c.expected +=
+            r->archive[i].used ? (r->archive[i].binding_offset ? 2u : 1u) : 0u;
     for (uint16_t i = 0u; i < r->rejection_capacity; i++)
         c.expected +=
             r->rejections[i].used && r->rejections[i].durable ? 1u : 0u;

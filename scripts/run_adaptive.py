@@ -24,8 +24,8 @@ def main() -> int:
     if logs is None:
         raise ValueError("Attempt directory limit reached")
     logs.mkdir()
-    report = {"fixture_warning": "Crypto, radio, Core and Coordinator boundaries are doubles in probe_pipeline; not a full SDK or RF gate",
-              "scope": "adaptation components, production node/pump boundary models, seven-board protocol fixtures",
+    report = {"fixture_warning": "Node ABI/crypto/radio/Core are doubles in IO fixtures; actual Coordinator tests use canonical source/headers and callback doubles; not full SDK or RF",
+              "scope": "integrated adaptation plus real POSIX fanout journals; downstream Core/USB/radio fixtures remain models",
               "full_sdk": "NOT_RUN", "ESP_IDF": "NOT_RUN", "HIL": "NOT_RUN",
               "python": platform.python_version(), "runs": [], "sources": {}}
     sources = list((root/"include").glob("ninlil_*.h")) + list((root/"src").glob("ninlil_*.c"))
@@ -37,6 +37,12 @@ def main() -> int:
                 root/"ports/esp32s3/ninlil_network_pump.h",
                 root/"embedded/esp32s3/components/ninlil_network/CMakeLists.txt",
                 root/"embedded/esp32s3/components/ninlil_network/Kconfig"]
+    sources += list((root/"tests/feedback_stub").glob("*.h"))
+    sources += list((root/"src").glob("*.h"))
+    sources += [root/"cmake/feedback_fixture.cmake",
+                root/"ports/esp32s3/ninlil_feedback_pump.c",
+                root/"ports/esp32s3/ninlil_feedback_pump.h"]
+    sources += [root/"cmake/fanout_store.cmake", root/"ports/posix/ninlil_journal.c"]
     for path in sources:
         if path.is_file():
             report["sources"][str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()

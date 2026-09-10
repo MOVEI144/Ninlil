@@ -102,3 +102,26 @@ MAC方式・RF設定・配置・負荷を同じにして観測方式だけを比
 
 ネイティブ境界fixtureは親機・子機の処理と無線pumpの接続を検査したもので、
 この7台実機試験の代用ではない。HILは引き続きNOT_RUN。
+
+## 6. 9月10日の確定観測・出力制御を比較する場合
+
+通常版とは別に `CONFIG_NINLIL_RADIO_FEEDBACK_EXPERIMENTAL=y` を指定して全台を
+再buildする。macの選択と独立に記録する。manifestへ
+`"power_mode": "closed-feedback"` を追加する。対照版は `"power_mode": "legacy"`。
+ランナーはsdkconfig.hのhash/defineと、全台起動直後のT応答のmodeを照合し、
+不一致なら配送を投入せずFAIL・停止処理へ移る。Tのmodeは制御選択の確認であり、
+電波品質・出力校正・全firmware imageのattestationではない。
+
+試験前に[統合範囲](RADIO_FEEDBACK_INTEGRATION_2026-09-10.md)の未実施gateを確認する。
+この追記時点でも7台HILは未実行。既存ランナーの12配送PASSだけでは24個の新鮮な
+probeや減力・loss復帰を直接観測した証拠にならない。それらは追加計測が必要。
+
+## 6. 統合した候補経路を比較する場合
+
+[統合状況](INTEGRATED_ROUTING_2026-09-10.md)の未実施gateを先に確認する。
+`CONFIG_NINLIL_ROUTE_CANDIDATES_EXPERIMENTAL=y` はclosed probesと組み合わせる。
+manifestに `"route_candidates": true` と `"closed_probes": true` を記録する。
+ビルドと宣言の一致は調べるが、ルート探索の稼働を物理的に証明するものではない。
+現在は固定PHY・best-effort評価であり、追加資源validatorなしではSLO容量受入を主張しない。
+Ctrl-C時もUNKNOWNの結果と停止記録を残す。タイムアウトや中断で永続配送を取消しない。
+この時点でも実機試験はNOT_RUN。試験に7台以外を使った結果を置き換えない。

@@ -1,6 +1,8 @@
 get_filename_component(NINLIL_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../.." ABSOLUTE)
 idf_component_register(
   SRCS "${NINLIL_ROOT}/ports/esp32s3/ninlil_network_pump.c"
+       "${NINLIL_ROOT}/ports/esp32s3/ninlil_feedback_pump.c"
+       "${NINLIL_ROOT}/src/ninlil_radio_feedback.c"
        "${NINLIL_ROOT}/ports/esp32s3/ninlil_sleep_esp.c"
        "${NINLIL_ROOT}/src/ninlil_secure.c"
        "${NINLIL_ROOT}/src/ninlil_secure_link.c"
@@ -37,6 +39,7 @@ idf_component_register(
        "${NINLIL_ROOT}/src/ninlil_field_plan.c"
        "${NINLIL_ROOT}/src/ninlil_node_membership.c"
        "${NINLIL_ROOT}/src/ninlil_node.c"
+       "${NINLIL_ROOT}/src/ninlil_node_binding.c"
        "${NINLIL_ROOT}/src/ninlil_node_auth.c"
        "${NINLIL_ROOT}/src/ninlil_node_control.c"
        "${NINLIL_ROOT}/src/ninlil_node_plans.c"
@@ -49,8 +52,13 @@ idf_component_register(
        "${NINLIL_ROOT}/src/ninlil_probe_monitor.c"
        "${NINLIL_ROOT}/src/ninlil_power_policy.c"
        "${NINLIL_ROOT}/src/ninlil_route_search.c"
+       "${NINLIL_ROOT}/src/ninlil_route_optimizer.c"
        "${NINLIL_ROOT}/src/ninlil_phy_plan.c"
        "${NINLIL_ROOT}/src/ninlil_fanout.c"
+       "${NINLIL_ROOT}/src/ninlil_fanout_core.c"
+       "${NINLIL_ROOT}/src/ninlil_fanout_codec.c"
+       "${NINLIL_ROOT}/src/ninlil_fanout_store.c"
+       "${NINLIL_ROOT}/src/ninlil_fanout_store_log.c"
   INCLUDE_DIRS "${NINLIL_ROOT}/include" "${NINLIL_ROOT}/ports/crypto" "${NINLIL_ROOT}/ports/flash"
   PRIV_INCLUDE_DIRS "${NINLIL_ROOT}/src"
   REQUIRES ninlil_radio esp_timer ninlil_core ninlil_edhoc_vendor mbedtls

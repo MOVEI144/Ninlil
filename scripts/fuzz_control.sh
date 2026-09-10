@@ -8,6 +8,7 @@ trap 'rm -rf "$temp"' EXIT
   -I"$root/include" "$root/tests/fuzz_control.c" \
   "$root/src/ninlil_join.c" "$root/src/ninlil_join_wire.c" "$root/src/ninlil_authorization.c" \
   "$root/src/ninlil_network.c" "$root/src/ninlil_network_route.c" "$root/src/ninlil_network_wire.c" \
+  "$root/src/ninlil_route_optimizer.c" "$root/src/ninlil_route_search.c" \
   "$root/src/ninlil_relay.c" \
   -o "$temp/fuzz_control"
 mkdir "$temp/corpus"

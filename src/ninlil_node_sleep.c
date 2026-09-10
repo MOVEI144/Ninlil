@@ -11,6 +11,12 @@ int ninlil_node_suspend(ninlil_node *n, uint64_t now)
     rc = n->status.fault ? n->status.fault : ninlil_verify_retained(n->core);
     if (rc != NINLIL_OK)
         return rc;
+    if (n->config.radio_observer.suspend) {
+        rc =
+            n->config.radio_observer.suspend(n->config.radio_observer.ctx, now);
+        if (rc != NINLIL_OK)
+            return rc;
+    }
     if (n->config.probe_monitor) {
         rc = ninlil_probe_monitor_pause(n->config.probe_monitor, now);
         if (rc != NINLIL_OK)

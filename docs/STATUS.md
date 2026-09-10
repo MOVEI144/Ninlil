@@ -1,10 +1,25 @@
 # Project status
 
+Current local recovery checkpoint: [SOFTWARE_READINESS_2026-09-10.md](SOFTWARE_READINESS_2026-09-10.md).
+**NOT implementation-complete; NOT merged.** Older sections below retain their
+original evidence scope. The previous partial PHY files are not part of this build.
 
 
-Updated: 2026-09-09
 
-## Latest scope: deployment lifecycle
+Updated: 2026-09-10
+
+## Current software candidate: identity-bound Core and fanout
+
+[Bound delivery](BOUND_DELIVERY_2026-09-10.md) connects persistent fanout to the
+actual Core, retains immutable target identity/epochs through retries and staged
+TX checks, and pins terminal deduplication until the Group commits its result.
+Full SDK sources and pinned dependencies are now available for verification;
+this is no longer based only on substitute type declarations. Seven-node models
+exercise actual cryptographic and delivery layers, not seven physical boards.
+The candidate is not a field release: shared PHY reservations, service/ownership
+separation at large scale and remaining release gates stay explicit.
+
+## Previous scope: deployment lifecycle
 
 The [lifecycle implementation](DEPLOYMENT_LIFECYCLE.md) adds an independent
 credential issuer for Root-only replacement, battery Light-sleep, explicit

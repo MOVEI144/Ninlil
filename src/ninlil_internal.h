@@ -2,7 +2,9 @@
 #define NINLIL_INTERNAL_H
 
 #include "ninlil.h"
+#include "ninlil_binding.h"
 #include "ninlil_journal.h"
+#include "ninlil_service.h"
 #include "ninlil_wire.h"
 
 #define NINLIL_JRN_OUT_CREATE 1u
@@ -15,6 +17,10 @@
 #define NINLIL_JRN_IN_REJECTION 8u
 #define NINLIL_JRN_IN_EXPIRED 9u
 #define NINLIL_JRN_STORAGE_BINDING 10u
+#define NINLIL_JRN_OUT_BINDING 11u
+#define NINLIL_JRN_BOUND_RELEASE 12u
+#define NINLIL_JRN_BOUND_CREATE_VERSION 6u
+#define NINLIL_JRN_BINDING_BYTES 124u
 #define NINLIL_JRN_RECORD_VERSION 5u
 #define NINLIL_JRN_OUT_HEADER 52u
 #define NINLIL_JRN_IN_HEADER 36u
@@ -32,19 +38,30 @@
 #define NINLIL_ARCHIVE_INBOUND 2u
 #define NINLIL_ARCHIVE_SLOT_NONE UINT16_MAX
 
+/* These fields index validated enums, not arbitrary public inputs. Keeping
+ * them byte-sized pays for binding references without raising role RAM caps.
+ * They are private RAM values; no struct layout is persisted or transmitted. */
+_Static_assert(NINLIL_OWNERSHIP_VOLATILE <= UINT8_MAX &&
+                   NINLIL_EVIDENCE_APPLICATION_ACCEPTED <= UINT8_MAX &&
+                   NINLIL_TRAFFIC_BULK <= UINT8_MAX &&
+                   NINLIL_OUTCOME_UNKNOWN <= UINT8_MAX,
+               "bounded private contract tags");
+
 typedef struct ninlil_outbound_entry {
     ninlil_id message_id;
     ninlil_id idempotency_key;
     ninlil_journal_ref record_ref;
     uint64_t absolute_deadline_ms;
     uint64_t last_sent_step;
+    uint64_t
+        binding_offset; /* Zero is legacy; generation follows record_ref. */
     uint16_t target;
     uint16_t service;
     uint16_t payload_len;
-    ninlil_ownership ownership;
-    ninlil_evidence required_evidence;
-    ninlil_evidence latest_evidence;
-    ninlil_traffic_class traffic_class;
+    uint8_t ownership;
+    uint8_t required_evidence;
+    uint8_t latest_evidence;
+    uint8_t traffic_class;
     uint8_t used;
     uint8_t attempted;
 } ninlil_outbound_entry;
@@ -71,14 +88,16 @@ typedef struct ninlil_archive_entry {
     ninlil_id idempotency_key;
     ninlil_journal_ref record_ref;
     uint64_t absolute_deadline_ms;
+    uint64_t binding_offset;
     uint16_t peer;
     uint16_t service;
     uint16_t payload_len;
-    ninlil_ownership ownership;
-    ninlil_evidence required_evidence;
-    ninlil_evidence latest_evidence;
-    ninlil_traffic_class traffic_class;
-    ninlil_outcome outcome;
+    uint8_t ownership;
+    uint8_t required_evidence;
+    uint8_t latest_evidence;
+    uint8_t traffic_class;
+    uint8_t outcome;
+    uint8_t binding_released;
     uint8_t kind;
     uint8_t used;
     uint8_t attempted;
@@ -103,6 +122,17 @@ typedef struct ninlil_rejection_entry {
     uint8_t durable;
     uint8_t used;
 } ninlil_rejection_entry;
+
+typedef struct ninlil_service_wait {
+    uint64_t next_step;
+    int result;
+    uint8_t state;
+} ninlil_service_wait;
+typedef struct ninlil_service_slot {
+    ninlil_id message;
+    uint16_t index;
+    uint8_t used;
+} ninlil_service_slot;
 
 struct ninlil_runtime {
     ninlil_config config;
@@ -136,9 +166,44 @@ struct ninlil_runtime {
     uint8_t has_records;
     uint64_t collected_bytes;
     uint8_t manual_collection;
+    ninlil_journal_ref pending_binding; /* Replay-only unaccepted prefix. */
+    ninlil_id pending_binding_id;
+    ninlil_service_wait *service_wait;
+    ninlil_service_slot *service_slots;
+    uint16_t service_cursor;
+    uint8_t service_class;
 };
 
+int ninlil_spool_limits_valid(const ninlil_config *config);
+size_t ninlil_service_memory(const ninlil_runtime *runtime);
+int ninlil_service_open(ninlil_runtime *runtime);
+void ninlil_service_clear(ninlil_runtime *runtime, uint16_t index);
+void ninlil_service_fill(ninlil_runtime *runtime);
+ninlil_outbound_entry *ninlil_service_select(ninlil_runtime *runtime);
+void ninlil_service_result(ninlil_runtime *runtime,
+                           ninlil_outbound_entry *entry, int result);
 int ninlil_collect_if_needed(ninlil_runtime *runtime);
+int ninlil_submit_checked(ninlil_runtime *runtime,
+                          const ninlil_submission *submission,
+                          const ninlil_delivery_binding *binding,
+                          ninlil_id *message_id);
+int ninlil_binding_decode(const uint8_t *record, uint16_t length, ninlil_id *id,
+                          ninlil_delivery_binding *binding);
+int ninlil_binding_log(ninlil_runtime *runtime, const ninlil_id *id,
+                       const ninlil_delivery_binding *binding,
+                       uint64_t *offset);
+int ninlil_binding_read(ninlil_runtime *runtime, const ninlil_id *id,
+                        uint64_t offset, uint32_t generation,
+                        ninlil_delivery_binding *binding);
+int ninlil_binding_check_outbound(ninlil_runtime *runtime,
+                                  const ninlil_outbound_entry *entry);
+int ninlil_binding_match(ninlil_runtime *runtime, const ninlil_id *id,
+                         uint64_t offset, uint32_t generation,
+                         const ninlil_delivery_binding *expected);
+int ninlil_binding_replay(ninlil_runtime *runtime, const uint8_t *payload,
+                          uint16_t length, const ninlil_journal_ref *ref);
+int ninlil_binding_replay_release(ninlil_runtime *runtime,
+                                  const uint8_t *payload, uint16_t length);
 
 int ninlil_id_equal(const ninlil_id *left, const ninlil_id *right);
 int ninlil_evidence_satisfies(ninlil_evidence required, ninlil_evidence actual);

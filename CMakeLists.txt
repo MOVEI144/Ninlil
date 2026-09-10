@@ -50,6 +50,8 @@ target_include_directories(ninlil_contract PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 ninlil_strict_target(ninlil_contract)
 
 set(NINLIL_DELIVERY_SOURCES
+  src/ninlil_binding.c
+  src/ninlil_service.c
   src/ninlil_collect.c
   src/ninlil_maintenance.c
   src/ninlil.c

@@ -1,4 +1,5 @@
 #include "ninlil_network_internal.h"
+#include "ninlil_route_optimizer.h"
 #include <string.h>
 
 static ninlil_network_node *node(ninlil_coordinator *c, uint16_t id)
@@ -103,6 +104,7 @@ int ninlil_coordinator_select(ninlil_coordinator *c, uint16_t source,
     ninlil_network_node *start, *end;
     uint16_t i;
     unsigned int hop;
+    uint64_t flow_changed = 0u;
     if (!c || c->poisoned || !c->enabled || !out || source == target ||
         source == excluded || target == excluded || c->pending.epoch != 0u)
         return NINLIL_ERR_STATE;
@@ -110,51 +112,61 @@ int ninlil_coordinator_select(ninlil_coordinator *c, uint16_t source,
     end = node(c, target);
     if (!start || !end)
         return NINLIL_ERR_NOT_FOUND;
-    for (i = 0u; i < c->node_count; i++) {
-        memset(&c->nodes[i].path, 0, sizeof(c->nodes[i].path));
-        c->nodes[i].path.cost_us = UINT64_MAX;
-    }
-    start->path.nodes[0] = source;
-    start->path.count = 1u;
-    start->path.cost_us = 0u;
-    for (hop = 0u; hop < NINLIL_NETWORK_HOPS_MAX; hop++) {
-        for (i = 0u; i < c->node_count; i++)
-            c->nodes[i].previous = c->nodes[i].path;
-        for (i = 0u; i < c->edge_capacity; i++) {
-            ninlil_network_edge *e = &c->edges[i];
-            ninlil_network_node *from, *to;
-            ninlil_network_path candidate;
-            unsigned int j;
-            int loop = 0;
-            if (!edge_valid(c, e, now) || e->from == excluded ||
-                e->to == excluded ||
-                (e->from != source &&
-                 !ninlil_network_policy(c, e->from, 1, 0u)))
-                continue;
-            from = node(c, e->from);
-            to = node(c, e->to);
-            if (!from || !to || from->previous.count == 0u ||
-                from->previous.count >= NINLIL_NETWORK_PATH_MAX)
-                continue;
-            for (j = 0u; j < from->previous.count; j++)
-                if (from->previous.nodes[j] == e->to)
-                    loop = 1;
-            if (loop)
-                continue;
-            candidate = from->previous;
-            candidate.nodes[candidate.count++] = e->to;
-            candidate.cost_us += edge_cost(e);
-            if (candidate.cost_us < to->path.cost_us)
-                to->path = candidate;
+    if (c->optimizer) {
+        ninlil_network_path selected;
+        int rc = ninlil_route_optimizer_select(c->optimizer, c, source, target,
+                                               excluded, now, &selected);
+        if (rc != NINLIL_OK)
+            return rc;
+        end->path = selected;
+    } else {
+        for (i = 0u; i < c->node_count; i++) {
+            memset(&c->nodes[i].path, 0, sizeof(c->nodes[i].path));
+            c->nodes[i].path.cost_us = UINT64_MAX;
+        }
+        start->path.nodes[0] = source;
+        start->path.count = 1u;
+        start->path.cost_us = 0u;
+        for (hop = 0u; hop < NINLIL_NETWORK_HOPS_MAX; hop++) {
+            for (i = 0u; i < c->node_count; i++)
+                c->nodes[i].previous = c->nodes[i].path;
+            for (i = 0u; i < c->edge_capacity; i++) {
+                ninlil_network_edge *e = &c->edges[i];
+                ninlil_network_node *from, *to;
+                ninlil_network_path candidate;
+                unsigned int j;
+                int loop = 0;
+                if (!edge_valid(c, e, now) || e->from == excluded ||
+                    e->to == excluded ||
+                    (e->from != source &&
+                     !ninlil_network_policy(c, e->from, 1, 0u)))
+                    continue;
+                from = node(c, e->from);
+                to = node(c, e->to);
+                if (!from || !to || from->previous.count == 0u ||
+                    from->previous.count >= NINLIL_NETWORK_PATH_MAX)
+                    continue;
+                for (j = 0u; j < from->previous.count; j++)
+                    if (from->previous.nodes[j] == e->to)
+                        loop = 1;
+                if (loop)
+                    continue;
+                candidate = from->previous;
+                candidate.nodes[candidate.count++] = e->to;
+                candidate.cost_us += edge_cost(e);
+                if (candidate.cost_us < to->path.cost_us)
+                    to->path = candidate;
+            }
         }
     }
     if (!ninlil_network_path_valid(&end->path))
         return NINLIL_ERR_NOT_FOUND;
     {
         ninlil_network_flow *f = ninlil_network_flow_find(c, &end->path, 0);
-        if (f)
+        if (f) {
             c->active = f->active;
-        else
+            flow_changed = f->changed_ms;
+        } else
             memset(&c->active, 0, sizeof(c->active));
     }
     if (c->active.epoch != 0u && c->active.path.nodes[0] == source &&
@@ -164,9 +176,19 @@ int ninlil_coordinator_select(ninlil_coordinator *c, uint16_t source,
         for (hop = 0u; hop < c->active.path.count; hop++)
             if (c->active.path.nodes[hop] == excluded)
                 excluded_active = 1;
+        for (hop = 0u; hop < c->active.path.count; hop++)
+            if (!ninlil_network_policy(c, c->active.path.nodes[hop],
+                                       hop > 0u &&
+                                           hop + 1u < c->active.path.count,
+                                       c->active.path.membership_epochs[hop]))
+                excluded_active = 1;
+        if (c->optimizer &&
+            ninlil_route_optimizer_validate(c->optimizer, c, &c->active.path,
+                                            now) != NINLIL_OK)
+            excluded_active = 1;
         if (!excluded_active && old != UINT64_MAX &&
-            (now < c->last_change_ms ||
-             now - c->last_change_ms < NINLIL_NETWORK_HOLD_MS ||
+            (now < flow_changed ||
+             now - flow_changed < NINLIL_NETWORK_HOLD_MS ||
              end->path.cost_us >= old - old / 5u)) {
             *out = c->active.path;
             out->cost_us = old;

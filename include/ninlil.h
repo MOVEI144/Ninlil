@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define NINLIL_API_VERSION 2u
+#define NINLIL_CONFIG_API_VERSION 3u
 #define NINLIL_ID_BYTES 16u
 #define NINLIL_MAX_PAYLOAD 256u
 #define NINLIL_MAX_STEP_WORK 1024u
@@ -152,6 +153,33 @@ typedef struct ninlil_clock {
     void *ctx;
 } ninlil_clock;
 
+/* Immutable logical destination, independent of an RF address or session key.
+ * The lookup is synchronous, same-owner, and reports only a currently verified
+ * peer. No keys are returned. Outputs must remain unchanged on lookup failure.
+ */
+typedef struct ninlil_delivery_binding {
+    uint8_t source_identity[32];
+    uint8_t peer_identity[32];
+    uint8_t authority[16];
+    uint64_t authority_epoch;
+    uint64_t membership_epoch;
+    uint64_t binding_epoch;
+} ninlil_delivery_binding;
+typedef int (*ninlil_binding_lookup)(void *ctx, uint16_t peer,
+                                     ninlil_delivery_binding *binding);
+
+/* Explicit durable backlog sizing; all-zero preserves the standard profile.
+ * owned_outbound is the retained index, service_slots the hot scheduling cache.
+ * These do not enlarge the neighbor/session/route tables or change Flash size.
+ * Reopen needs room for every retained contract; a smaller limit cannot evict
+ * it. Extra RAM must be explicitly budgeted (at most 1 MiB); no hot-path
+ * allocation.
+ */
+typedef struct ninlil_spool_limits {
+    uint16_t owned_outbound, service_slots, total_owned;
+    uint32_t memory_ceiling_bytes;
+} ninlil_spool_limits;
+
 typedef struct ninlil_config {
     const char *journal_location;
     uint16_t node_id;
@@ -163,6 +191,10 @@ typedef struct ninlil_config {
     ninlil_clock clock;
     ninlil_policy_lookup policy_lookup;
     void *policy_ctx;
+    ninlil_binding_lookup binding_lookup; /* NULL cannot send bound messages. */
+    void *binding_ctx; /* Borrowed until close. No reentrant Core calls. */
+    ninlil_spool_limits
+        spool; /* Explicit opt-in; no additional RF authority. */
 } ninlil_config;
 
 /* The payload is borrowed only for the synchronous submit call. Durable

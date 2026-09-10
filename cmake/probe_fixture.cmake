@@ -5,13 +5,16 @@ set(probe_copy "${CMAKE_CURRENT_BINARY_DIR}/probe_fixture_sources")
 file(MAKE_DIRECTORY "${probe_copy}")
 set(probe_sources "")
 foreach(source src/ninlil_node_radio.c src/ninlil_node_links.c
-               src/ninlil_node_sleep.c ports/esp32s3/ninlil_network_pump.c)
+               src/ninlil_node_sleep.c ports/esp32s3/ninlil_network_pump.c
+               ports/esp32s3/ninlil_feedback_pump.c)
   get_filename_component(name "${source}" NAME)
   configure_file("${NINLIL_ADAPTIVE_ROOT}/${source}" "${probe_copy}/${name}" COPYONLY)
   list(APPEND probe_sources "${probe_copy}/${name}")
 endforeach()
 configure_file("${NINLIL_ADAPTIVE_ROOT}/ports/esp32s3/ninlil_network_pump.h"
                "${probe_copy}/ninlil_network_pump.h" COPYONLY)
+configure_file("${NINLIL_ADAPTIVE_ROOT}/ports/esp32s3/ninlil_feedback_pump.h"
+               "${probe_copy}/ninlil_feedback_pump.h" COPYONLY)
 add_executable(test_probe_pipeline ${probe_sources}
     "${NINLIL_ADAPTIVE_ROOT}/src/ninlil_radio_adapt.c"
     "${NINLIL_ADAPTIVE_ROOT}/tests/test_probe_pipeline.c")

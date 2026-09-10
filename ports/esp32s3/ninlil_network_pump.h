@@ -4,8 +4,10 @@
 #include "sdkconfig.h"
 #endif
 #include "ninlil_airtime.h"
-#include "ninlil_radio_adapt.h"
 #include "ninlil_probe_monitor.h"
+#include "ninlil_radio_adapt.h"
+#include "ninlil_radio_feedback.h"
+#include "ninlil_route_optimizer.h"
 #include "ninlil_routed.h"
 #include "ninlil_sx1262_radio.h"
 typedef struct ninlil_node ninlil_node;
@@ -20,6 +22,11 @@ typedef struct ninlil_esp_network_pump {
 #endif
     uint8_t closed_probes;
     int last_measurement_result;
+#ifdef CONFIG_NINLIL_ROUTE_CANDIDATES_EXPERIMENTAL
+    ninlil_route_optimizer route_workspace;
+    ninlil_search_node route_nodes[16];
+    ninlil_search_edge route_edges[64];
+#endif
     uint64_t token;
     uint64_t tx_at_us;
     uint32_t transmitted;
@@ -28,7 +35,14 @@ typedef struct ninlil_esp_network_pump {
     int last_receive_result;
     ninlil_radio_adapt power[16];
     uint16_t power_peer[16];
-    uint8_t adaptive_power;
+    uint8_t adaptive_power; /* 0 fixed, 1 legacy, 2 confirmed feedback */
+    ninlil_radio_feedback *feedback; /* borrowed; no default RAM allocation */
+#ifdef CONFIG_NINLIL_RADIO_FEEDBACK_EXPERIMENTAL
+    ninlil_radio_feedback feedback_workspace;
+#endif
+    uint64_t feedback_probe_token;
+    uint32_t feedback_queue_us;
+    int feedback_reply_result;
     int (*control_receive)(void *ctx, const uint8_t *frame, size_t length,
                            uint64_t now_ms);
     /* Revalidate a queued fragment or channel-1 frame against the current
@@ -50,11 +64,12 @@ int ninlil_esp_network_open(ninlil_esp_network_pump *p,
 int ninlil_esp_node_open(ninlil_esp_network_pump *p, ninlil_sx1262_radio *radio,
                          ninlil_node *node, uint32_t budget_us);
 /* Before the first node step. Connect completed measurements to the existing
- * observation/route path; retains legacy power policy, not the new v2 policy.
+ * observation/route path. This call does not select a power policy.
  * Workspace remains caller-owned and borrowed until node_close. The default
- * pump has only a pointer; Kconfig allocates embedded workspace only on opt-in. */
+ * pump has only a pointer; Kconfig allocates embedded workspace only on opt-in.
+ */
 int ninlil_esp_node_closed_probes(ninlil_esp_network_pump *p,
-                                 ninlil_probe_monitor *workspace);
+                                  ninlil_probe_monitor *workspace);
 int ninlil_esp_network_emit(void *ctx, uint16_t next,
                             ninlil_traffic_class traffic, const uint8_t *frame,
                             size_t length);
@@ -63,4 +78,10 @@ int ninlil_esp_network_emit(void *ctx, uint16_t next,
 int ninlil_esp_network_step(ninlil_esp_network_pump *p);
 int ninlil_esp_node_adaptive_power(ninlil_esp_network_pump *p,
                                    int8_t minimum_dbm);
+/* Attach an explicit, caller-owned workspace before the first staged frame.
+ * Workspace must outlive node and pump. No switching from an already enabled
+ * power owner. All users must rebuild the experimental config/pump ABI. */
+int ninlil_esp_node_feedback_open(ninlil_esp_network_pump *pump,
+                                  int8_t minimum_dbm,
+                                  ninlil_radio_feedback *workspace);
 #endif

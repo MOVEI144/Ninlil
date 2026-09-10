@@ -263,4 +263,6 @@ int ninlil_node_discovery_receive(ninlil_node *node, const uint8_t *frame,
                                   size_t length);
 int ninlil_node_discovery_current(ninlil_node *node, const uint8_t *frame,
                                   size_t length);
+int ninlil_node_binding_lookup(void *ctx, uint16_t peer,
+                               ninlil_delivery_binding *binding);
 #endif

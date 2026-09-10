@@ -266,6 +266,9 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
     entry = ninlil_find_outbound(runtime, &view.message_id);
     if (!entry || entry->target != view.source || !entry->attempted)
         return NINLIL_OK;
+    rc = ninlil_binding_check_outbound(runtime, entry);
+    if (rc != NINLIL_OK)
+        return rc;
     if (view.status != NINLIL_RECEIPT_EVIDENCE) {
         int passed;
 
@@ -295,7 +298,7 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
                              archive_slot);
     if (rc != NINLIL_OK)
         return rc;
-    entry->latest_evidence = view.evidence;
+    entry->latest_evidence = (uint8_t)view.evidence;
     if (ninlil_evidence_satisfies(entry->required_evidence, view.evidence))
         return ninlil_archive_outbound(runtime, entry, NINLIL_OUTCOME_SATISFIED,
                                        archive_slot);

@@ -136,6 +136,15 @@ static void setup(void)
         g->capabilities = NINLIL_CAP_APP_SEND | NINLIL_CAP_APP_RECEIVE;
         if (i == 1u || (root_relay && i == 0u))
             g->capabilities |= NINLIL_CAP_RELAY_CUSTODY;
+#ifdef NINLIL_TEST_BOUND_FANOUT
+        /* This seven-member static-roster test explicitly uses the existing
+         * 32-peer powered profile. Capability, not the candidate role alone,
+         * permits forwarding: four candidates remain application endpoints. */
+        if (i != 0u)
+            g->role = NINLIL_ROLE_POWERED_RELAY_CANDIDATE;
+        if (i == 2u)
+            g->capabilities |= NINLIL_CAP_RELAY_CUSTODY;
+#endif
         g->service_count = 1u;
         g->services[0] =
             (ninlil_service_grant){256u, 64u, 16u, NINLIL_SERVICE_BOTH, 15u};
@@ -160,7 +169,13 @@ static void setup(void)
         c->counter_io = counter_io;
         c->counter_ctx = c->emit_ctx = d;
         c->emit = emit;
-        CHECK(ninlil_node_open(&d->node, c, 0u) == NINLIL_ERR_CORRUPT);
+        {
+            int unopened = ninlil_node_open(&d->node, c, 0u);
+            if (unopened != NINLIL_ERR_CORRUPT)
+                fprintf(stderr, "initial open node=%u members=%u result=%d\n",
+                        i + 1u, c->member_count, unopened);
+            CHECK(unopened == NINLIL_ERR_CORRUPT);
+        }
         CHECK(ninlil_node_provision_stores(c) == NINLIL_OK);
         CHECK(ninlil_node_open(&d->node, c, 0u) == NINLIL_OK);
     }

@@ -10,7 +10,8 @@ static int context_valid(const ninlil_link_context *c)
         nonzero |= c->session[i];
     return nonzero != 0u;
 }
-static int same_context(const ninlil_link_context *a, const ninlil_link_context *b)
+static int same_context(const ninlil_link_context *a,
+                        const ninlil_link_context *b)
 {
     return a->generation == b->generation && a->profile == b->profile &&
            a->power_dbm == b->power_dbm &&
@@ -91,7 +92,9 @@ int ninlil_link_metrics_tx(ninlil_link_metrics *m, const ninlil_link_context *c,
         return NINLIL_ERR_INVALID;
     if (m->pending && token == m->token && same_context(&m->context, c))
         return now == m->tx_ms && airtime == m->pending_airtime_us &&
-                       queue == m->pending_queue_us ? NINLIL_OK : NINLIL_ERR_CONFLICT;
+                       queue == m->pending_queue_us
+                   ? NINLIL_OK
+                   : NINLIL_ERR_CONFLICT;
     if (token == m->previous_token && m->active && same_context(&m->context, c))
         return NINLIL_ERR_CONFLICT;
     if (m->sequence == UINT64_MAX)
@@ -119,7 +122,8 @@ int ninlil_link_metrics_tx(ninlil_link_metrics *m, const ninlil_link_context *c,
     m->pending_queue_us = queue;
     return NINLIL_OK;
 }
-int ninlil_link_metrics_reply(ninlil_link_metrics *m, uint64_t token, uint64_t now)
+int ninlil_link_metrics_reply(ninlil_link_metrics *m, uint64_t token,
+                              uint64_t now)
 {
     if (!m || now < m->now_ms)
         return NINLIL_ERR_INVALID;

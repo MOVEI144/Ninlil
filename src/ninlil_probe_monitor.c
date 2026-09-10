@@ -36,8 +36,11 @@ static int close_trial(ninlil_probe_monitor_peer *p, uint64_t now)
 {
     ninlil_link_metrics *m = &p->metrics;
     int completed = m->pending && now >= m->due_ms;
-    ninlil_probe_sample sample = {m->tx_ms, m->token, m->sequence,
-                                  m->pending_airtime_us, m->pending_queue_us,
+    ninlil_probe_sample sample = {m->tx_ms,
+                                  m->token,
+                                  m->sequence,
+                                  m->pending_airtime_us,
+                                  m->pending_queue_us,
                                   m->replied};
     int rc = ninlil_link_metrics_tick(m, now);
     if (rc != NINLIL_OK || !completed)
@@ -50,7 +53,7 @@ static int close_trial(ninlil_probe_monitor_peer *p, uint64_t now)
 }
 
 static int route_window(ninlil_probe_monitor_peer *p, uint64_t now,
-                         ninlil_link_window *w)
+                        ninlil_link_window *w)
 {
     ninlil_link_window result = {0};
     if (p->sample_count != NINLIL_METRIC_WINDOW)
@@ -82,9 +85,9 @@ static int route_window(ninlil_probe_monitor_peer *p, uint64_t now,
 }
 
 int ninlil_probe_monitor_tx(ninlil_probe_monitor *m, uint16_t peer,
-                             const uint8_t session[16], int8_t power,
-                             uint64_t token, uint64_t now, uint32_t airtime,
-                             uint64_t queue)
+                            const uint8_t session[16], int8_t power,
+                            uint64_t token, uint64_t now, uint32_t airtime,
+                            uint64_t queue)
 {
     ninlil_probe_monitor_peer *p, next;
     ninlil_link_context context;
@@ -155,8 +158,8 @@ int ninlil_probe_monitor_tx(ninlil_probe_monitor *m, uint16_t peer,
 }
 
 int ninlil_probe_monitor_reply(ninlil_probe_monitor *m, uint16_t peer,
-                                const uint8_t session[16], uint64_t token,
-                                uint64_t now)
+                               const uint8_t session[16], uint64_t token,
+                               uint64_t now)
 {
     ninlil_probe_monitor_peer *p;
     if (!m || !m->profile || !valid_peer(peer, session))
@@ -169,8 +172,8 @@ int ninlil_probe_monitor_reply(ninlil_probe_monitor *m, uint16_t peer,
 }
 
 int ninlil_probe_monitor_read(ninlil_probe_monitor *m, uint16_t peer,
-                               const uint8_t session[16], uint64_t now,
-                               int pending_only, ninlil_link_window *out)
+                              const uint8_t session[16], uint64_t now,
+                              int pending_only, ninlil_link_window *out)
 {
     ninlil_probe_monitor_peer *p;
     ninlil_link_window window;
@@ -195,32 +198,40 @@ int ninlil_probe_monitor_read(ninlil_probe_monitor *m, uint16_t peer,
 }
 
 int ninlil_probe_monitor_ack(ninlil_probe_monitor *m, uint16_t peer,
-                              uint64_t token, uint8_t bits)
+                             uint64_t token, uint8_t bits)
 {
     ninlil_probe_monitor_peer *p;
     if (!m || !m->profile || !peer || peer == UINT16_MAX || !token)
         return NINLIL_ERR_INVALID;
     p = find(m, peer);
-    if (!p || !p->report.last_sequence ||
-        token != p->report.last_token ||
+    if (!p || !p->report.last_sequence || token != p->report.last_token ||
         bits != p->report.success_bits)
         return NINLIL_ERR_STATE;
     p->acknowledged_sequence = p->report.last_sequence;
     return NINLIL_OK;
 }
 
-int ninlil_probe_monitor_pause(ninlil_probe_monitor *m, uint64_t now)
+int ninlil_probe_monitor_invalidate(ninlil_probe_monitor *m, uint16_t peer,
+                                    uint64_t now)
 {
-    if (!m || !m->profile)
+    if (!m || !m->profile || peer == UINT16_MAX)
         return NINLIL_ERR_INVALID;
     for (unsigned int i = 0u; i < NINLIL_PROBE_MONITOR_PEERS; i++)
-        if (m->peers[i].metrics.now_ms > now)
+        if ((!peer || m->peers[i].address == peer) &&
+            m->peers[i].metrics.now_ms > now)
             return NINLIL_ERR_INVALID;
     for (unsigned int i = 0u; i < NINLIL_PROBE_MONITOR_PEERS; i++) {
+        if (peer && m->peers[i].address != peer)
+            continue;
         (void)ninlil_link_metrics_invalidate(&m->peers[i].metrics, now);
         m->peers[i].acknowledged_sequence = 0u;
         m->peers[i].sample_count = m->peers[i].cursor = 0u;
         memset(&m->peers[i].report, 0, sizeof(m->peers[i].report));
     }
     return NINLIL_OK;
+}
+
+int ninlil_probe_monitor_pause(ninlil_probe_monitor *m, uint64_t now)
+{
+    return ninlil_probe_monitor_invalidate(m, 0u, now);
 }

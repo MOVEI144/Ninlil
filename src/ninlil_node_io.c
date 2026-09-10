@@ -1,4 +1,5 @@
 #include "ninlil_node_internal.h"
+#include "ninlil_route_optimizer.h"
 #include <string.h>
 
 static int enter(ninlil_node *n, uint64_t now)
@@ -36,6 +37,17 @@ int ninlil_node_step(ninlil_node *n, uint64_t now)
         rc = ninlil_node_result(n, ninlil_node_control_step(n));
     if (rc == NINLIL_OK)
         rc = ninlil_node_result(n, ninlil_node_links_step(n));
+    if (rc == NINLIL_OK && n->coordinator.optimizer &&
+        n->config.local == n->config.root &&
+        ninlil_node_lease(n, &lease) == NINLIL_OK) {
+        n->planning = 1u;
+        int work = ninlil_route_optimizer_step(n->coordinator.optimizer,
+                                               &n->coordinator, lease, 64u);
+        n->planning = 0u;
+        if (work == NINLIL_ERR_IO || work == NINLIL_ERR_CORRUPT ||
+            work == NINLIL_ERR_FAULT)
+            rc = ninlil_node_result(n, work);
+    }
     if (rc == NINLIL_OK)
         rc = ninlil_node_result(n, ninlil_node_routes_step(n));
     if (rc != NINLIL_OK)
@@ -87,6 +99,22 @@ int ninlil_node_receive(ninlil_node *n, const uint8_t *frame, size_t length,
                                  plain, sizeof(plain), &size);
             if (rc == NINLIL_OK)
                 rc = ninlil_node_control_receive(n, peer, plain, size, 1);
+            /* Only this authenticated direct-neighbor ingress may feed RF
+             * feedback. A routed/E2E control reply is not a direct RF sample.
+             * The control handler has checked membership and the challenge. */
+            if (rc == NINLIL_OK && size == 9u && plain[0] == NODE_PROBE_REPLY &&
+                now >= n->peers[index].probe_sent_at &&
+                now - n->peers[index].probe_sent_at < 3000u) {
+                const uint8_t *session =
+                    n->peers[index].sessions[1].material.fingerprint;
+                uint64_t token = ninlil_node_get(plain + 1, 8u);
+                if (n->config.probe_monitor)
+                    (void)ninlil_probe_monitor_reply(n->config.probe_monitor,
+                                                     peer, session, token, now);
+                if (n->config.radio_observer.reply)
+                    n->config.radio_observer.reply(n->config.radio_observer.ctx,
+                                                   peer, token, session, now);
+            }
             ninlil_secret_clear(plain, sizeof(plain));
         } else if (frame[31] == 0u && ninlil_node_lease(n, &lease) == NINLIL_OK)
             rc = ninlil_routed_receive(&n->routed, frame, length, lease);

@@ -63,9 +63,13 @@ typedef struct ninlil_network_plan {
 typedef int (*ninlil_plan_commit_fn)(void *ctx,
                                      const ninlil_network_plan *plan);
 
+typedef struct ninlil_route_optimizer ninlil_route_optimizer;
+
 typedef struct ninlil_network_flow {
     ninlil_network_plan active;
     uint8_t reconciled;
+    uint64_t
+        changed_ms; /* Boot-local per-flow hold; not persisted or authority. */
 } ninlil_network_flow;
 
 typedef struct ninlil_coordinator {
@@ -90,6 +94,8 @@ typedef struct ninlil_coordinator {
     uint8_t poisoned;
     ninlil_network_flow flows[NINLIL_NETWORK_FLOWS_MAX];
     ninlil_network_plan last_record;
+    ninlil_route_optimizer
+        *optimizer; /* Optional borrowed, fixed-PHY planner. */
 } ninlil_coordinator;
 
 int ninlil_coordinator_open(ninlil_coordinator *c, ninlil_network_node *nodes,

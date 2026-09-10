@@ -423,8 +423,10 @@ static void staged_retry_coalescing(void)
     REQUIRE(
         !ninlil_node_frame_equal(n, saved.frame, saved.frame, saved.length));
     n->peers[1].sessions[1].ready = 1u;
-    REQUIRE(ninlil_airtime_next(&f.pump.scheduler, 200000u, &selected) ==
-            NINLIL_OK);
+    /* Keep the physical clock and scheduler on the same monotonic timeline. */
+    now_us = 200000;
+    REQUIRE(ninlil_airtime_next(&f.pump.scheduler, (uint64_t)now_us,
+                                &selected) == NINLIL_OK);
     REQUIRE(ninlil_airtime_complete(&f.pump.scheduler, NINLIL_OK) == NINLIL_OK);
     REQUIRE(ninlil_step(f.core) == NINLIL_OK && f.pump.token > token);
     REQUIRE(n->peers[1].sessions[1].rx_bitmap == 0u);

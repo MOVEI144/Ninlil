@@ -176,7 +176,7 @@ add_library(ninlil_node STATIC src/ninlil_node_sync.c src/ninlil_node_diagnostic
   src/ninlil_node_io.c src/ninlil_node_links.c src/ninlil_node_recovery.c
   src/ninlil_node_lifecycle.c src/ninlil_node_collection.c src/ninlil_node_radio.c)
 target_include_directories(ninlil_node PUBLIC include)
-target_sources(ninlil_node PRIVATE src/ninlil_node_sleep.c)
+target_sources(ninlil_node PRIVATE src/ninlil_node_sleep.c src/ninlil_node_binding.c)
 target_sources(ninlil_node PRIVATE src/ninlil_root_replacement.c)
 target_sources(ninlil_node PRIVATE src/ninlil_deployment_retire.c)
 target_link_libraries(ninlil_node PUBLIC ninlil_identity ninlil_lease_clock

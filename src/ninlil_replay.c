@@ -81,7 +81,9 @@ static int replay_out_create(ninlil_runtime *runtime, const uint8_t *payload,
     uint16_t payload_len;
 
     if (length < NINLIL_JRN_OUT_HEADER ||
-        payload[0] != NINLIL_JRN_RECORD_VERSION || payload[5] != 0u)
+        (payload[0] != NINLIL_JRN_RECORD_VERSION &&
+         payload[0] != NINLIL_JRN_BOUND_CREATE_VERSION) ||
+        payload[5] != 0u)
         return NINLIL_ERR_CORRUPT;
     payload_len = get_be16(payload + 10);
     deadline = get_be64(payload + 12);
@@ -91,15 +93,23 @@ static int replay_out_create(ninlil_runtime *runtime, const uint8_t *payload,
                         deadline))
         return NINLIL_ERR_CORRUPT;
     memset(&candidate, 0, sizeof(candidate));
-    candidate.ownership = (ninlil_ownership)payload[1];
-    candidate.required_evidence = (ninlil_evidence)payload[2];
-    candidate.traffic_class = (ninlil_traffic_class)payload[3];
+    candidate.ownership = payload[1];
+    candidate.required_evidence = payload[2];
+    candidate.traffic_class = payload[3];
     candidate.target = get_be16(payload + 6);
     candidate.service = get_be16(payload + 8);
     candidate.payload_len = payload_len;
     candidate.absolute_deadline_ms = deadline;
     memcpy(candidate.message_id.bytes, payload + 20, NINLIL_ID_BYTES);
     memcpy(candidate.idempotency_key.bytes, payload + 36, NINLIL_ID_BYTES);
+    if (payload[0] == NINLIL_JRN_BOUND_CREATE_VERSION) {
+        if (!runtime->pending_binding.offset || !runtime->storage_bound ||
+            runtime->pending_binding.generation != reference->generation ||
+            !ninlil_id_equal(&runtime->pending_binding_id,
+                             &candidate.message_id))
+            return NINLIL_ERR_CORRUPT;
+        candidate.binding_offset = runtime->pending_binding.offset;
+    }
     if (candidate.target == 0u || candidate.target == UINT16_MAX ||
         candidate.service < NINLIL_APPLICATION_SERVICE_MIN ||
         !bytes_nonzero(candidate.message_id.bytes) ||
@@ -292,7 +302,7 @@ static int replay_out_update(ninlil_runtime *runtime, uint8_t type,
         if ((satisfies && archive_slot >= runtime->archive_capacity) ||
             (!satisfies && archive_slot != NINLIL_ARCHIVE_SLOT_NONE))
             return NINLIL_ERR_CORRUPT;
-        entry->latest_evidence = evidence;
+        entry->latest_evidence = (uint8_t)evidence;
         if (satisfies)
             return ninlil_archive_outbound(
                 runtime, entry, NINLIL_OUTCOME_SATISFIED, archive_slot);
@@ -366,8 +376,18 @@ int ninlil_replay_record(void *ctx, uint8_t type, const uint8_t *payload,
         return NINLIL_OK;
     }
     runtime->has_records = 1u;
-    if (type == NINLIL_JRN_OUT_CREATE)
-        return replay_out_create(runtime, payload, length, reference);
+    if (type == NINLIL_JRN_OUT_BINDING)
+        return ninlil_binding_replay(runtime, payload, length, reference);
+    if (type == NINLIL_JRN_OUT_CREATE) {
+        int rc = replay_out_create(runtime, payload, length, reference);
+        memset(&runtime->pending_binding, 0, sizeof(runtime->pending_binding));
+        return rc;
+    }
+    /* An incomplete prefix is never an accepted outbound. Only the immediately
+     * following v6 create can consume it, even across an interrupted boot. */
+    memset(&runtime->pending_binding, 0, sizeof(runtime->pending_binding));
+    if (type == NINLIL_JRN_BOUND_RELEASE)
+        return ninlil_binding_replay_release(runtime, payload, length);
     if (type == NINLIL_JRN_IN_ACCEPT)
         return replay_in_accept(runtime, payload, length, reference);
     if (type == NINLIL_JRN_IN_REJECTION)

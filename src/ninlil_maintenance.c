@@ -37,6 +37,10 @@ int ninlil_retire_completed(ninlil_runtime *r)
         return rc;
     if (!r->storage_bound)
         return NINLIL_ERR_STATE;
+    for (uint16_t i = 0u; i < r->archive_capacity; i++)
+        if (r->archive[i].used && r->archive[i].binding_offset &&
+            !r->archive[i].binding_released)
+            return NINLIL_ERR_BUSY;
     rc = ninlil_journal_rewrite(r->journal, binding_only, r);
     /* Either publication or an ambiguous write requires authoritative reopen.
      */

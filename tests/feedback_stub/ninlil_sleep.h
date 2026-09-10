@@ -1,0 +1,1 @@
+/* Header resolved by isolated declaration fixture. */

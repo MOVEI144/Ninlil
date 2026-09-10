@@ -79,5 +79,7 @@
       "firmware": "build/7/app.bin"
     }
   ],
-  "closed_probes": false
+  "power_mode": "legacy",
+  "closed_probes": false,
+  "route_candidates": false
 }

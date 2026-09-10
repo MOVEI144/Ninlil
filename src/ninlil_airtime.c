@@ -30,7 +30,7 @@ int ninlil_airtime_open(ninlil_airtime_scheduler *s, uint64_t now,
 }
 
 int ninlil_airtime_enable_drr(ninlil_airtime_scheduler *s, uint32_t quantum,
-                             uint32_t bypass)
+                              uint32_t bypass)
 {
     if (!s || !s->budget_us || quantum < 1000u || quantum > 50000u ||
         quantum > s->budget_us || bypass > s->budget_us || bypass > 400000u)
@@ -69,21 +69,22 @@ static unsigned int peer_slot(const ninlil_airtime_scheduler *s, uint16_t peer)
 }
 
 static void register_peer(ninlil_airtime_scheduler *s, unsigned int slot,
-                           uint16_t peer)
+                          uint16_t peer)
 {
     int existing = s->peer_ids[slot] == peer;
     /* New and returning idle peers join the current service frontier. Idle
-     * time cannot accumulate a catch-up entitlement over continuously queued peers. */
+     * time cannot accumulate a catch-up entitlement over continuously queued
+     * peers. */
     for (unsigned int cls = 0u; cls < 4u; cls++) {
         uint64_t floor = UINT64_MAX;
         if (existing && peer_queued(s, peer, (int)cls))
             continue;
         for (unsigned int i = 0u; i < NINLIL_AIRTIME_QUEUE_MAX; i++)
-            if (s->peer_ids[i] &&
-                peer_queued(s, s->peer_ids[i], (int)cls) &&
+            if (s->peer_ids[i] && peer_queued(s, s->peer_ids[i], (int)cls) &&
                 s->peer_service_us[i][cls] < floor)
                 floor = s->peer_service_us[i][cls];
-        if (floor != UINT64_MAX && (!existing || s->peer_service_us[slot][cls] < floor))
+        if (floor != UINT64_MAX &&
+            (!existing || s->peer_service_us[slot][cls] < floor))
             s->peer_service_us[slot][cls] = floor;
         else if (!existing)
             s->peer_service_us[slot][cls] = 0u;
@@ -167,7 +168,8 @@ int ninlil_airtime_enqueue_at(ninlil_airtime_scheduler *s, uint64_t token,
     for (unsigned int i = 0u; i < NINLIL_AIRTIME_QUEUE_MAX; i++)
         if (s->jobs[i].used && s->jobs[i].token == token)
             existing = 1;
-    rc = ninlil_airtime_enqueue(s, token, peer, traffic, airtime, frame, length);
+    rc =
+        ninlil_airtime_enqueue(s, token, peer, traffic, airtime, frame, length);
     if (rc != NINLIL_OK || existing)
         return rc;
     for (unsigned int i = 0u; i < NINLIL_AIRTIME_QUEUE_MAX; i++) {
@@ -228,11 +230,11 @@ static int drr_candidate(const ninlil_airtime_scheduler *s, unsigned int cls)
             return -1;
         value = s->peer_service_us[at][cls];
         /* Saturation makes the job last; take rejects actual overflow. */
-        value = value > UINT64_MAX - j->airtime_us
-                    ? UINT64_MAX : value + j->airtime_us;
+        value = value > UINT64_MAX - j->airtime_us ? UINT64_MAX
+                                                   : value + j->airtime_us;
         if (best < 0 || value < finish ||
-            (value == finish && s->queued_sequence[i] <
-                                   s->queued_sequence[(unsigned int)best])) {
+            (value == finish &&
+             s->queued_sequence[i] < s->queued_sequence[(unsigned int)best])) {
             best = (int)i;
             finish = value;
         }
@@ -300,7 +302,8 @@ static int drr_next(ninlil_airtime_scheduler *s, uint64_t now,
             if (s->drr_enter)
                 s->deficit_us[cls] += (int64_t)s->quantum_us * weights[cls];
             s->drr_enter = 0u;
-            if (s->deficit_us[cls] >= (int64_t)s->jobs[(unsigned int)at].airtime_us) {
+            if (s->deficit_us[cls] >=
+                (int64_t)s->jobs[(unsigned int)at].airtime_us) {
                 s->reserved = (uint8_t)at;
                 s->waiting = 1u;
                 s->bypass_left_us = s->bypass_limit_us;

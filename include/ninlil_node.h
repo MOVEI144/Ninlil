@@ -2,12 +2,12 @@
 #define NINLIL_NODE_H
 
 #include "ninlil_join.h"
-#include "ninlil_probe_monitor.h"
 #include "ninlil_lease_clock.h"
+#include "ninlil_probe_monitor.h"
 #include "ninlil_routed.h"
 typedef struct ninlil_identity ninlil_identity;
 
-#define NINLIL_NODE_CONFIG_API_VERSION 2u
+#define NINLIL_NODE_CONFIG_API_VERSION 4u
 #define NINLIL_NODE_MEMBERS_MAX 16u
 #define NINLIL_NODE_BOOTSTRAP_HEADER 16u
 #define NINLIL_NODE_BOOTSTRAP_PAYLOAD 224u
@@ -20,6 +20,24 @@ typedef struct ninlil_node_member {
     ninlil_join_grant grant;
     uint8_t public_key[65];
 } ninlil_node_member;
+
+/* Optional synchronous radio observation callbacks. These carry public probe
+ * metadata only. No payload/key access, reentrant node calls or RF effects.
+ * The context remains alive until node_close; copy, do not retain reply bytes.
+ */
+typedef struct ninlil_node_radio_observer {
+    void (*reply)(void *ctx, uint16_t peer, uint64_t token,
+                  const uint8_t session[16], uint64_t now_ms);
+    int (*suspend)(void *ctx, uint64_t now_ms);
+    void *ctx;
+} ninlil_node_radio_observer;
+
+typedef struct ninlil_node_radio_tx {
+    uint16_t peer;
+    uint32_t profile;
+    uint64_t probe_token; /* zero for DATA, receipts and probe replies */
+    uint8_t session[16];
+} ninlil_node_radio_tx;
 
 typedef struct ninlil_node_config {
     uint16_t local;
@@ -50,6 +68,9 @@ typedef struct ninlil_node_config {
     /* Optional borrowed telemetry owner. Prefer enable_probe_monitor before
      * the first step. Rebuild consumers after this config ABI extension. */
     ninlil_probe_monitor *probe_monitor;
+    ninlil_node_radio_observer radio_observer;
+    ninlil_spool_limits
+        spool; /* Explicit durable backlog; no session resizing. */
 } ninlil_node_config;
 
 typedef struct ninlil_node ninlil_node;
@@ -116,7 +137,7 @@ void ninlil_node_transmitted(ninlil_node *node, const uint8_t *frame,
 /* Initialize/borrow monitor before any probes; no RF, storage or authority
  * effects. The monitor must outlive the node and not be shared with another. */
 int ninlil_node_enable_probe_monitor(ninlil_node *node,
-                                      ninlil_probe_monitor *monitor);
+                                     ninlil_probe_monitor *monitor);
 /* Supplement the matching successful transmitted() call, same owner/time.
  * Reads actual applied TX power, not a staged radio_power() request.
  * Unknown queue residence is UINT64_MAX and cannot become a zero-cost sample.
@@ -155,4 +176,33 @@ int ninlil_node_collect(ninlil_node *node);
 int ninlil_node_link_quality(ninlil_node *node, uint16_t peer, uint64_t now_ms,
                              uint64_t *observed_ms, uint16_t *delivered);
 
+/* Attach one copied observer after node open, before the port's first TX.
+ * Must use the same execution owner. Conflicting observers are rejected.
+ * Public config ABI extension: rebuild all consumers; no wire/journal change.
+ */
+int ninlil_node_observe_radio(ninlil_node *node,
+                              const ninlil_node_radio_observer *observer);
+/* Read the current authenticated local hop context of a frame which has just
+ * passed frame_current. Never grants transmission permission itself. EMPTY for
+ * bootstrap/forwarded frames, which must not inherit an end-target's low power.
+ * Exactly the current, not-yet-transmitted probe gets a nonzero probe token.
+ * Output is unchanged on error. No nonce allocation or RX-window mutation. */
+int ninlil_node_radio_tx_context(ninlil_node *node, const uint8_t *frame,
+                                 size_t length, ninlil_node_radio_tx *context);
+
+/* Root-only optional candidate ranking. Borrow workspace until node_close;
+ * initialize it first with ninlil_route_optimizer_open, and attach a probe
+ * monitor on Root before this call. EMPTY on a participant.
+ * Does not activate plans,
+ * change radio profiles, or claim calibrated capacity/SLO admission. */
+int ninlil_node_enable_route_optimizer(ninlil_node *node,
+                                       ninlil_route_optimizer *workspace);
+/* Current verified endpoint binding, not a transmit grant. Same owner, no IO.
+ * authority_epoch is this profile's Root membership generation (not boot era).
+ * Root replacement conservatively holds old bound commands; no automatic
+ * rebinding. Reboot/rekey of the same approved roster preserves the contract.
+ * Caller may snapshot this value before ninlil_submit_bound or Group START.
+ * Output unchanged on error. Normal Core retries invoke the same lookup. */
+int ninlil_node_peer_binding(ninlil_node *node, uint16_t peer,
+                             ninlil_delivery_binding *binding);
 #endif

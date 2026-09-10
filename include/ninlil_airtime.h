@@ -32,7 +32,8 @@ typedef struct ninlil_airtime_scheduler {
     uint8_t active;
     uint8_t busy;
     uint8_t waiting;
-    /* Optional DRR policy; volatile scheduling state, never delivery evidence. */
+    /* Optional DRR policy; volatile scheduling state, never delivery evidence.
+     */
     int64_t deficit_us[4];
     uint64_t queued_sequence[NINLIL_AIRTIME_QUEUE_MAX];
     uint64_t next_sequence;
@@ -60,8 +61,8 @@ int ninlil_airtime_open(ninlil_airtime_scheduler *s, uint64_t now_us,
  * tradeoff between large-frame progress and urgent latency. No TX preemption.
  * quantum is 1000..50000 us; bypass is 0..min(budget,400000) us.
  * Struct ABI changed: recompile all consumers. No wire/journal changes. */
-int ninlil_airtime_enable_drr(ninlil_airtime_scheduler *s,
-                             uint32_t quantum_us, uint32_t urgent_bypass_us);
+int ninlil_airtime_enable_drr(ninlil_airtime_scheduler *s, uint32_t quantum_us,
+                              uint32_t urgent_bypass_us);
 int ninlil_airtime_enqueue(ninlil_airtime_scheduler *s, uint64_t token,
                            uint16_t peer, ninlil_traffic_class traffic,
                            uint32_t airtime_us, const uint8_t *frame,

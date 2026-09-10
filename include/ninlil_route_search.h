@@ -30,7 +30,8 @@ typedef struct ninlil_search_path {
 /* Must validate authorization AND shared radio/capacity/wake constraints.
  * Called on complete candidates, never given permission to mutate a plan.
  * Returning OK admits a proposal for later staging, not a delivery. */
-typedef int (*ninlil_search_validate)(void *ctx, const ninlil_search_path *path);
+typedef int (*ninlil_search_validate)(void *ctx,
+                                      const ninlil_search_path *path);
 typedef struct ninlil_search_config {
     const ninlil_search_node *nodes;
     const ninlil_search_edge *edges;
@@ -38,13 +39,20 @@ typedef struct ninlil_search_config {
     uint64_t generation, now_ms;
     uint32_t max_age_ms, work_limit;
     uint16_t node_count, edge_count, source, target, excluded;
+    /* Explicit legacy observation cost mode. Only probe airtime and queue are
+     * known; wake/commit and end-to-end evidence latency remain UNKNOWN. This
+     * mode is best-effort ranking, never SLO/capacity admission. Zero is
+     * strict. */
+    uint8_t probe_cost_only;
     ninlil_search_validate validate;
     void *validate_ctx;
 } ninlil_search_config;
 typedef struct ninlil_search_result {
     ninlil_search_path paths[3];
     uint32_t work;
-    uint8_t count, search_limited, declared_disjoint; /* Only declared intermediate failure domains, NOT physical independence. */
+    uint8_t count, search_limited,
+        declared_disjoint; /* Only declared intermediate failure domains, NOT
+                              physical independence. */
 } ninlil_search_result;
 typedef struct ninlil_route_search {
     ninlil_search_config config;

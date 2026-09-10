@@ -1,5 +1,11 @@
 # 適応通信実装と7台試験 — 2026-09-09
 
+後続の永続保存実装は [DURABLE_FANOUT_2026-09-10.md](DURABLE_FANOUT_2026-09-10.md) を参照。
+この文書の試験結果は作成時点の範囲を表す。
+
+現在の統合状況は [INTEGRATED_ROUTING_2026-09-10.md](INTEGRATED_ROUTING_2026-09-10.md)。
+以下は明記された基準版に対する記録であり、統合後の最新状態ではない。
+
 この文書は `4357286` 時点の記録。観測経路の後続実装は
 [OBSERVATION_INTEGRATION_2026-09-10.md](OBSERVATION_INTEGRATION_2026-09-10.md) を参照。
 未接続と記した観測行は、その後続記録によって更新される。
@@ -75,3 +81,5 @@ source/log SHA-256は `docs/evidence/2026-09-09-adaptive/` の記録を参照す
 実IDF configure/compile/link、RF/HIL、電源断、消費電流、range/soak/field受入は未実行。
 コンポーネントCIのPASSを全SDKのCI-greenに置き換えない。GitHub Actionsを起動しない。
 7台試験の操作・対象・制限は [SEVEN_BOARD_TEST.md](SEVEN_BOARD_TEST.md) を参照。
+
+送信出力制御の履歴: [PR19実装記録](RADIO_FEEDBACK_INTEGRATION_2026-09-10.md)。
