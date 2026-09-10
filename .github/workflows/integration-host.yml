@@ -5,18 +5,15 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: ninlil-bound-integration-${{ github.ref }}
-  cancel-in-progress: false
 jobs:
-  source:
+  inputs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-      - name: Fetch and verify the repository's exact dependency pins
+      - name: Prepare exact public dependencies and formatter
         shell: bash
         run: |
           set -euo pipefail
@@ -24,22 +21,29 @@ jobs:
           bash scripts/fetch_sx126x_driver.sh
           python3 scripts/check_edhoc.py
           bash scripts/check_sx126x_driver.sh
-      - name: Archive tracked source and public dependency checkouts
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends clang-format-18
+      - name: Export bounded validation inputs only
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/ninlil-source"
-          git rev-parse HEAD > "$RUNNER_TEMP/ninlil-source/commit.txt"
-          git ls-tree -r HEAD > "$RUNNER_TEMP/ninlil-source/tree.txt"
-          git archive --format=tar HEAD | gzip -n > "$RUNNER_TEMP/ninlil-source/source.tar.gz"
-          # These public clones contain no checkout token; preserve their pins
-          # for check_edhoc.py. Never archive the main checkout's .git or HOME.
-          tar -czf "$RUNNER_TEMP/ninlil-source/dependencies.tar.gz" third_party/libedhoc third_party/sx126x_driver
-          cd "$RUNNER_TEMP/ninlil-source"
-          sha256sum source.tar.gz dependencies.tar.gz tree.txt commit.txt > SHA256SUMS
+          out="$RUNNER_TEMP/ninlil-inputs"
+          mkdir -p "$out/tools"
+          git rev-parse HEAD > "$out/commit.txt"
+          git ls-tree -r HEAD > "$out/tree.txt"
+          git archive --format=tar HEAD | gzip -n > "$out/source.tar.gz"
+          tar -czf "$out/dependencies.tar.gz" third_party/libedhoc third_party/sx126x_driver
+          cp -L /usr/bin/clang-format-18 "$out/tools/clang-format"
+          # Only shared libraries needed by this public formatter, never HOME or credentials.
+          ldd /usr/bin/clang-format-18 | awk '/=> \/.*lib(LLVM|clang-cpp)/ {print $3}' | while read -r lib; do cp -L "$lib" "$out/tools/"; done
+          clang-format-18 --version > "$out/tools/version.txt"
+          tar -C "$out" -czf "$out/formatter.tar.gz" tools
+          rm -r "$out/tools"
+          cd "$out"
+          sha256sum source.tar.gz dependencies.tar.gz formatter.tar.gz tree.txt commit.txt > SHA256SUMS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ninlil-complete-source-${{ github.sha }}
-          path: ${{ runner.temp }}/ninlil-source/
+          name: ninlil-validation-inputs-${{ github.sha }}
+          path: ${{ runner.temp }}/ninlil-inputs/
           if-no-files-found: error
           retention-days: 3
