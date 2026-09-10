@@ -96,6 +96,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Publish workflow updates separately through the authenticated connector.
+          # Do not request or assume workflow-write permission for GITHUB_TOKEN.
+          git restore --source=HEAD --staged --worktree .github/workflows/ci.yml
           git rm -r .transfer .integration
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
