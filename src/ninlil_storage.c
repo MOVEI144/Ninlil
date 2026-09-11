@@ -91,6 +91,8 @@ int ninlil_append_record(ninlil_runtime *runtime, uint8_t type,
         return runtime->fatal_error;
     rc = ninlil_journal_append(runtime->journal, type, payload, length,
                                reference);
+    if (rc == NINLIL_OK)
+        runtime->has_records = 1u;
     if (rc != NINLIL_OK && rc != NINLIL_ERR_CAPACITY)
         runtime->fatal_error = rc;
     return rc;
@@ -106,6 +108,44 @@ int ninlil_read_payload(ninlil_runtime *runtime,
 
     if (rc != NINLIL_OK)
         runtime->fatal_error = rc;
+    return rc;
+}
+
+int ninlil_verify_retained(ninlil_runtime *r)
+{
+    if (!r)
+        return NINLIL_ERR_INVALID;
+    int rc = ninlil_health(r);
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->outbound_capacity; i++)
+        if (r->outbound[i].used)
+            rc = ninlil_read_payload(r, &r->outbound[i].record_ref, 0u, NULL,
+                                     0u);
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->inbound_capacity; i++)
+        if (r->inbound[i].used)
+            rc =
+                ninlil_read_payload(r, &r->inbound[i].record_ref, 0u, NULL, 0u);
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->archive_capacity; i++)
+        if (r->archive[i].used)
+            rc =
+                ninlil_read_payload(r, &r->archive[i].record_ref, 0u, NULL, 0u);
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->rejection_capacity; i++)
+        if (r->rejections[i].used && r->rejections[i].durable)
+            rc = ninlil_read_payload(r, &r->rejections[i].record_ref, 0u, NULL,
+                                     0u);
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->outbound_capacity; i++) {
+        ninlil_outbound_entry *e = &r->outbound[i];
+        ninlil_delivery_binding binding;
+        if (e->used && e->binding_offset)
+            rc = ninlil_binding_read(r, &e->message_id, e->binding_offset,
+                                     e->record_ref.generation, &binding);
+    }
+    for (uint16_t i = 0u; rc == NINLIL_OK && i < r->archive_capacity; i++) {
+        ninlil_archive_entry *e = &r->archive[i];
+        ninlil_delivery_binding binding;
+        if (e->used && e->binding_offset)
+            rc = ninlil_binding_read(r, &e->message_id, e->binding_offset,
+                                     e->record_ref.generation, &binding);
+    }
     return rc;
 }
 
@@ -198,7 +238,8 @@ int ninlil_id_in_use(ninlil_runtime *runtime, const ninlil_id *id)
 
 static int archive_replaceable(const ninlil_archive_entry *entry)
 {
-    return !entry->used || !entry->need_receipt;
+    return !entry->used || (!entry->need_receipt && (!entry->binding_offset ||
+                                                     entry->binding_released));
 }
 
 int ninlil_archive_admission(const ninlil_runtime *runtime, uint16_t *slot)
@@ -248,16 +289,18 @@ int ninlil_archive_outbound(ninlil_runtime *runtime,
     archive->message_id = entry->message_id;
     archive->idempotency_key = entry->idempotency_key;
     archive->record_ref = entry->record_ref;
+    archive->binding_offset = entry->binding_offset;
     archive->absolute_deadline_ms = entry->absolute_deadline_ms;
     archive->peer = entry->target;
     archive->service = entry->service;
     archive->payload_len = entry->payload_len;
-    archive->ownership = entry->ownership;
-    archive->required_evidence = entry->required_evidence;
+    archive->ownership = (uint8_t)entry->ownership;
+    archive->required_evidence = (uint8_t)entry->required_evidence;
     archive->latest_evidence = entry->latest_evidence;
-    archive->traffic_class = traffic_class;
-    archive->outcome = outcome;
+    archive->traffic_class = (uint8_t)traffic_class;
+    archive->outcome = (uint8_t)outcome;
     archive->attempted = entry->attempted;
+    ninlil_service_clear(runtime, (uint16_t)(entry - runtime->outbound));
     memset(entry, 0, sizeof(*entry));
     runtime->outbound_live--;
     runtime->live_by_class[(unsigned int)traffic_class]--;
@@ -290,10 +333,10 @@ int ninlil_archive_inbound(ninlil_runtime *runtime, ninlil_inbound_entry *entry,
     archive->peer = entry->source;
     archive->service = entry->service;
     archive->payload_len = entry->payload_len;
-    archive->ownership = entry->ownership;
-    archive->required_evidence = entry->required_evidence;
-    archive->latest_evidence = evidence;
-    archive->traffic_class = entry->traffic_class;
+    archive->ownership = (uint8_t)entry->ownership;
+    archive->required_evidence = (uint8_t)entry->required_evidence;
+    archive->latest_evidence = (uint8_t)evidence;
+    archive->traffic_class = (uint8_t)entry->traffic_class;
     archive->outcome = NINLIL_OUTCOME_SATISFIED;
     archive->need_receipt = need_receipt;
     archive->receipt_handoff_committed =
@@ -371,7 +414,7 @@ int ninlil_outbound_admission(const ninlil_runtime *runtime,
 
     if (!ninlil_traffic_class_valid(traffic_class))
         return NINLIL_ERR_INVALID;
-    if (runtime->outbound_live >= profile->max_outbound)
+    if (runtime->outbound_live >= runtime->outbound_capacity)
         return NINLIL_ERR_CAPACITY;
     missing_critical =
         runtime->live_by_class[NINLIL_TRAFFIC_CRITICAL] >=
@@ -390,7 +433,7 @@ int ninlil_outbound_admission(const ninlil_runtime *runtime,
                         ? missing_critical
                         : (uint32_t)missing_critical + missing_control;
     if ((uint32_t)runtime->outbound_live + 1u + required_free >
-        profile->max_outbound)
+        runtime->outbound_capacity)
         return NINLIL_ERR_CAPACITY;
     if (traffic_class == NINLIL_TRAFFIC_BULK &&
         runtime->bulk_live >= profile->bulk_maximum)
@@ -400,7 +443,9 @@ int ninlil_outbound_admission(const ninlil_runtime *runtime,
 
 int ninlil_total_owned_available(const ninlil_runtime *runtime)
 {
-    uint16_t limit = runtime->config.profile.max_total_owned;
+    uint16_t limit = runtime->config.spool.owned_outbound
+                         ? runtime->config.spool.total_owned
+                         : runtime->config.profile.max_total_owned;
 
     return limit == 0u ||
            (uint32_t)runtime->outbound_live + runtime->inbound_live < limit;
@@ -413,7 +458,8 @@ int ninlil_log_outbound(ninlil_runtime *runtime,
     uint8_t record[NINLIL_JRN_OUT_HEADER + NINLIL_MAX_PAYLOAD];
 
     memset(record, 0, NINLIL_JRN_OUT_HEADER);
-    record[0] = NINLIL_JRN_RECORD_VERSION;
+    record[0] = entry->binding_offset ? NINLIL_JRN_BOUND_CREATE_VERSION
+                                      : NINLIL_JRN_RECORD_VERSION;
     record[1] = (uint8_t)entry->ownership;
     record[2] = (uint8_t)entry->required_evidence;
     record[3] = (uint8_t)entry->traffic_class;

@@ -1,0 +1,274 @@
+[
+  {
+    "path": "third_party/adapted/edhoc_cipher_suite_2.c",
+    "upstream_path": "third_party/libedhoc/helpers/src/edhoc_cipher_suite_2.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "5b00b5f7a6c6a57c9171c0254c0096670500f71742ed1113416674799bbce795",
+    "sha256": "a5e606d0856d08a6bf2c6e3c8e465383dfeb882ce089d040734b88276a1b5c36",
+    "patch": "third_party/adapted/edhoc_cipher_suite_2.c.patch"
+  },
+  {
+    "path": "third_party/adapted/zcbor_encode.c",
+    "upstream_path": "third_party/libedhoc/externals/zcbor/src/zcbor_encode.c",
+    "upstream_commit": "d3093b5684f62268c7f27f8a5079f166772619de",
+    "upstream_lf_sha256": "2b96c798970f18bbff4b6f0b8535d4395f0d58f53f4fc8d415d82efb65919d3d",
+    "sha256": "ca059eb63ba9c0d44d0d510a29de10819de793469426e58f39f1d5dc2a3cfbb2",
+    "patch": "third_party/adapted/zcbor_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_bstr_type_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_bstr_type_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "64640003bb8f49ae18d62db7bf3cbb98eb27a9987b4495eab29c2df1faf10005",
+    "sha256": "41e3f280260946c6029878341ef9efb9eae2e1a638057147424663230987ac6a",
+    "patch": "third_party/adapted/cbor/backend_cbor_bstr_type_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_bstr_type_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_bstr_type_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "ffeedbdb39dd2a96355194b8cb19bc566d52593c60a26de32aa3c37a2edefc6b",
+    "sha256": "422ab58c39933507fe776e49dfa8766513fe25bdec1988d2330734ac2c1b3bcc",
+    "patch": "third_party/adapted/cbor/backend_cbor_bstr_type_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_connection_identifier_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_connection_identifier_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "657725f3721846663691488cb0b35dd24fdf97867be308daab023fa778ee876d",
+    "sha256": "e37347f37d2650418c21d3ab5de750821cb9a62e924433cedc1ff686459a5554",
+    "patch": "third_party/adapted/cbor/backend_cbor_connection_identifier_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_connection_identifier_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_connection_identifier_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "3a14a7345b2ce5aeb5e6318dfbc52468153daf61b9caac7feaae8a5fe5e308f3",
+    "sha256": "788b29f19e9f4c84871a2426dd71b1f47fd0a2958baaf409f890bce80c9f7bf6",
+    "patch": "third_party/adapted/cbor/backend_cbor_connection_identifier_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_ead_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_ead_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "09afff14ae945d77384bef02676f27711015cc21056e92feee08e362e9c29f86",
+    "sha256": "0a6872dd62ceb395f199bf551014212087d1952c5fda01c09a5ed11ca682a903",
+    "patch": "third_party/adapted/cbor/backend_cbor_ead_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_ead_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_ead_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "64590d1858c2b2f2afc2501ea860b6418b17dab03836a31f3b95114a7dd26443",
+    "sha256": "0e67a24e2b5510de807880b3d288570852cbcb97d91c825b644336e5d7df824e",
+    "patch": "third_party/adapted/cbor/backend_cbor_ead_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_enc_structure_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_enc_structure_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "e383c2c1d4fd9130f6b6abfd80bfb4ccf628261bc14bda728a55c9abf71d2cb0",
+    "sha256": "672bfa7fd4bfc446ed9bd629d3279f7b4d26de7761ddb36f7f653712aa0d488b",
+    "patch": "third_party/adapted/cbor/backend_cbor_enc_structure_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_enc_structure_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_enc_structure_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "4b7fbe91f33c2d10e2a80cb275351ba364c96cd4f27a588c0cc5a5b7a9eba620",
+    "sha256": "d92e4acd8b9c424769da46425c056a26032272161a4375f3b6200be32b3cc946",
+    "patch": "third_party/adapted/cbor/backend_cbor_enc_structure_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_id_cred_x_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_id_cred_x_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "4cab92f943dbd8d3133447986e884e1a980049d90449e8c0df7f306a35b7cc66",
+    "sha256": "7d5fee72f64b07bab06fad2bed32ab481d51d26b75d4caeca3ecb3f28652a5c0",
+    "patch": "third_party/adapted/cbor/backend_cbor_id_cred_x_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_id_cred_x_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_id_cred_x_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "d634a5ebce562aa10a22365d62f89e5fa5fae003aa24989c44ca2a8065827dd6",
+    "sha256": "d4a253d7a01ca031926c524be80ad3d42dd645a4f3587a44ad9153eb225cc3c3",
+    "patch": "third_party/adapted/cbor/backend_cbor_id_cred_x_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_info_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_info_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "dcd8249fd14b536b3abfb7c3c00107e918abfc1146b06ea03d6acc62ab565084",
+    "sha256": "21954e1eed3c43760ebf9625c6a7fdc16a2540a7672b23220016db17946bf22a",
+    "patch": "third_party/adapted/cbor/backend_cbor_info_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_info_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_info_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "8879ddf87bc9f117834fcc90e4d0a6c9c8fbab163edfd277cc328bb669a447b0",
+    "sha256": "f1ea3cc4abbca10517d968790a8d07d664568f977876258efa6f9208c1ecf47e",
+    "patch": "third_party/adapted/cbor/backend_cbor_info_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_int_type_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_int_type_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "2142ae6bbf283371dfe71a3e8e30a839e796d854dafe5f76edeb7082c8109dff",
+    "sha256": "583eaa993445a3a1cd850bb0b8a8c623909dfb77970a7041b82a61d0b26b7e0d",
+    "patch": "third_party/adapted/cbor/backend_cbor_int_type_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_int_type_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_int_type_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "3867d428762630b10223718f187e19cd409009d3a3eadb693c50037e6c37ad0f",
+    "sha256": "a892162d7dfad7d63203820b8e401383cbf7a054960fd30b67148364bae59370",
+    "patch": "third_party/adapted/cbor/backend_cbor_int_type_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_1_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_1_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "a8b55432e9053939b674f27833d1db204b9d982f3a5ff10574b7170c374d0c34",
+    "sha256": "971e0039a33fad7b3ac34a3433393d9875ed6ffb3ef8ab397e2502dd45d547cf",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_1_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_1_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_1_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "2739c0a299b625e409b7e9794ba88e3b0069eb1c75ee34cd8a22d402fbe48528",
+    "sha256": "4150543f45de3321995ebace661bd73df23cadd34aeb37741b32dfb4aa11fe41",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_1_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_2_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_2_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "42ab6e8e9f64f813749ac3002af02bb31f7b266d157b30b9c2972534d950910d",
+    "sha256": "c126951bb7bbe7cdad156775754fe5963af79e9e5c6cd8c4d555a4d79bd17771",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_2_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_2_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_2_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "2a387b9ebcc13e94f25d55ca211e6eff8d02dfd2a698c5739fb903efd2d7b1f0",
+    "sha256": "5da7461b815025cd15a42c865553661b072ae8f9f7ee782eda703dbbf18bc138",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_2_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_3_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_3_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "5146e3d44f7d021fb8430f61c1ac2d6e72509b1febd7a18ac0b58e1ffed5e743",
+    "sha256": "a928138bcc973bca2fb75498811f83b78362350084328e8d9ba6ed438182e59c",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_3_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_3_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_3_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "c2791cc5671bc727de96bae44a625604b54238f96c12b721f9a6ca8953fdc4cd",
+    "sha256": "14a3ca0562f092d491eabeef4390a23d86a1c1b129bdb45ad3e378edd26e22cd",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_3_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_4_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_4_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "226f01208e0028a956c9e5967ca7e372605ebfd4c0ae0bbae832ead93425ddf2",
+    "sha256": "9e6728ce6abd41fe39b911c1a9ab831e1e4c9b0acdd9761df96dd8f1a3524329",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_4_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_4_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_4_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "d389cb8c7b92154f71f87960eb58262491dbff247a48d68c9e034f45b0c12f60",
+    "sha256": "86947cec8ec1f2e0431494b8fb145cb2e9c8af52994898a69fa7121f31901a21",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_4_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_error_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_error_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "a18601c5dc3dba653cace0b5cd2bbbd52c9ea65b34c574ff9777da0e700e8aed",
+    "sha256": "618b63513518240e4243b4f60a1481af5106781dd556fc92f645e28fe09e6462",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_error_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_message_error_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_message_error_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "b4b25e31e4f2068f94b93c3d67428d2bd702747b35b0c862c386a36e27e4f4f4",
+    "sha256": "49885fa974678e76429530ccca0e41b4c36cdd9b9fa7130d179e2828d394c417",
+    "patch": "third_party/adapted/cbor/backend_cbor_message_error_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_plaintext_2_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_plaintext_2_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "1ecbe7cb04a1f14c546320cf774a7e2ae8c16e1961932af2cc2a7bdb9ad4ef07",
+    "sha256": "52f5be095a0a7db280406cc363929ea2ab68f93aef5eed01f630cbe0c8492ba9",
+    "patch": "third_party/adapted/cbor/backend_cbor_plaintext_2_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_plaintext_2_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_plaintext_2_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "441432d8bc8ff833ca12d9e99969c9e6707a15c3a1cd30444320d6d5bcd5a3ec",
+    "sha256": "0bd01aa79f4231ed7223643083a49340813557791d709491dc9463f9760e398f",
+    "patch": "third_party/adapted/cbor/backend_cbor_plaintext_2_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_plaintext_3_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_plaintext_3_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "5264582a4118071b711ed6303fa3f3742f0637ab6760ddb4b2bf59a1206f3910",
+    "sha256": "4082f54e1834584eddd4eec5a391f81ba1bf4291742ae2b0179cbb3f6a147de0",
+    "patch": "third_party/adapted/cbor/backend_cbor_plaintext_3_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_plaintext_3_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_plaintext_3_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "7499428c55a5e32bbbc75d87f345db2c19ec14dbb6f6e9364b25d48e23cbc719",
+    "sha256": "e7361971935816af8faa62b6adda3e91dac806f147f5fd052a54cd568653e5de",
+    "patch": "third_party/adapted/cbor/backend_cbor_plaintext_3_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_plaintext_4_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_plaintext_4_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "5289cc541fdb44195980ffda9be3b2aedd12d06e6543ee8bdc5bf2f89c711acb",
+    "sha256": "476a897f104c0cd63fef4e11810486b823893654ee8c3b4987e18b18867c231b",
+    "patch": "third_party/adapted/cbor/backend_cbor_plaintext_4_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_plaintext_4_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_plaintext_4_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "f5914328e3ad487b164a3e0e2be365117492a23b877b00cd6ff8e9e9f346501f",
+    "sha256": "da7d0212b1c9dbffb0ed4e3d29bf7f6566e83b3abbc21aae8655bbd091afb574",
+    "patch": "third_party/adapted/cbor/backend_cbor_plaintext_4_encode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_sig_structure_decode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_sig_structure_decode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "71f15e96d46859839f8ac8f14ce9ca3b4bfb3f7fbcf41312b3075f2e8c9644f1",
+    "sha256": "c023caebfd4512d636d1d2ca153c6459feaf80d739242e9dfa481bc02b4b5f88",
+    "patch": "third_party/adapted/cbor/backend_cbor_sig_structure_decode.c.patch"
+  },
+  {
+    "path": "third_party/adapted/cbor/backend_cbor_sig_structure_encode.c",
+    "upstream_path": "third_party/libedhoc/backends/cbor/src/backend_cbor_sig_structure_encode.c",
+    "upstream_commit": "2b245e4a8aedb675ded18d085801e20a980e8e5c",
+    "upstream_lf_sha256": "cb44a410c9978cd272a5f669526a874a6cc9834d2315fbd9e56f639bf6bdd324",
+    "sha256": "a34164a412c7e3eda1b7e9e657a341929540e8f33ec72dd8bb8e965512e98dfe",
+    "patch": "third_party/adapted/cbor/backend_cbor_sig_structure_encode.c.patch"
+  }
+]

@@ -1,0 +1,130 @@
+{
+  "date": "2026-09-10",
+  "repository": "MOVEI144/Ninlil",
+  "base_commit": "b38878e79f1e7b28ecbc195762395b1d67ab6475",
+  "remote_written": false,
+  "remote_commit": null,
+  "scope": "Real POSIX journal + fanout owner/codec/store. Downstream Core binding is a separate file-backed fixture, NOT actual Ninlil Core. Existing node/USB/RF fixtures remain simulations.",
+  "result": "PASS_WITH_SCOPE_LIMITS",
+  "matrix": [
+    {
+      "name": "gcc",
+      "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+      "tests": 25,
+      "failures": 0,
+      "skipped": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "gcc-sanitize",
+      "compiler": "gcc (Debian 14.2.0-19) 14.2.0",
+      "tests": 25,
+      "failures": 0,
+      "skipped": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "clang",
+      "compiler": "clang version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)",
+      "tests": 25,
+      "failures": 0,
+      "skipped": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "clang-sanitize",
+      "compiler": "clang version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)",
+      "tests": 25,
+      "failures": 0,
+      "skipped": 0,
+      "result": "PASS"
+    }
+  ],
+  "source_inputs": 89,
+  "python_seven_runner_tests": 17,
+  "static_analysis": {
+    "commands": 10,
+    "exit_codes": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "diagnostic_bytes": 0
+  },
+  "witnesses": {
+    "start_process_exit_points": 10,
+    "target_transition_process_exit_points": 3,
+    "torn_start_byte_prefixes": 1191,
+    "committed_corruption_record_classes": 5,
+    "codec_seed": 20260910,
+    "codec_mutations": 20000,
+    "codec_accepted": 9296,
+    "codec_rejected": 10704,
+    "targets": 511,
+    "initially_blocked_before_core_admission": 32,
+    "initially_satisfied": 479,
+    "finally_satisfied": 511,
+    "posix_file_bytes": 149177,
+    "host_store_and_arrays_bytes_capacity512": 78400
+  },
+  "sha256_test_backend": {
+    "provider": "OpenSSL",
+    "version": "3.5.6",
+    "custom_cryptography": false
+  },
+  "unrun": [
+    "Full repository checkout/build/ABI/regressions",
+    "ESP-IDF build",
+    "New storage layer on raw-Flash backend",
+    "Actual identity-bound Ninlil delivery Core integration",
+    "Installed CMake package consumer",
+    "Full project 50000-line and clang-format gates",
+    "Seven physical boards/RF/HIL",
+    "Electrical power cuts/current/range/soak/field"
+  ],
+  "historical_failures_retained": [
+    "integrity-backend BUSY incorrectly allowed other targets before fix",
+    "Clang initial pointer-bound diagnostic before length-snapshot fix"
+  ],
+  "original_source_verification": {
+    "include/ninlil.h": {
+      "repository": "MOVEI144/Ninlil",
+      "ref": "b38878e79f1e7b28ecbc195762395b1d67ab6475",
+      "git_blob": "f0daf2553fbda32e8bdd96795dcf792a400032ea",
+      "sha256": "a068984d0e326948d4a603667371f2b9f794125f6745634c7b5742781ac4a97c",
+      "bytes": 11182,
+      "matched": true
+    },
+    "src/ninlil_journal.h": {
+      "repository": "MOVEI144/Ninlil",
+      "ref": "b38878e79f1e7b28ecbc195762395b1d67ab6475",
+      "git_blob": "dbe3415fba0a11a8dec7c4bdfca1633b383056bf",
+      "sha256": "c065f51aa9e93a7985c9a906fbf8395180b48147cac0552fd5f84c7778939566",
+      "bytes": 1893,
+      "matched": true
+    },
+    "ports/posix/ninlil_journal.c": {
+      "repository": "MOVEI144/Ninlil",
+      "ref": "b38878e79f1e7b28ecbc195762395b1d67ab6475",
+      "git_blob": "13306af9662abe3e1bcc9223347daab95460f168",
+      "sha256": "fff370e24ec3391c97f6a89226fbd4044d1ac9323b4c4341a7f5020bda9bf444",
+      "bytes": 14922,
+      "matched": true
+    },
+    "cmake/NinlilConfig.cmake.in": {
+      "repository": "MOVEI144/Ninlil",
+      "ref": "b38878e79f1e7b28ecbc195762395b1d67ab6475",
+      "git_blob": "3cc024878afc97629871eab894b0688a615651c5",
+      "sha256": "3d9678efc4118f581c7e6ae59fba76d5f93dce443b0875099be28cdf0c139221",
+      "bytes": 1465,
+      "matched": true
+    }
+  }
+}

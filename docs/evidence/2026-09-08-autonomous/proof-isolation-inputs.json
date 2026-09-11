@@ -1,0 +1,8 @@
+{
+  "historical_evidence": true,
+  "revision": "b4f51051d1bbff30ff70327eea67a4c8d211a7b4",
+  "git_path": "docs/evidence/2026-09-08-autonomous/proof-isolation-inputs.json",
+  "sha256": "5a736a5067c98d2bb06333637bd3176157ee664f9e3ac1b86e4f15cad377e406",
+  "retrieve": "git show b4f51051d1bbff30ff70327eea67a4c8d211a7b4:docs/evidence/2026-09-08-autonomous/proof-isolation-inputs.json",
+  "note": "Original full report verified and retained in Git. Current results are in docs/FIELD_RESULTS_2026-09-08.json."
+}

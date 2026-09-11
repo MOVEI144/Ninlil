@@ -11,13 +11,11 @@ static int payload_matches(ninlil_runtime *runtime,
     int rc;
 
     *matches = 1;
-    if (payload_len == 0u)
-        return NINLIL_OK;
     rc = ninlil_read_payload(runtime, reference, payload_offset, stored,
                              payload_len);
     if (rc != NINLIL_OK)
         return rc;
-    *matches = memcmp(stored, payload, payload_len) == 0;
+    *matches = payload_len == 0u || memcmp(stored, payload, payload_len) == 0;
     return NINLIL_OK;
 }
 
@@ -268,6 +266,9 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
     entry = ninlil_find_outbound(runtime, &view.message_id);
     if (!entry || entry->target != view.source || !entry->attempted)
         return NINLIL_OK;
+    rc = ninlil_binding_check_outbound(runtime, entry);
+    if (rc != NINLIL_OK)
+        return rc;
     if (view.status != NINLIL_RECEIPT_EVIDENCE) {
         int passed;
 
@@ -297,11 +298,75 @@ static int handle_receipt(ninlil_runtime *runtime, const uint8_t *packet,
                              archive_slot);
     if (rc != NINLIL_OK)
         return rc;
-    entry->latest_evidence = view.evidence;
+    entry->latest_evidence = (uint8_t)view.evidence;
     if (ninlil_evidence_satisfies(entry->required_evidence, view.evidence))
         return ninlil_archive_outbound(runtime, entry, NINLIL_OUTCOME_SATISFIED,
                                        archive_slot);
     return NINLIL_OK;
+}
+
+static int durable_data(ninlil_runtime *r, const uint8_t *packet, size_t length)
+{
+    ninlil_wire_data_view v;
+    ninlil_inbound_entry *in;
+    ninlil_archive_entry *archive;
+    ninlil_rejection_entry *rejection;
+    int matches = 0, rc;
+    if (ninlil_wire_decode_data(packet, length, &v) != NINLIL_OK ||
+        v.target != r->config.node_id)
+        return NINLIL_ERR_INVALID;
+    rc = handle_data(r, packet, length);
+    if (rc != NINLIL_OK)
+        return rc;
+    in = ninlil_find_inbound(r, &v.message_id);
+    archive = ninlil_find_archive_id(r, &v.message_id);
+    rejection = ninlil_find_rejection(r, &v.message_id);
+    if (in)
+        rc = inbound_contract_matches(r, in, &v, &matches);
+    else if (archive)
+        rc = archive_contract_matches(r, archive, &v, &matches);
+    else if (rejection)
+        rc = rejection_contract_matches(r, rejection, &v, &matches);
+    return rc != NINLIL_OK ? rc : matches ? NINLIL_OK : NINLIL_ERR_STATE;
+}
+
+static int durable_receipt(ninlil_runtime *r, const uint8_t *packet,
+                           size_t length)
+{
+    ninlil_wire_receipt_view v;
+    ninlil_info info;
+    int rc;
+    if (ninlil_wire_decode_receipt(packet, length, &v) != NINLIL_OK ||
+        v.target != r->config.node_id)
+        return NINLIL_ERR_INVALID;
+    rc = handle_receipt(r, packet, length);
+    if (rc != NINLIL_OK)
+        return rc;
+    rc = ninlil_query(r, &v.message_id, &info);
+    if (rc != NINLIL_OK || info.peer != v.source ||
+        !info.remote_boundary_may_have_been_reached)
+        return NINLIL_ERR_STATE;
+    if (v.status == NINLIL_RECEIPT_EVIDENCE)
+        return info.latest_evidence >= v.evidence ? NINLIL_OK
+                                                  : NINLIL_ERR_STATE;
+    return (v.status == NINLIL_RECEIPT_PERMANENT_REJECTION &&
+            info.outcome == NINLIL_OUTCOME_FAILED) ||
+                   (v.status == NINLIL_RECEIPT_EXPIRED &&
+                    info.outcome == NINLIL_OUTCOME_EXPIRED)
+               ? NINLIL_OK
+               : NINLIL_ERR_STATE;
+}
+
+int ninlil_ingest(ninlil_runtime *r, const uint8_t *packet, size_t length)
+{
+    uint8_t type;
+    if (!r || !packet || length > NINLIL_WIRE_PACKET_MAX ||
+        ninlil_wire_packet_type(packet, length, &type) != NINLIL_OK)
+        return NINLIL_ERR_INVALID;
+    if (r->fatal_error != NINLIL_OK)
+        return r->fatal_error;
+    return type == NINLIL_WIRE_DATA ? durable_data(r, packet, length)
+                                    : durable_receipt(r, packet, length);
 }
 
 int ninlil_process_receive(ninlil_runtime *runtime, int *worked)

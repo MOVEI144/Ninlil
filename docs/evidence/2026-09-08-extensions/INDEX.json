@@ -1,0 +1,76 @@
+{
+  "revision": "62deae46cb08a745bc8924a89073abb5703565dc",
+  "evidence_branch": "codex/storage-bulk-radio-evidence",
+  "records": [
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run1.jsonl",
+      "sha256": "4a961149a831863f5428a488e654fa9079aa1951f7557bf93f777cae0b4be509",
+      "bytes": 5473,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run1.jsonl"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run1.json",
+      "sha256": "c6f539781849220f5f3e61f44c223ce6412940e4fc4493c97f3a564e021e337a",
+      "bytes": 1072,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run1.json"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run2.jsonl",
+      "sha256": "e007a88a351c4b64b60b90d63e44b949e5b97e37dd419f01c41047793c9d11c1",
+      "bytes": 298157,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run2.jsonl"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run2.json",
+      "sha256": "17f25ef0a8557b7aa58b92098d7261028c39be689af3f11c8a088b774b223d1b",
+      "bytes": 2480,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run2.json"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run3.jsonl",
+      "sha256": "47d39f202dea444d7244545ee37d7d8dc2465cd1076b9edb9720024b0a73afd5",
+      "bytes": 300806,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run3.jsonl"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run3.json",
+      "sha256": "5a9e03f8d08944bfeab3ed29940742470c8271a4a0879db8b23795774fd6e1d9",
+      "bytes": 1771,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run3.json"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run4.jsonl",
+      "sha256": "ad4a15545203696e21f30011fe90fc7708b2ded27c12505ef9ce791aa437c2d3",
+      "bytes": 343709,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run4.jsonl"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run4.json",
+      "sha256": "fdc3528fbdebf9de25b3bb342e2caed95719cfa4f9ba2cc749261bab6fc5546f",
+      "bytes": 1692,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run4.json"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run5.jsonl",
+      "sha256": "5f62d6c6acff03e922a66c516eaed78385a147751bac325755f75b6f638eb572",
+      "bytes": 312333,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run5.jsonl"
+    },
+    {
+      "path": "docs/evidence/2026-09-08-extensions/run5.json",
+      "sha256": "cb2f3bcdb2634d73e2b1e7913c5e64753793f7950480229a3ca1a0e920b2ae54",
+      "bytes": 1746,
+      "verified_git_bytes": true,
+      "git_source": "62deae46cb08a745bc8924a89073abb5703565dc:docs/evidence/2026-09-08-extensions/run5.json"
+    }
+  ]
+}

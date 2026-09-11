@@ -1,0 +1,49 @@
+name: Bound delivery integration validation
+on:
+  push:
+    branches: [integration/core-bound-delivery-20260910]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inputs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Prepare exact public dependencies and formatter
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/fetch_edhoc.sh
+          bash scripts/fetch_sx126x_driver.sh
+          python3 scripts/check_edhoc.py
+          bash scripts/check_sx126x_driver.sh
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends clang-format-18
+      - name: Export bounded validation inputs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/ninlil-inputs"
+          mkdir -p "$out/tools"
+          git rev-parse HEAD > "$out/commit.txt"
+          git ls-tree -r HEAD > "$out/tree.txt"
+          git archive --format=tar HEAD | gzip -n > "$out/source.tar.gz"
+          tar -czf "$out/dependencies.tar.gz" third_party/libedhoc third_party/sx126x_driver
+          cp -L /usr/bin/clang-format-18 "$out/tools/clang-format"
+          # Only shared libraries needed by this public formatter, never HOME or credentials.
+          ldd /usr/bin/clang-format-18 | awk '/=> \/.*lib(LLVM|clang-cpp)/ {print $3}' | while read -r lib; do cp -L "$lib" "$out/tools/"; done
+          clang-format-18 --version > "$out/tools/version.txt"
+          tar -C "$out" -czf "$out/formatter.tar.gz" tools
+          rm -r "$out/tools"
+          cd "$out"
+          sha256sum source.tar.gz dependencies.tar.gz formatter.tar.gz tree.txt commit.txt > SHA256SUMS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ninlil-validation-inputs-${{ github.sha }}
+          path: ${{ runner.temp }}/ninlil-inputs/
+          if-no-files-found: error
+          retention-days: 3

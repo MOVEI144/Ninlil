@@ -23,10 +23,10 @@
 static int fake_spi_token;
 static int64_t fake_time_us;
 static int fake_busy_level;
+static int fake_sleep_on_deselect;
 static esp_err_t fake_gpio_config_result;
 static esp_err_t fake_bus_init_result;
 static esp_err_t fake_add_device_result;
-static esp_err_t fake_acquire_result;
 static esp_err_t fake_transmit_result;
 static unsigned int fake_gpio_set_calls;
 static unsigned int fake_gpio_set_fail_call;
@@ -35,20 +35,24 @@ static unsigned int fake_release_calls;
 static unsigned int fake_transmit_calls;
 static unsigned int fake_remove_calls;
 static unsigned int fake_free_calls;
-static TickType_t fake_last_acquire_wait;
+static unsigned int fake_transmit_fail_call;
 static spi_bus_config_t fake_bus_config;
 static spi_device_interface_config_t fake_device_config;
 static int fake_levels[64];
 static int fake_contract_error;
+static uint8_t fake_transmitted[512];
+static size_t fake_transmitted_size;
+static size_t fake_received_size;
+static int fake_pattern_reads;
 
 static void reset_fakes(void)
 {
     fake_time_us = 0;
     fake_busy_level = 0;
+    fake_sleep_on_deselect = 0;
     fake_gpio_config_result = ESP_OK;
     fake_bus_init_result = ESP_OK;
     fake_add_device_result = ESP_OK;
-    fake_acquire_result = ESP_OK;
     fake_transmit_result = ESP_OK;
     fake_gpio_set_calls = 0u;
     fake_gpio_set_fail_call = 0u;
@@ -57,11 +61,14 @@ static void reset_fakes(void)
     fake_transmit_calls = 0u;
     fake_remove_calls = 0u;
     fake_free_calls = 0u;
-    fake_last_acquire_wait = 0u;
+    fake_transmit_fail_call = 0u;
     memset(&fake_bus_config, 0, sizeof(fake_bus_config));
     memset(&fake_device_config, 0, sizeof(fake_device_config));
     memset(fake_levels, 0, sizeof(fake_levels));
     fake_contract_error = 0;
+    fake_transmitted_size = 0u;
+    fake_received_size = 0u;
+    fake_pattern_reads = 0;
 }
 
 esp_err_t gpio_config(const gpio_config_t *config)
@@ -72,6 +79,9 @@ esp_err_t gpio_config(const gpio_config_t *config)
 
 esp_err_t gpio_set_level(gpio_num_t gpio, int level)
 {
+    if (fake_sleep_on_deselect && gpio == NINLIL_SX1262_PIN_NSS && level &&
+        fake_transmitted_size)
+        fake_busy_level = 1; /* Sleep holds BUSY high until wake/reset. */
     fake_gpio_set_calls++;
     if (fake_gpio_set_fail_call == fake_gpio_set_calls)
         return ESP_FAIL;
@@ -164,8 +174,11 @@ esp_err_t spi_device_acquire_bus(spi_device_handle_t device, TickType_t wait)
         return ESP_FAIL;
     }
     fake_acquire_calls++;
-    fake_last_acquire_wait = wait;
-    return fake_acquire_result;
+    // This HAL must not explicitly acquire its dedicated bus. The old fake
+    // accepted finite waits that the real IDF rejects.
+    (void)wait;
+    fake_contract_error = 1;
+    return ESP_ERR_INVALID_ARG;
 }
 
 void spi_device_release_bus(spi_device_handle_t device)
@@ -178,13 +191,31 @@ void spi_device_release_bus(spi_device_handle_t device)
 esp_err_t spi_device_polling_transmit(spi_device_handle_t device,
                                       spi_transaction_t *transaction)
 {
-    if (device != &fake_spi_token || transaction->length % 8u != 0u) {
+    if (device != &fake_spi_token || transaction->length % 8u != 0u ||
+        transaction->length > 64u * 8u ||
+        fake_levels[NINLIL_SX1262_PIN_NSS] != 0) {
         fake_contract_error = 1;
         return ESP_FAIL;
     }
     fake_transmit_calls++;
+    if (fake_transmit_calls == fake_transmit_fail_call)
+        return ESP_FAIL;
+    if (transaction->tx_buffer) {
+        size_t size = transaction->length / 8u;
+        if (size > sizeof(fake_transmitted) - fake_transmitted_size)
+            return ESP_FAIL;
+        memcpy(fake_transmitted + fake_transmitted_size, transaction->tx_buffer,
+               size);
+        fake_transmitted_size += size;
+    }
     if (fake_transmit_result == ESP_OK && transaction->rx_buffer) {
         memset(transaction->rx_buffer, UINT8_C(0xA5), transaction->length / 8u);
+        if (fake_pattern_reads) {
+            size_t i;
+            for (i = 0u; i < transaction->length / 8u; i++)
+                ((uint8_t *)transaction->rx_buffer)[i] =
+                    (uint8_t)fake_received_size++;
+        }
     }
     return fake_transmit_result;
 }
@@ -225,14 +256,14 @@ static int test_init_io_and_cleanup(void)
     CHECK(sx126x_hal_reset(&context) == SX126X_HAL_STATUS_OK);
     CHECK(fake_levels[NINLIL_SX1262_PIN_RESET] == 1);
     CHECK(sx126x_hal_wakeup(&context) == SX126X_HAL_STATUS_OK);
-    CHECK(fake_last_acquire_wait == 200u);
+    CHECK(fake_acquire_calls == 0u);
     CHECK(fake_levels[NINLIL_SX1262_PIN_NSS] == 1);
 
     fake_transmit_calls = 0u;
     CHECK(sx126x_hal_write(&context, command, sizeof(command), write_data,
                            sizeof(write_data)) == SX126X_HAL_STATUS_OK);
     CHECK(fake_transmit_calls == 2u);
-    CHECK(fake_last_acquire_wait == 20u);
+    CHECK(fake_acquire_calls == 0u);
 
     fake_transmit_calls = 0u;
     CHECK(sx126x_hal_read(&context, command, sizeof(command), read_data,
@@ -241,6 +272,7 @@ static int test_init_io_and_cleanup(void)
     CHECK(read_data[0] == UINT8_C(0xA5));
     CHECK(read_data[1] == UINT8_C(0xA5));
     CHECK(read_data[2] == UINT8_C(0xA5));
+    CHECK(fake_release_calls == 0u);
 
     ninlil_sx1262_hal_deinit(&context);
     CHECK(context.spi == NULL);
@@ -266,22 +298,38 @@ static int test_bounded_operation_failures(void)
     CHECK(fake_acquire_calls == 0u);
 
     fake_busy_level = 0;
-    fake_acquire_result = ESP_FAIL;
+    fake_transmit_result = ESP_FAIL;
     CHECK(sx126x_hal_write(&context, &command, 1u, NULL, 0u) ==
           SX126X_HAL_STATUS_ERROR);
-    CHECK(fake_last_acquire_wait == 20u);
+    CHECK(fake_levels[NINLIL_SX1262_PIN_NSS] == 1);
 
-    fake_acquire_result = ESP_OK;
+    fake_transmit_result = ESP_OK;
     fake_gpio_set_fail_call = fake_gpio_set_calls + 1u;
     CHECK(sx126x_hal_write(&context, &command, 1u, NULL, 0u) ==
           SX126X_HAL_STATUS_ERROR);
-    CHECK(fake_release_calls == 1u);
+    CHECK(fake_release_calls == 0u);
 
     fake_gpio_set_fail_call = 0u;
     fake_transmit_result = ESP_FAIL;
     CHECK(sx126x_hal_read(&context, &command, 1u, &command, 1u) ==
           SX126X_HAL_STATUS_ERROR);
     CHECK(fake_levels[NINLIL_SX1262_PIN_NSS] == 1);
+
+    fake_transmit_result = ESP_OK;
+    fake_transmit_fail_call = fake_transmit_calls + 2u;
+    CHECK(sx126x_hal_write(&context, &command, 1u, &command, 1u) ==
+          SX126X_HAL_STATUS_ERROR);
+    CHECK(fake_levels[NINLIL_SX1262_PIN_NSS] == 1);
+    fake_transmit_fail_call = fake_transmit_calls + 2u;
+    CHECK(sx126x_hal_read(&context, &command, 1u, &command, 1u) ==
+          SX126X_HAL_STATUS_ERROR);
+    CHECK(fake_levels[NINLIL_SX1262_PIN_NSS] == 1);
+    fake_transmit_fail_call = 0u;
+    CHECK(sx126x_hal_read(&context, &command, 1u, &command, 1u) ==
+          SX126X_HAL_STATUS_OK);
+    CHECK(fake_acquire_calls == 0u);
+    CHECK(fake_release_calls == 0u);
+    CHECK(fake_contract_error == 0);
 
     ninlil_sx1262_hal_deinit(&context);
     return 0;
@@ -315,10 +363,65 @@ static int test_init_and_reset_fail_closed(void)
     return 0;
 }
 
+static int test_long_non_dma_transfers(void)
+{
+    const uint16_t lengths[] = {0u, 1u, 63u, 64u, 65u, 200u, 240u};
+    uint8_t command[2] = {0x0Eu, 0u}, payload[240], output[242];
+    ninlil_sx1262_hal_context context;
+    size_t i, j;
+    for (i = 0u; i < sizeof(payload); i++)
+        payload[i] = (uint8_t)i;
+    for (i = 0u; i < sizeof(lengths) / sizeof(lengths[0]); i++) {
+        reset_fakes();
+        CHECK(ninlil_sx1262_hal_init(&context) == 0);
+        CHECK(sx126x_hal_write(&context, command, 2u, payload, lengths[i]) ==
+              SX126X_HAL_STATUS_OK);
+        CHECK(fake_transmitted_size == 2u + lengths[i]);
+        CHECK(memcmp(fake_transmitted, command, 2u) == 0);
+        CHECK(memcmp(fake_transmitted + 2, payload, lengths[i]) == 0);
+        CHECK(fake_transmit_calls == 1u + (lengths[i] + 63u) / 64u);
+        fake_pattern_reads = 1;
+        memset(output, 0xEE, sizeof(output));
+        CHECK(sx126x_hal_read(&context, command, 2u, output + 1, lengths[i]) ==
+              SX126X_HAL_STATUS_OK);
+        for (j = 0u; j < lengths[i]; j++)
+            CHECK(output[j + 1u] == (uint8_t)j);
+        CHECK(output[0] == 0xEE && output[lengths[i] + 1u] == 0xEE);
+        CHECK(fake_levels[NINLIL_SX1262_PIN_NSS] == 1 && !fake_contract_error);
+        ninlil_sx1262_hal_deinit(&context);
+    }
+    reset_fakes();
+    CHECK(ninlil_sx1262_hal_init(&context) == 0);
+    fake_transmit_fail_call = 3u;
+    CHECK(sx126x_hal_write(&context, command, 2u, payload, 240u) ==
+          SX126X_HAL_STATUS_ERROR);
+    CHECK(fake_transmit_calls == 3u && fake_levels[NINLIL_SX1262_PIN_NSS] == 1);
+    ninlil_sx1262_hal_deinit(&context);
+    return 0;
+}
+
+static int test_sleep_busy(void)
+{
+    ninlil_sx1262_hal_context context;
+    const uint8_t sleep_command[2] = {0x84u, 4u};
+    reset_fakes();
+    CHECK(ninlil_sx1262_hal_init(&context) == 0);
+    fake_sleep_on_deselect = 1;
+    CHECK(sx126x_hal_write(&context, sleep_command, 2u, NULL, 0u) ==
+          SX126X_HAL_STATUS_OK);
+    CHECK(fake_busy_level && fake_time_us >= 500 && fake_time_us < 20000);
+    /* Other commands still refuse an asserted BUSY signal. */
+    CHECK(sx126x_hal_write(&context, (const uint8_t[]){0x80u, 0u}, 2u, NULL,
+                           0u) == SX126X_HAL_STATUS_ERROR);
+    ninlil_sx1262_hal_deinit(&context);
+    return 0;
+}
 static int (*const tests[])(void) = {
     test_init_io_and_cleanup,
     test_bounded_operation_failures,
     test_init_and_reset_fail_closed,
+    test_long_non_dma_transfers,
+    test_sleep_busy,
 };
 
 int main(void)

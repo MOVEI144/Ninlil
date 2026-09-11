@@ -1,0 +1,8 @@
+{
+  "historical_evidence": true,
+  "revision": "b4f51051d1bbff30ff70327eea67a4c8d211a7b4",
+  "git_path": "docs/LOCAL_VERIFICATION_2026-09-08.json",
+  "sha256": "0aac11388695bc9be4b30de03dab2cd17af8ee319a52f06362dd316e43ae0d2f",
+  "retrieve": "git show b4f51051d1bbff30ff70327eea67a4c8d211a7b4:docs/LOCAL_VERIFICATION_2026-09-08.json",
+  "note": "Original full report verified and retained in Git. Current results are in docs/FIELD_RESULTS_2026-09-08.json."
+}

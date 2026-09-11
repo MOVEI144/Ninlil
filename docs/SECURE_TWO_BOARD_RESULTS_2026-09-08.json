@@ -1,0 +1,8 @@
+{
+  "historical_evidence": true,
+  "revision": "b4f51051d1bbff30ff70327eea67a4c8d211a7b4",
+  "git_path": "docs/SECURE_TWO_BOARD_RESULTS_2026-09-08.json",
+  "sha256": "8f679efc650252134ee31698663ea5d2a8042658e603fd8b554d9f4368661d4a",
+  "retrieve": "git show b4f51051d1bbff30ff70327eea67a4c8d211a7b4:docs/SECURE_TWO_BOARD_RESULTS_2026-09-08.json",
+  "note": "Original full report verified and retained in Git. Current results are in docs/FIELD_RESULTS_2026-09-08.json."
+}

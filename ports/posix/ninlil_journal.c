@@ -5,6 +5,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/file.h>
@@ -15,12 +16,14 @@
 #define JRN_HEADER 10u
 #define JRN_CRC 4u
 #define JRN_MAX_PAYLOAD 320u
-#define JRN_MAX_TYPE 9u
+#define JRN_MAX_TYPE 12u
 
 struct ninlil_journal {
     int fd;
     int poisoned;
     uint64_t maximum_bytes;
+    char *path;
+    uint32_t generation;
 };
 
 static uint32_t crc32_ieee(const uint8_t *data, size_t length)
@@ -230,6 +233,7 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
             ninlil_journal_ref reference;
 
             reference.offset = (uint64_t)(position + (off_t)JRN_HEADER);
+            reference.generation = 0u;
             reference.length = length;
             reference.type = header[5];
             rc = on_record(ctx, header[5], body, length, &reference);
@@ -257,6 +261,11 @@ int ninlil_journal_open(ninlil_journal **out, const char *path,
     }
     journal->fd = fd;
     journal->maximum_bytes = maximum_bytes;
+    journal->path = strdup(path);
+    if (!journal->path) {
+        ninlil_journal_close(journal);
+        return NINLIL_ERR_CAPACITY;
+    }
     *out = journal;
     return NINLIL_OK;
 }
@@ -305,6 +314,7 @@ int ninlil_journal_append(ninlil_journal *journal, uint8_t type,
     }
     if (reference) {
         reference->offset = (uint64_t)(start + (off_t)JRN_HEADER);
+        reference->generation = journal->generation;
         reference->length = length;
         reference->type = type;
     }
@@ -329,6 +339,8 @@ int ninlil_journal_read(ninlil_journal *journal,
         reference->offset < JRN_HEADER ||
         reference->offset > (uint64_t)INT64_MAX)
         return NINLIL_ERR_INVALID;
+    if (reference->generation != journal->generation)
+        return NINLIL_ERR_STATE;
     record_offset = reference->offset - JRN_HEADER;
     rc = read_full_at(journal->fd, (off_t)record_offset, record, JRN_HEADER);
     if (rc != NINLIL_OK)
@@ -352,11 +364,105 @@ int ninlil_journal_read(ninlil_journal *journal,
     return NINLIL_OK;
 }
 
+int ninlil_journal_usage(ninlil_journal *j, uint64_t *used, uint64_t *capacity)
+{
+    struct stat status;
+    if (!j || !used || !capacity || j->poisoned || fstat(j->fd, &status) != 0 ||
+        status.st_size < 0)
+        return NINLIL_ERR_IO;
+    *used = (uint64_t)status.st_size;
+    *capacity = j->maximum_bytes;
+    return *used <= *capacity ? NINLIL_OK : NINLIL_ERR_CORRUPT;
+}
+
+int ninlil_journal_visit(ninlil_journal *j, ninlil_journal_on_record visit,
+                         void *ctx)
+{
+    uint64_t used, capacity, offset = 0u;
+    int rc = ninlil_journal_usage(j, &used, &capacity);
+    if (rc != NINLIL_OK || !visit)
+        return rc != NINLIL_OK ? rc : NINLIL_ERR_INVALID;
+    while (offset < used) {
+        uint8_t bytes[JRN_HEADER + JRN_MAX_PAYLOAD + JRN_CRC];
+        uint16_t length;
+        ninlil_journal_ref ref;
+        if (used - offset < JRN_HEADER ||
+            read_full_at(j->fd, (off_t)offset, bytes, JRN_HEADER) != NINLIL_OK)
+            return NINLIL_ERR_CORRUPT;
+        if (!header_valid(bytes, &length) ||
+            used - offset < JRN_HEADER + (uint64_t)length + JRN_CRC)
+            return NINLIL_ERR_CORRUPT;
+        ref.offset = offset + JRN_HEADER;
+        ref.generation = j->generation;
+        ref.length = length;
+        ref.type = bytes[5];
+        rc = ninlil_journal_read(j, &ref, 0u, bytes, length);
+        if (rc == NINLIL_OK)
+            rc = visit(ctx, ref.type, bytes, length, &ref);
+        if (rc != NINLIL_OK)
+            return rc;
+        offset += JRN_HEADER + (uint64_t)length + JRN_CRC;
+    }
+    return NINLIL_OK;
+}
+
+int ninlil_journal_rewrite(ninlil_journal *j, ninlil_journal_snapshot snapshot,
+                           void *ctx)
+{
+    ninlil_journal next = {0};
+    struct stat old_stat, new_stat;
+    char *path;
+    int rc = NINLIL_ERR_IO, old_fd;
+    if (!j || !snapshot || !j->path || j->poisoned ||
+        j->generation == UINT32_MAX || strlen(j->path) > 4090u)
+        return NINLIL_ERR_STATE;
+    path = malloc(strlen(j->path) + 6u);
+    if (!path)
+        return NINLIL_ERR_CAPACITY;
+    (void)snprintf(path, strlen(j->path) + 6u, "%s.next", j->path);
+    next.fd = open(path, O_RDWR | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+    next.maximum_bytes = j->maximum_bytes;
+    next.generation = j->generation + 1u;
+    /* .next is reserved scratch. Never truncate a symlink, shared inode or
+     * another user's file, including a hard link to the authoritative journal.
+     */
+    if (next.fd < 0 || flock(next.fd, LOCK_EX | LOCK_NB) != 0 ||
+        fstat(j->fd, &old_stat) != 0 || fstat(next.fd, &new_stat) != 0 ||
+        !S_ISREG(new_stat.st_mode) || new_stat.st_nlink != 1 ||
+        new_stat.st_uid != geteuid() ||
+        (new_stat.st_dev == old_stat.st_dev &&
+         new_stat.st_ino == old_stat.st_ino) ||
+        ftruncate(next.fd, 0) != 0)
+        goto cleanup;
+    rc = snapshot(ctx, &next);
+    if (rc != NINLIL_OK)
+        goto cleanup;
+    if (next.poisoned || fdatasync(next.fd) != 0 ||
+        rename(path, j->path) != 0) {
+        rc = NINLIL_ERR_IO;
+        goto cleanup;
+    }
+    old_fd = j->fd;
+    j->fd = next.fd;
+    j->generation = next.generation;
+    next.fd = -1;
+    (void)close(old_fd);
+    rc = fsync_parent(j->path);
+    if (rc != NINLIL_OK)
+        j->poisoned = 1;
+cleanup:
+    if (next.fd >= 0)
+        (void)close(next.fd);
+    free(path);
+    return rc;
+}
+
 void ninlil_journal_close(ninlil_journal *journal)
 {
     if (!journal)
         return;
     if (journal->fd >= 0)
         (void)close(journal->fd);
+    free(journal->path);
     free(journal);
 }

@@ -1,0 +1,8 @@
+{
+  "historical_evidence": true,
+  "revision": "b4f51051d1bbff30ff70327eea67a4c8d211a7b4",
+  "git_path": "docs/THREE_BOARD_RELAY_RESULTS_2026-09-08.json",
+  "sha256": "0cd502d66a4f4e634200eea267c267d1c93cef1c462b483b0b5a507008033143",
+  "retrieve": "git show b4f51051d1bbff30ff70327eea67a4c8d211a7b4:docs/THREE_BOARD_RELAY_RESULTS_2026-09-08.json",
+  "note": "Original full report verified and retained in Git. Current results are in docs/FIELD_RESULTS_2026-09-08.json."
+}

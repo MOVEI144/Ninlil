@@ -25,12 +25,13 @@ static int config_valid(const ninlil_config *config)
            config->link.send && config->link.recv && config->random.fill &&
            config->max_work_per_step <= NINLIL_MAX_STEP_WORK &&
            config->retry_interval_steps <= NINLIL_MAX_RETRY_INTERVAL_STEPS &&
-           ninlil_role_profile_validate(&config->profile) == NINLIL_OK;
+           ninlil_role_profile_validate(&config->profile) == NINLIL_OK &&
+           ninlil_spool_limits_valid(config);
 }
 
 static size_t runtime_ram_bytes(const ninlil_runtime *runtime)
 {
-    return sizeof(*runtime) +
+    return sizeof(*runtime) + ninlil_service_memory(runtime) +
            (size_t)runtime->outbound_capacity * sizeof(*runtime->outbound) +
            (size_t)runtime->inbound_capacity * sizeof(*runtime->inbound) +
            (size_t)runtime->archive_capacity * sizeof(*runtime->archive) +
@@ -58,8 +59,6 @@ int ninlil_open(ninlil_runtime **out, const ninlil_config *config)
     *out = NULL;
     if (!config_valid(config))
         return NINLIL_ERR_INVALID;
-    if (config->profile.role == NINLIL_ROLE_POWERED_RELAY_CANDIDATE)
-        return NINLIL_ERR_STATE;
     if (config->link.max_packet_size != 0u &&
         config->link.max_packet_size < NINLIL_WIRE_RECEIPT_SIZE)
         return NINLIL_ERR_INVALID;
@@ -73,11 +72,16 @@ int ninlil_open(ninlil_runtime **out, const ninlil_config *config)
         runtime->config.retry_interval_steps = 1u;
     if (runtime->config.max_work_per_step == 0u)
         runtime->config.max_work_per_step = 8u;
-    runtime->outbound_capacity = config->profile.max_outbound;
+    runtime->outbound_capacity = config->spool.owned_outbound
+                                     ? config->spool.owned_outbound
+                                     : config->profile.max_outbound;
     runtime->inbound_capacity = config->profile.max_inbound;
     runtime->archive_capacity = config->profile.dedupe_ids;
     runtime->rejection_capacity = config->profile.max_inbound;
-    if (runtime_ram_bytes(runtime) > config->profile.dram_ceiling_bytes) {
+    uint32_t memory_limit = config->spool.owned_outbound
+                                ? config->spool.memory_ceiling_bytes
+                                : config->profile.dram_ceiling_bytes;
+    if (runtime_ram_bytes(runtime) > memory_limit) {
         free(runtime);
         return NINLIL_ERR_CAPACITY;
     }
@@ -93,6 +97,11 @@ int ninlil_open(ninlil_runtime **out, const ninlil_config *config)
         !runtime->rejections) {
         ninlil_close(runtime);
         return NINLIL_ERR_IO;
+    }
+    rc = ninlil_service_open(runtime);
+    if (rc != NINLIL_OK) {
+        ninlil_close(runtime);
+        return rc;
     }
     runtime->replaying = 1u;
     rc =
@@ -113,6 +122,8 @@ void ninlil_close(ninlil_runtime *runtime)
     if (!runtime)
         return;
     ninlil_journal_close(runtime->journal);
+    free(runtime->service_slots);
+    free(runtime->service_wait);
     free(runtime->outbound);
     free(runtime->inbound);
     free(runtime->archive);
@@ -223,8 +234,10 @@ static ninlil_outbound_entry *free_outbound(ninlil_runtime *runtime)
     return NULL;
 }
 
-int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
-                  ninlil_id *message_id)
+int ninlil_submit_checked(ninlil_runtime *runtime,
+                          const ninlil_submission *submission,
+                          const ninlil_delivery_binding *binding,
+                          ninlil_id *message_id)
 {
     ninlil_outbound_entry *existing;
     ninlil_archive_entry *archived;
@@ -249,6 +262,11 @@ int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
             return rc;
         if (!matches)
             return NINLIL_ERR_CONFLICT;
+        rc = ninlil_binding_match(runtime, &existing->message_id,
+                                  existing->binding_offset,
+                                  existing->record_ref.generation, binding);
+        if (rc != NINLIL_OK)
+            return rc;
         *message_id = existing->message_id;
         return NINLIL_OK;
     }
@@ -259,8 +277,18 @@ int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
             return rc;
         if (!matches)
             return NINLIL_ERR_CONFLICT;
+        rc = ninlil_binding_match(runtime, &archived->message_id,
+                                  archived->binding_offset,
+                                  archived->record_ref.generation, binding);
+        if (rc != NINLIL_OK)
+            return rc;
         *message_id = archived->message_id;
         return NINLIL_OK;
+    }
+    if (binding) {
+        rc = ninlil_binding_current(runtime, submission->target, binding);
+        if (rc != NINLIL_OK)
+            return rc;
     }
     rc = deadline_admissible(runtime, submission->absolute_deadline_ms);
     if (rc != NINLIL_OK)
@@ -284,9 +312,9 @@ int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
     candidate.target = submission->target;
     candidate.service = submission->service;
     candidate.payload_len = submission->payload_len;
-    candidate.ownership = submission->ownership;
-    candidate.required_evidence = submission->required_evidence;
-    candidate.traffic_class = submission->traffic_class;
+    candidate.ownership = (uint8_t)submission->ownership;
+    candidate.required_evidence = (uint8_t)submission->required_evidence;
+    candidate.traffic_class = (uint8_t)submission->traffic_class;
     candidate.absolute_deadline_ms = submission->absolute_deadline_ms;
     for (attempt = 0u; attempt < MESSAGE_ID_ATTEMPTS; attempt++) {
         if (runtime->config.random.fill(runtime->config.random.ctx,
@@ -299,8 +327,16 @@ int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
     }
     if (attempt == MESSAGE_ID_ATTEMPTS)
         return NINLIL_ERR_CONFLICT;
+    if (binding) {
+        rc = ninlil_binding_log(runtime, &candidate.message_id, binding,
+                                &candidate.binding_offset);
+        if (rc != NINLIL_OK)
+            return rc;
+    }
     rc = ninlil_log_outbound(runtime, &candidate, submission->payload,
                              &reference);
+    if (rc == NINLIL_OK && binding)
+        rc = ninlil_read_payload(runtime, &reference, 0u, NULL, 0u);
     if (rc != NINLIL_OK)
         return rc;
     candidate.record_ref = reference;
@@ -314,6 +350,12 @@ int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
     return NINLIL_OK;
 }
 
+int ninlil_submit(ninlil_runtime *runtime, const ninlil_submission *submission,
+                  ninlil_id *message_id)
+{
+    return ninlil_submit_checked(runtime, submission, NULL, message_id);
+}
+
 int ninlil_step(ninlil_runtime *runtime)
 {
     uint32_t work = 0u;
@@ -325,6 +367,9 @@ int ninlil_step(ninlil_runtime *runtime)
         return runtime->fatal_error;
     if (runtime->step_count == UINT64_MAX)
         return NINLIL_ERR_FAULT;
+    result = ninlil_collect_if_needed(runtime);
+    if (result != NINLIL_OK)
+        return result;
     runtime->step_count++;
     while (work < runtime->config.max_work_per_step) {
         uint8_t offset;
@@ -359,7 +404,8 @@ int ninlil_step(ninlil_runtime *runtime)
     return result;
 }
 
-int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
+static int receive_filtered(ninlil_runtime *runtime, uint16_t service,
+                            uint8_t classes, ninlil_inbound *out)
 {
     int blocked = NINLIL_ERR_EMPTY;
     int expired_one = 0;
@@ -373,7 +419,9 @@ int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
         ninlil_inbound_entry *entry = &runtime->inbound[index];
         int rc;
 
-        if (!entry->used || entry->handed)
+        if (!entry->used || entry->handed ||
+            (service && entry->service != service) ||
+            !(classes & NINLIL_TRAFFIC_MASK(entry->traffic_class)))
             continue;
         if (entry->required_evidence == NINLIL_EVIDENCE_APPLICATION_ACCEPTED &&
             entry->absolute_deadline_ms != 0u) {
@@ -417,6 +465,23 @@ int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
         return NINLIL_OK;
     }
     return blocked;
+}
+
+int ninlil_receive(ninlil_runtime *runtime, ninlil_inbound *out)
+{
+    return ninlil_receive_service(runtime, 0u, out);
+}
+int ninlil_receive_service(ninlil_runtime *runtime, uint16_t service,
+                           ninlil_inbound *out)
+{
+    return receive_filtered(runtime, service, 15u, out);
+}
+int ninlil_receive_class(ninlil_runtime *runtime, uint16_t service,
+                         ninlil_traffic_class traffic, ninlil_inbound *out)
+{
+    uint8_t mask = NINLIL_TRAFFIC_MASK(traffic);
+    return mask ? receive_filtered(runtime, service, mask, out)
+                : NINLIL_ERR_INVALID;
 }
 
 int ninlil_application_accept(ninlil_runtime *runtime,
@@ -539,11 +604,23 @@ int ninlil_query(ninlil_runtime *runtime, const ninlil_id *message_id,
         return runtime->fatal_error;
     outbound = ninlil_find_outbound(runtime, message_id);
     if (outbound) {
+        if (outbound->binding_offset) {
+            ninlil_delivery_binding binding;
+            int rc = ninlil_query_binding(runtime, message_id, &binding);
+            if (rc != NINLIL_OK)
+                return rc;
+        }
         info_from_outbound(outbound, out);
         return NINLIL_OK;
     }
     archive = ninlil_find_archive_id(runtime, message_id);
     if (archive) {
+        if (archive->binding_offset) {
+            ninlil_delivery_binding binding;
+            int rc = ninlil_query_binding(runtime, message_id, &binding);
+            if (rc != NINLIL_OK)
+                return rc;
+        }
         info_from_archive(archive, out);
         return NINLIL_OK;
     }
@@ -600,4 +677,49 @@ int ninlil_mark_unknown(ninlil_runtime *runtime, const ninlil_id *message_id)
     if (!entry->attempted)
         return NINLIL_ERR_STATE;
     return ninlil_finish_outbound(runtime, entry, NINLIL_OUTCOME_UNKNOWN);
+}
+
+int ninlil_set_retry_interval(ninlil_runtime *runtime, uint32_t steps)
+{
+    if (!runtime || steps == 0u || steps > NINLIL_MAX_RETRY_INTERVAL_STEPS)
+        return NINLIL_ERR_INVALID;
+    if (runtime->fatal_error != NINLIL_OK)
+        return runtime->fatal_error;
+    runtime->config.retry_interval_steps = steps;
+    return NINLIL_OK;
+}
+
+int ninlil_health(const ninlil_runtime *runtime)
+{
+    return runtime ? runtime->fatal_error : NINLIL_ERR_INVALID;
+}
+int ninlil_bind_storage(ninlil_runtime *r, const uint8_t identity[32],
+                        int initialize)
+{
+    uint8_t record[33], checked[33];
+    ninlil_journal_ref ref;
+    int rc;
+    if (!r || !identity || memcmp(identity, (uint8_t[32]){0}, 32u) == 0)
+        return NINLIL_ERR_INVALID;
+    if (r->fatal_error != NINLIL_OK)
+        return r->fatal_error;
+    if (r->storage_bound)
+        return memcmp(identity, r->storage_identity, 32u) == 0
+                   ? NINLIL_OK
+                   : NINLIL_ERR_CONFLICT;
+    if (!initialize || r->has_records)
+        return NINLIL_ERR_CORRUPT;
+    record[0] = 1u;
+    memcpy(record + 1, identity, 32u);
+    rc = ninlil_append_record(r, NINLIL_JRN_STORAGE_BINDING, record,
+                              sizeof(record), &ref);
+    if (rc == NINLIL_OK)
+        rc = ninlil_read_payload(r, &ref, 0u, checked, sizeof(checked));
+    if (rc == NINLIL_OK && memcmp(record, checked, sizeof(record)) != 0)
+        rc = NINLIL_ERR_CORRUPT;
+    if (rc == NINLIL_OK) {
+        memcpy(r->storage_identity, identity, 32u);
+        r->storage_bound = 1u;
+    }
+    return rc;
 }

@@ -9,7 +9,7 @@
 #define FLASH_ERASED UINT8_C(0xFF)
 #define FLASH_ERASED_WORD UINT32_C(0xFFFFFFFF)
 #define FLASH_MAX_RECORD_SIZE 368u
-#define FLASH_MAX_TYPE 9u
+#define FLASH_MAX_TYPE 12u
 #define FLASH_HEADER_CRC_OFFSET 16u
 #define FLASH_COMMIT_OFFSET 24u
 
@@ -121,12 +121,6 @@ static int write_exact(const ninlil_flash_io *io, size_t offset,
                                                            : NINLIL_ERR_IO;
 }
 
-static int can_be_partial_program(uint32_t value, uint32_t target)
-{
-    /* NOR flash programming changes only 1 bits to 0 bits. */
-    return (value & target) == target;
-}
-
 static commit_state classify_commit(const uint8_t *header)
 {
     uint32_t marker = get_be32(header + FLASH_COMMIT_OFFSET);
@@ -135,10 +129,11 @@ static commit_state classify_commit(const uint8_t *header)
 
     if (marker == FLASH_COMMIT && complement == expected_complement)
         return COMMIT_STATE_COMMITTED;
-    if ((marker == FLASH_ERASED_WORD && complement == FLASH_ERASED_WORD) ||
-        (can_be_partial_program(marker, FLASH_COMMIT) &&
-         can_be_partial_program(complement, expected_complement)))
+    if (marker == FLASH_ERASED_WORD && complement == FLASH_ERASED_WORD)
         return COMMIT_STATE_INCOMPLETE;
+    /* A partly programmed marker can also be corruption of a committed
+     *
+     * record. Skipping it would silently abandon durable ownership. */
     return COMMIT_STATE_CORRUPT;
 }
 

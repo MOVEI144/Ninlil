@@ -1,0 +1,210 @@
+{
+  "reviewed_commit": "f5b5b7eb84f7ad830cb2bbba2a9a7820820d53d4",
+  "recorded_at": "2026-09-07T23:49:42.560121+00:00",
+  "product_source_modified": false,
+  "existing_tests_modified": false,
+  "issues_published": false,
+  "hosted_ci_run": false,
+  "physical_hardware_accessed": false,
+  "new_device_backups_created": false,
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "file": "ports/flash/ninlil_flash_store.c",
+      "line": 138,
+      "witness": "storage_probe.c",
+      "title": "Committed marker corruption is treated as incomplete; owned records disappear",
+      "status": "reproduced_unfixed"
+    },
+    {
+      "id": "R2",
+      "priority": "P1",
+      "file": "src/ninlil_policy.c",
+      "line": 50,
+      "witness": "quota_probe.c",
+      "title": "Transient service capacity produces durable permanent rejection",
+      "status": "reproduced_unfixed"
+    },
+    {
+      "id": "R3",
+      "priority": "P1",
+      "file": "src/ninlil_network.c",
+      "line": 257,
+      "witness": "control_probe.c",
+      "title": "Abort of partly applied COMMITTED plan discards its lease fence",
+      "status": "reproduced_unfixed"
+    },
+    {
+      "id": "R4",
+      "priority": "P1",
+      "file": "src/ninlil_network.c",
+      "line": 320,
+      "witness": "control_probe.c",
+      "title": "Pending plan replay checks an unrelated active flow lease",
+      "status": "reproduced_unfixed"
+    },
+    {
+      "id": "R5",
+      "priority": "P1",
+      "file": "src/ninlil_network.c",
+      "line": 325,
+      "witness": "control_probe.c",
+      "title": "Partially applied plan replay bypasses fresh participant reconciliation",
+      "status": "reproduced_unfixed"
+    },
+    {
+      "id": "R6",
+      "priority": "P1",
+      "file": "ports/esp32s3/ninlil_network_pump.c",
+      "line": 90,
+      "witness": "pump_probe.c",
+      "title": "Missing route blocks unrelated queued control transmission",
+      "status": "reproduced_unfixed"
+    },
+    {
+      "id": "R7",
+      "priority": "P1",
+      "file": "src/ninlil_routed.c",
+      "line": 265,
+      "witness": "pump_probe.c",
+      "title": "Staged frame validation ignores deadline and current route lease",
+      "status": "reproduced_unfixed"
+    },
+    {
+      "id": "R8",
+      "priority": "P2",
+      "file": "src/ninlil_airtime.c",
+      "line": 111,
+      "witness": "contract_probe.c",
+      "title": "Small normal frames can indefinitely starve a larger critical frame",
+      "status": "reproduced_unfixed"
+    },
+    {
+      "id": "R9",
+      "priority": "P2",
+      "file": "src/ninlil_join.c",
+      "line": 24,
+      "witness": "contract_probe.c",
+      "title": "Join commits grants that Core policy validation rejects",
+      "status": "reproduced_unfixed"
+    }
+  ],
+  "validation": {
+    "existing_ctest": {
+      "per_configuration": 27,
+      "configurations": [
+        "gcc",
+        "clang",
+        "gcc-sanitize",
+        "clang-sanitize"
+      ],
+      "passed": 108,
+      "failed": 0
+    },
+    "adapted_upstream": {
+      "passed": 711,
+      "failed": 0
+    },
+    "fuzz": {
+      "manifest_runs": 10000,
+      "control_runs": 10000,
+      "seed": 20260907
+    },
+    "gcc_analyzer_object_compilation_units": 40,
+    "clang_analysis": "passed",
+    "esp_and_vendor_api_syntax": "passed",
+    "dependency_pin_and_patch_hash_checks": "passed",
+    "review_witness_executables_per_configuration": 5,
+    "witness_output_lines_per_configuration": 11,
+    "witness_configurations": 4,
+    "unique_findings_reproduced": 9,
+    "simulator_reproducibility_configurations": 4,
+    "format_check": "passed",
+    "new_target_link_run": false,
+    "rf_and_power_cut_run": false
+  },
+  "toolchain": {
+    "container": "ninlil-static-star-verify",
+    "os": "Ubuntu 24.04; Linux 6.6.87.2-microsoft-standard-WSL2 x86_64",
+    "gcc": "13.3.0",
+    "clang": "18.1.3",
+    "clang_format": "18.1.3",
+    "cmake": "3.28.3",
+    "python": "3.12.3"
+  },
+  "commands": {
+    "baseline": "bash /work/.verify-m1-evidence/relay-20260908-local.sh",
+    "probes": "python3 -B reviews/2026-09-08/run_probes.py /tmp/ninlil-secure-hil-local",
+    "gcc_analysis": "python3 -B reviews/2026-09-08/run_analysis.py /tmp/ninlil-secure-hil-local/gcc",
+    "simulator": "for kind in gcc clang gcc-sanitize clang-sanitize; do ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 bash scripts/verify_sim.sh /tmp/ninlil-secure-hil-local/$kind/ninlil_sim; done"
+  },
+  "artifacts": [
+    {
+      "path": "reviews/2026-09-08/contract_probe.c",
+      "bytes": 4663,
+      "sha256": "45a6d113eb944b03c5572905ac4c9ead57daf586dab2dd60eb1e81247fb8f716"
+    },
+    {
+      "path": "reviews/2026-09-08/control_probe.c",
+      "bytes": 6967,
+      "sha256": "bf3b245a5aee378fafbb8cf603c388bd6a409cac5c4049e2ca1391e9db9dda25"
+    },
+    {
+      "path": "reviews/2026-09-08/pump_probe.c",
+      "bytes": 10233,
+      "sha256": "68f75f7e532f84fe06982692809cdc6fa9e263fbc1a465241f271952f44f00c2"
+    },
+    {
+      "path": "reviews/2026-09-08/quota_probe.c",
+      "bytes": 3749,
+      "sha256": "7b42e91122b31c69e3bb367e7b72f943c0a04c1822dda2c8d4c377f16eb7ccaa"
+    },
+    {
+      "path": "reviews/2026-09-08/README.md",
+      "bytes": 16509,
+      "sha256": "61e9d218cdce312359b1ec81030242b5e07fb754c7c1e340e57994fda6cfa4df"
+    },
+    {
+      "path": "reviews/2026-09-08/run_analysis.py",
+      "bytes": 1878,
+      "sha256": "f14516a1afd9b6ba84e121932f95a0d8a51de5c703ae69b45fe55cb8d961943b"
+    },
+    {
+      "path": "reviews/2026-09-08/run_probes.py",
+      "bytes": 2692,
+      "sha256": "90ac0fe31010338816cf9521e26ba59d2c18e50d1a664b2400c9b37e3d7a42d2"
+    },
+    {
+      "path": "reviews/2026-09-08/storage_probe.c",
+      "bytes": 3518,
+      "sha256": "c277be17c587bf6f30ec245e511fd45f5a5d5d81c7ddac9583a4281e381e24d8"
+    },
+    {
+      "path": ".verify-m1-evidence/review-20260908-local.log",
+      "bytes": 60069,
+      "sha256": "9ee19605cc17215a5cd4e264b9899c0e51b9f59880aa2b83808c4abc1f28e1ef"
+    },
+    {
+      "path": ".verify-m1-evidence/review-20260908-probes.log",
+      "bytes": 5417,
+      "sha256": "441f2fa028458a5a854da1b1eae976f20f302a0baa893db73328a6e79daa0467"
+    },
+    {
+      "path": ".verify-m1-evidence/review-20260908-gcc-analyzer.log",
+      "bytes": 1521,
+      "sha256": "c355af5881c881b1a3e90da43b84c9e092c6015531f46ce91a9fbed81f25afc8"
+    },
+    {
+      "path": ".verify-m1-evidence/review-20260908-reproducibility.log",
+      "bytes": 2712,
+      "sha256": "5305dd088b2690cec4c9ee3a3eace3d5acacefb07d12e24198f50c250de049e7"
+    },
+    {
+      "path": ".verify-m1-evidence/review-20260908-probes-final.log",
+      "bytes": 5417,
+      "sha256": "441f2fa028458a5a854da1b1eae976f20f302a0baa893db73328a6e79daa0467"
+    }
+  ],
+  "final_witness_log": ".verify-m1-evidence/review-20260908-probes-final.log"
+}

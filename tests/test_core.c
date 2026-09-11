@@ -592,8 +592,7 @@ static int test_service_direction_payload_class_and_quota(void)
     request.traffic_class = NINLIL_TRAFFIC_NORMAL;
     CHECK(ninlil_submit(runtime, &request, &message_id) == NINLIL_OK);
     test_fill_id(&request.idempotency_key, UINT8_C(0x7A));
-    CHECK(ninlil_submit(runtime, &request, &message_id) ==
-          NINLIL_ERR_UNAUTHORIZED);
+    CHECK(ninlil_submit(runtime, &request, &message_id) == NINLIL_ERR_CAPACITY);
     policy.session_membership_epoch = 0u;
     test_fill_id(&request.idempotency_key, UINT8_C(0x7B));
     CHECK(ninlil_submit(runtime, &request, &message_id) == NINLIL_ERR_STATE);
@@ -615,7 +614,7 @@ static int test_mtu_and_incompatible_journal_rejected(void)
     ninlil_id key;
     ninlil_id message_id;
     ninlil_submission request;
-    uint8_t payload[53];
+    uint8_t payload[NINLIL_RADIO_MTU - 40u + 1u];
     struct stat before;
     struct stat after;
     FILE *file;

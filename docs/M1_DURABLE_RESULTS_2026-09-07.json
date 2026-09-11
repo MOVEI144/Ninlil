@@ -1,0 +1,407 @@
+{
+  "schema": "ninlil-m1-durable-evidence-v1",
+  "source_commit": "80ab9acd444b577fc687bf6dbcddbf7e13ec2fa3",
+  "artifact_root": "C:\\dev\\job\\iot\\Ninlil\\.verify-m1-evidence",
+  "hosted_ci_run": false,
+  "local_gate": {
+    "ctest_configurations": 4,
+    "tests_per_configuration": 16,
+    "result": "PASS",
+    "log_sha256": "032a5fa189af7da7f736a929d0471aaf576b36aeccdbbb72a43200f4cfdc83ff"
+  },
+  "firmware": {
+    "delivery-a-init": {
+      "app_sha256": "417a981b55955a9115feda15a7109646827889616523f8734e7c8099e8bee5c6",
+      "app_bytes": 237280,
+      "sdkconfig_sha256": "f5eddab87fab4305c630bf31f2003c1e2d9f42e379d0e02c7054accc1611d95a"
+    },
+    "delivery-b-resp": {
+      "app_sha256": "b89cda050f883a51563bac762d18b8c8f6977ea06d89dc822464555bbd7d021c",
+      "app_bytes": 234352,
+      "sdkconfig_sha256": "e318ff0531d87dfe3fec66ebc5ab12ce8a64aa3bc264cf9146a705b3d5d2e476"
+    },
+    "delivery-b-init": {
+      "app_sha256": "d1e514a306a1a57e18fd525752c230e6ac493592ff6c406b2491564fbd75c32b",
+      "app_bytes": 237280,
+      "sdkconfig_sha256": "ffef7b14f941f607192eab7d09de572e2fde0d35abd8773a7cce8a939b2a692e"
+    },
+    "delivery-a-resp": {
+      "app_sha256": "bb05f558b3ec2833e65b7f888bf084531b6abca7dcad8d32d1f126da9be6a7c1",
+      "app_bytes": 234352,
+      "sdkconfig_sha256": "a6288678ac67d86b4a883f986d55090f1b0c80ab65f0b2efe976933b1f533e91"
+    },
+    "recovery-a-init": {
+      "app_sha256": "36ec0d5f98f618168cc27511969ff1ee0103c5b9c46686ddec78d580fcfef03d",
+      "app_bytes": 237280,
+      "sdkconfig_sha256": "1000a6c511b0787579eabc01176c485f25f49e6ababee85ed5989ef30d31459a"
+    },
+    "recovery-b-resp": {
+      "app_sha256": "1727aa1017decb2bf33f090bee37d189caf662a2970a5db073d1af26614efa66",
+      "app_bytes": 234352,
+      "sdkconfig_sha256": "d696c807c54b14785717546723918e337f76aba27f818d5bcf07b4be82f82154"
+    }
+  },
+  "campaigns": [
+    {
+      "label": "delivery-a-to-b-01",
+      "mode": "new",
+      "campaign": 2026090701,
+      "source_commit": "80ab9acd444b577fc687bf6dbcddbf7e13ec2fa3",
+      "boards": {
+        "a": {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "variant": "delivery-a-init",
+          "begin_utc": "2026-09-07T10:08:14.848280+00:00",
+          "end_utc": "2026-09-07T10:08:40.515247+00:00",
+          "log_sha256": "329327176e7e5369324ca02bbf88834229f34712cd8ecfbb5887852b409a68c0",
+          "log_bytes": 30577,
+          "app_sha256": "417a981b55955a9115feda15a7109646827889616523f8734e7c8099e8bee5c6",
+          "elf_sha256": "8919340391e493591c416112a1367d6e9fd87fc2288edd20fe47108fb1d64938",
+          "journal_sha256": "50a1fc03e8b43da0691e1123454c5f2ef2cf062e6ff45f3e9b9d6f9eeb309f60",
+          "journal_record_counts": {
+            "1": 100,
+            "2": 100,
+            "3": 100
+          },
+          "journal_append_offset": 27296,
+          "radio_tx_done_logs": 100
+        },
+        "b": {
+          "serial": "E0:72:A1:D8:3E:74",
+          "variant": "delivery-b-resp",
+          "begin_utc": "2026-09-07T10:08:14.580576+00:00",
+          "end_utc": "2026-09-07T10:08:40.719945+00:00",
+          "log_sha256": "d4c1c6a8d12c55f97a4b609708fca2d597e9139c76bb611398b3d32b2e7f3e29",
+          "log_bytes": 29797,
+          "app_sha256": "b89cda050f883a51563bac762d18b8c8f6977ea06d89dc822464555bbd7d021c",
+          "elf_sha256": "3c20b100463caadee5adcb06a6f7677350f3367000c6a6eb244be7b749846346",
+          "journal_sha256": "fda6b2229edb9cfa69eece5bbf3c29f8e17b96021300d7a6ae315e1fba68cc37",
+          "journal_record_counts": {
+            "5": 100,
+            "7": 100,
+            "6": 100
+          },
+          "journal_append_offset": 25600,
+          "radio_tx_done_logs": 100
+        }
+      },
+      "result": "PASS",
+      "distinct_messages": 100,
+      "missing": 0,
+      "duplicate_ownership_records": 0,
+      "sender_stack_minimum_free_bytes": 12876,
+      "evidence": "REMOTE_STORED and SATISFIED; consumer retirement is harness-only, not product application acceptance",
+      "analysis_sha256": "f64df4ff4cea309f4a57d6c22bb58a7adbb4eddd308e0f91bf90c93087547efa",
+      "first_message_id": "2906a6ccc770390887b38a19cb79ac72",
+      "last_message_id": "9a4cc18480b29717635dcba56a1649ea"
+    },
+    {
+      "label": "delivery-a-to-b-replay-01",
+      "mode": "replay",
+      "campaign": 2026090701,
+      "source_commit": "80ab9acd444b577fc687bf6dbcddbf7e13ec2fa3",
+      "boards": {
+        "a": {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "variant": "delivery-a-init",
+          "begin_utc": "2026-09-07T10:09:27.268491+00:00",
+          "end_utc": "2026-09-07T10:09:31.038759+00:00",
+          "log_sha256": "d50a939f970598f9a590d9dc5ddb15241c26e94d362de41b39a0b061d335ce39",
+          "log_bytes": 25859,
+          "app_sha256": "417a981b55955a9115feda15a7109646827889616523f8734e7c8099e8bee5c6",
+          "elf_sha256": "8919340391e493591c416112a1367d6e9fd87fc2288edd20fe47108fb1d64938",
+          "journal_sha256": "50a1fc03e8b43da0691e1123454c5f2ef2cf062e6ff45f3e9b9d6f9eeb309f60",
+          "journal_record_counts": {
+            "1": 100,
+            "2": 100,
+            "3": 100
+          },
+          "journal_append_offset": 27296,
+          "radio_tx_done_logs": 0
+        },
+        "b": {
+          "serial": "E0:72:A1:D8:3E:74",
+          "variant": "delivery-b-resp",
+          "begin_utc": "2026-09-07T10:09:26.943313+00:00",
+          "end_utc": "2026-09-07T10:09:31.100845+00:00",
+          "log_sha256": "c9a63170ff96b3c441eb282bfa71fac96a1fe9d7275df201cfc97a1a170fae39",
+          "log_bytes": 3347,
+          "app_sha256": "b89cda050f883a51563bac762d18b8c8f6977ea06d89dc822464555bbd7d021c",
+          "elf_sha256": "3c20b100463caadee5adcb06a6f7677350f3367000c6a6eb244be7b749846346",
+          "journal_sha256": "fda6b2229edb9cfa69eece5bbf3c29f8e17b96021300d7a6ae315e1fba68cc37",
+          "journal_record_counts": {
+            "5": 100,
+            "7": 100,
+            "6": 100
+          },
+          "journal_append_offset": 25600,
+          "radio_tx_done_logs": 0
+        }
+      },
+      "result": "PASS",
+      "distinct_messages": 100,
+      "missing": 0,
+      "duplicate_ownership_records": 0,
+      "sender_stack_minimum_free_bytes": 13436,
+      "evidence": "REMOTE_STORED and SATISFIED; consumer retirement is harness-only, not product application acceptance",
+      "analysis_sha256": "e670aa592bdd8a6126d6e06003706b37049692595960346b4ef356ba425a0f8b",
+      "first_message_id": "2906a6ccc770390887b38a19cb79ac72",
+      "last_message_id": "9a4cc18480b29717635dcba56a1649ea"
+    },
+    {
+      "label": "delivery-b-to-a-01",
+      "mode": "new",
+      "campaign": 2026090702,
+      "source_commit": "80ab9acd444b577fc687bf6dbcddbf7e13ec2fa3",
+      "boards": {
+        "b": {
+          "serial": "E0:72:A1:D8:3E:74",
+          "variant": "delivery-b-init",
+          "begin_utc": "2026-09-07T10:12:51.264734+00:00",
+          "end_utc": "2026-09-07T10:13:15.930441+00:00",
+          "log_sha256": "ee251aa6406a92a1783852d13ae3fee647a4cc30b3e2f8eb7314ebead5b30660",
+          "log_bytes": 30570,
+          "app_sha256": "d1e514a306a1a57e18fd525752c230e6ac493592ff6c406b2491564fbd75c32b",
+          "elf_sha256": "7c5fa05348769a5282a26f9dcc7f4e75d9ad195596c86cff920ce840d0739919",
+          "journal_sha256": "9ab536229c4787bf125f7cd794115131c376ef62b69b8a11bebb51f6bb62c363",
+          "journal_record_counts": {
+            "1": 100,
+            "2": 100,
+            "3": 100
+          },
+          "journal_append_offset": 27296,
+          "radio_tx_done_logs": 100
+        },
+        "a": {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "variant": "delivery-a-resp",
+          "begin_utc": "2026-09-07T10:12:51.043955+00:00",
+          "end_utc": "2026-09-07T10:13:16.141096+00:00",
+          "log_sha256": "3d2b9f451306468b715f860e88fa827e3e562d7c2d8ff5ac7a1316b2c3ce944e",
+          "log_bytes": 29788,
+          "app_sha256": "bb05f558b3ec2833e65b7f888bf084531b6abca7dcad8d32d1f126da9be6a7c1",
+          "elf_sha256": "92c7f4ea2736347f5d0e31a3053d175fbbb9d787fad9e06f6d28547548a35b6c",
+          "journal_sha256": "bd1f8318ab5146c20d094675449a935b5bfb340815f950abf039082534eab36c",
+          "journal_record_counts": {
+            "5": 100,
+            "7": 100,
+            "6": 100
+          },
+          "journal_append_offset": 25600,
+          "radio_tx_done_logs": 100
+        }
+      },
+      "result": "PASS",
+      "distinct_messages": 100,
+      "missing": 0,
+      "duplicate_ownership_records": 0,
+      "sender_stack_minimum_free_bytes": 12876,
+      "evidence": "REMOTE_STORED and SATISFIED; consumer retirement is harness-only, not product application acceptance",
+      "analysis_sha256": "f58d3d2b1544ff44f5b065228cf87c7a3864444d86238922d37028e7443802bc",
+      "first_message_id": "8d683b17e49553a7f6f26e27ae0ac8eb",
+      "last_message_id": "dca73099d492266ea5cd4302983ffeb2"
+    },
+    {
+      "label": "delivery-b-to-a-replay-01",
+      "mode": "replay",
+      "campaign": 2026090702,
+      "source_commit": "80ab9acd444b577fc687bf6dbcddbf7e13ec2fa3",
+      "boards": {
+        "b": {
+          "serial": "E0:72:A1:D8:3E:74",
+          "variant": "delivery-b-init",
+          "begin_utc": "2026-09-07T10:14:16.334433+00:00",
+          "end_utc": "2026-09-07T10:14:20.045285+00:00",
+          "log_sha256": "b2e18ffcad96567cb4e636140f2120d695b9348d549159d273606c33a464c86f",
+          "log_bytes": 25855,
+          "app_sha256": "d1e514a306a1a57e18fd525752c230e6ac493592ff6c406b2491564fbd75c32b",
+          "elf_sha256": "7c5fa05348769a5282a26f9dcc7f4e75d9ad195596c86cff920ce840d0739919",
+          "journal_sha256": "9ab536229c4787bf125f7cd794115131c376ef62b69b8a11bebb51f6bb62c363",
+          "journal_record_counts": {
+            "1": 100,
+            "2": 100,
+            "3": 100
+          },
+          "journal_append_offset": 27296,
+          "radio_tx_done_logs": 0
+        },
+        "a": {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "variant": "delivery-a-resp",
+          "begin_utc": "2026-09-07T10:14:16.018007+00:00",
+          "end_utc": "2026-09-07T10:14:20.161463+00:00",
+          "log_sha256": "c054adc13eea5dbe51eb652e30817b7ee856a358ba6ea6c0c106fb02ff0c67ac",
+          "log_bytes": 3347,
+          "app_sha256": "bb05f558b3ec2833e65b7f888bf084531b6abca7dcad8d32d1f126da9be6a7c1",
+          "elf_sha256": "92c7f4ea2736347f5d0e31a3053d175fbbb9d787fad9e06f6d28547548a35b6c",
+          "journal_sha256": "bd1f8318ab5146c20d094675449a935b5bfb340815f950abf039082534eab36c",
+          "journal_record_counts": {
+            "5": 100,
+            "7": 100,
+            "6": 100
+          },
+          "journal_append_offset": 25600,
+          "radio_tx_done_logs": 0
+        }
+      },
+      "result": "PASS",
+      "distinct_messages": 100,
+      "missing": 0,
+      "duplicate_ownership_records": 0,
+      "sender_stack_minimum_free_bytes": 13436,
+      "evidence": "REMOTE_STORED and SATISFIED; consumer retirement is harness-only, not product application acceptance",
+      "analysis_sha256": "3f45dd193e76b77681d970bcf1273e9da2f620ee66ecb82d33a684c5e571789a",
+      "first_message_id": "8d683b17e49553a7f6f26e27ae0ac8eb",
+      "last_message_id": "dca73099d492266ea5cd4302983ffeb2"
+    },
+    {
+      "label": "delivery-recovery-resume-01",
+      "mode": "new",
+      "campaign": 2026090703,
+      "source_commit": "80ab9acd444b577fc687bf6dbcddbf7e13ec2fa3",
+      "boards": {
+        "a": {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "variant": "recovery-a-init",
+          "begin_utc": "2026-09-07T10:18:16.238076+00:00",
+          "end_utc": "2026-09-07T10:18:41.874007+00:00",
+          "log_sha256": "0d6dcfe6bfcfb42f63d179fe5697904f5af9f87b23c18593e3d5d5eb129fb384",
+          "log_bytes": 30577,
+          "app_sha256": "36ec0d5f98f618168cc27511969ff1ee0103c5b9c46686ddec78d580fcfef03d",
+          "elf_sha256": "feffc2548e00ab67c7b7e6f3b1f20e37178d93bc1cfea73fe1a9ed34f3ffb3bc",
+          "journal_sha256": "c5cf8cdfc9f40b29a010fb98bbff4d4f66afbb732e6af914cc8a68443f1650bb",
+          "journal_record_counts": {
+            "1": 100,
+            "2": 100,
+            "3": 100
+          },
+          "journal_append_offset": 27296,
+          "radio_tx_done_logs": 100
+        },
+        "b": {
+          "serial": "E0:72:A1:D8:3E:74",
+          "variant": "recovery-b-resp",
+          "begin_utc": "2026-09-07T10:18:15.961232+00:00",
+          "end_utc": "2026-09-07T10:18:42.080430+00:00",
+          "log_sha256": "a2f10f0bd60e08380574cedc5bb2fcf2678e8d8aaed87b19c63b5aa365853c8a",
+          "log_bytes": 29793,
+          "app_sha256": "1727aa1017decb2bf33f090bee37d189caf662a2970a5db073d1af26614efa66",
+          "elf_sha256": "939e1716f1fda29ec63da42486bbd7b918a7c4fe92373f496389141d92c756ec",
+          "journal_sha256": "7a9f112201b688028306b925967fe305405e33bcca1e59c344075c7e8e40286f",
+          "journal_record_counts": {
+            "5": 100,
+            "7": 100,
+            "6": 100
+          },
+          "journal_append_offset": 25600,
+          "radio_tx_done_logs": 100
+        }
+      },
+      "result": "PASS",
+      "distinct_messages": 100,
+      "missing": 0,
+      "duplicate_ownership_records": 0,
+      "sender_stack_minimum_free_bytes": 12876,
+      "evidence": "REMOTE_STORED and SATISFIED; consumer retirement is harness-only, not product application acceptance",
+      "analysis_sha256": "1bd1b3ee0f135a96e650edf1318e773bce0d9c2829a1b5ac74b7448610b8259c",
+      "first_message_id": "dcefbe0c26ce504323a6bbd994d86253",
+      "last_message_id": "c4ca0e84f4ffd07049f040b293261688"
+    }
+  ],
+  "completed_replay": [
+    {
+      "original": "delivery-a-to-b-01",
+      "reboot": "delivery-a-to-b-replay-01",
+      "identical_message_ids": 100,
+      "byte_identical_journals": true,
+      "rf_retransmissions": 0
+    },
+    {
+      "original": "delivery-b-to-a-01",
+      "reboot": "delivery-b-to-a-replay-01",
+      "identical_message_ids": 100,
+      "byte_identical_journals": true,
+      "rf_retransmissions": 0
+    }
+  ],
+  "pending_recovery": {
+    "result": "PASS",
+    "campaign": 2026090703,
+    "pending_message_id": "dcefbe0c26ce504323a6bbd994d86253",
+    "pending_log_sha256": "668835a6cd2c4d1917bbd415588858702364c8be5c5e754d081abf6cc58903be",
+    "pending_sender_records": [
+      "OUT_CREATE",
+      "OUT_ATTEMPT"
+    ],
+    "pending_receiver_empty": true,
+    "snapshots": {
+      "a": {
+        "board": "a",
+        "serial": "E0:72:A1:F7:FF:0C",
+        "action": "read",
+        "offset": 2097152,
+        "bytes": 131072,
+        "sha256": "d67f329293d0cd7a34094fd81316650a9e6bcf8e6a698835025341130a3b05f5",
+        "md5_device_verified": true,
+        "initially_erased": false,
+        "utc": "2026-09-07T10:16:55.465538+00:00"
+      },
+      "b": {
+        "board": "b",
+        "serial": "E0:72:A1:D8:3E:74",
+        "action": "read",
+        "offset": 2097152,
+        "bytes": 131072,
+        "sha256": "b5a41c3758763bbec72769fab4a2533bf2db0b6312d93d25a695f9e4b9e02260",
+        "md5_device_verified": true,
+        "initially_erased": true,
+        "utc": "2026-09-07T10:17:55.265448+00:00"
+      }
+    },
+    "reset_method": "esptool USBJTAGSerialReset into ROM, verified by ROM readback; not power removal",
+    "resumed_same_message_id": true,
+    "resumed_distinct_messages": 100,
+    "capture_validation_issue": "Initial capture helper mistook initialization result=PASS for delivery PASS and raised an assertion; its finally block reset A. Preserved raw log plus post-reset device snapshots establish the pending state. Predicate corrected; no firmware change.",
+    "resume_analysis_sha256": "1bd1b3ee0f135a96e650edf1318e773bce0d9c2829a1b5ac74b7448610b8259c"
+  },
+  "final_device_state": [
+    {
+      "board": "a",
+      "serial": "E0:72:A1:F7:FF:0C",
+      "result": "PASS",
+      "variant": "init-a-fix",
+      "source_commit": "8e8a6ea13efc8932c0a1508e4cc800b3038e1108",
+      "tx_enabled": false,
+      "frequency_hz": 0,
+      "init_cycles": 100,
+      "accounted_gpio_errors": 99,
+      "log_sha256": "2ce1ec36240b87ede68ece7ac10664838fdd895b3328292cbac1746d3cf7b219",
+      "log_bytes": 11431,
+      "end_utc": "2026-09-07T10:20:47.022714+00:00"
+    },
+    {
+      "board": "b",
+      "serial": "E0:72:A1:D8:3E:74",
+      "result": "PASS",
+      "variant": "init-b",
+      "source_commit": "8e8a6ea13efc8932c0a1508e4cc800b3038e1108",
+      "tx_enabled": false,
+      "frequency_hz": 0,
+      "init_cycles": 100,
+      "accounted_gpio_errors": 99,
+      "log_sha256": "c94b8e3a32fec1d014ffd36ac5d7cb60dff032991c822c0af1474506463e0e92",
+      "log_bytes": 11429,
+      "end_utc": "2026-09-07T10:20:49.404054+00:00"
+    }
+  ],
+  "manifest_sha256": "d78872990859c30be5e26d7cea743312ec7f199717df409b04130a73b9eb6a94",
+  "manifest_files": 195,
+  "overall_m1_accepted": false,
+  "unrun_physical_gates": [
+    "physical USB disconnect/reconnect",
+    "controlled hard power interruption",
+    "receiver receipt-loss restart boundary",
+    "radio fault injection matrix",
+    "RF calibration and antenna certification combination verification"
+  ]
+}

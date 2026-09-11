@@ -1,0 +1,52 @@
+#ifndef NINLIL_CONTROL_LOG_H
+#define NINLIL_CONTROL_LOG_H
+
+#include "ninlil_join.h"
+#include "ninlil_relay.h"
+
+#define NINLIL_CONTROL_LOG_MAX (UINT64_C(1024) * 1024u)
+typedef struct ninlil_control_log ninlil_control_log;
+
+typedef struct ninlil_control_replay {
+    int (*join)(void *ctx, const ninlil_join_record *record);
+    int (*plan)(void *ctx, const ninlil_network_plan *record);
+    int (*relay)(void *ctx, const ninlil_relay_record *record);
+    void *ctx;
+    int (*epoch)(void *ctx, uint64_t minimum_epoch);
+    int (*member)(void *ctx, const uint8_t *record, uint16_t length);
+} ninlil_control_replay;
+
+/* Separate from the delivery journal. Uses the existing POSIX or raw-Flash
+ * journal port selected at link time. Bounded append-only storage backpressures
+ * when full; it never evicts owned records or implicitly resets authorization.
+ */
+int ninlil_control_log_open(ninlil_control_log **log, const char *location,
+                            uint64_t maximum_bytes,
+                            ninlil_control_replay replay);
+void ninlil_control_log_close(ninlil_control_log *log);
+int ninlil_control_log_bind(ninlil_control_log *log, const uint8_t identity[32],
+                            int initialize);
+int ninlil_control_log_join(void *ctx, const ninlil_join_record *record);
+int ninlil_control_log_plan(void *ctx, const ninlil_network_plan *record);
+int ninlil_control_log_relay(void *ctx, const ninlil_relay_record *record);
+/* Snapshot emits current committed state only. Collection retains every owned
+ * Relay packet and never restores volatile live proofs. Epoch fences are a new
+ * record kind; older readers fail closed rather than accepting stale plans. */
+typedef int (*ninlil_control_snapshot)(void *ctx,
+                                       ninlil_control_log *replacement);
+int ninlil_control_log_collect(ninlil_control_log *log,
+                               ninlil_control_snapshot snapshot, void *ctx,
+                               int force);
+int ninlil_control_log_epoch(ninlil_control_log *log, uint64_t minimum_epoch);
+/* Revalidate persisted control records before publishing derived authority. */
+int ninlil_control_log_verify(ninlil_control_log *log);
+/* NM1 public trust record; callers authenticate/authorize before committing.
+ * Older readers reject this additive record kind. */
+int ninlil_control_log_member(ninlil_control_log *log, const uint8_t *record,
+                              uint16_t length);
+/* Revalidate the committed envelope/checksum before exposing an owned packet.
+ */
+int ninlil_control_log_verify_relay(void *ctx,
+                                    const ninlil_relay_record *record);
+
+#endif

@@ -2,7 +2,11 @@ get_filename_component(NINLIL_CORE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../../.." 
 
 idf_component_register(
     SRCS
+        "${NINLIL_CORE_ROOT}/src/ninlil_collect.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil_maintenance.c"
         "${NINLIL_CORE_ROOT}/src/ninlil.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil_binding.c"
+        "${NINLIL_CORE_ROOT}/src/ninlil_service.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_authorization.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_custody.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_group.c"
@@ -19,6 +23,7 @@ idf_component_register(
         "${NINLIL_CORE_ROOT}/src/ninlil_radio.c"
         "${NINLIL_CORE_ROOT}/src/ninlil_rf_profile.c"
         "${NINLIL_CORE_ROOT}/ports/flash/ninlil_flash_store.c"
+        "${NINLIL_CORE_ROOT}/ports/flash/ninlil_flash_bank.c"
         "${NINLIL_CORE_ROOT}/ports/flash/ninlil_security_state.c"
         "${NINLIL_CORE_ROOT}/ports/esp32s3/ninlil_flash_journal.c"
         "${NINLIL_CORE_ROOT}/ports/esp32s3/ninlil_security_partitions.c"

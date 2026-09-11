@@ -1,0 +1,193 @@
+{
+  "schema": "ninlil-m1-diagnostic-evidence-v1",
+  "artifact_root": "C:/dev/job/iot/Ninlil/.verify-m1-evidence",
+  "hosted_ci_run": false,
+  "campaigns": [
+    {
+      "campaign": "jp-a-to-b-03",
+      "direction": "a-to-b",
+      "source_commit": "834c62f6b58257f3d116e27937c8803731623805",
+      "boards": {
+        "a": {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "variant": "diag-a-init",
+          "begin_utc": "2026-09-07T18:18:46.902675+09:00",
+          "end_utc": "2026-09-07T18:22:42.143006+09:00",
+          "raw_log_sha256": "1af12f8bd1ee9aff95a5aa06e8aa14216f060777af1d7781d624cfadd14914e8",
+          "raw_log_bytes": 191407,
+          "app_sha256": "c711517d0f6b660da7c16be9e6b9ca9279df9d04944bd97c680ce8d90558d9cd",
+          "app_bytes": 215312,
+          "elf_sha256": "59310b4b4942553b551871fd2501971c602ab1a2e81a0a8d4fc7fff9c12a7726",
+          "boot_elf_hash_prefix": "59310b4b4",
+          "tx_count": 1000,
+          "rx_count": 1000,
+          "rx_rssi_dbm": {
+            "min": -38,
+            "median": -31.0,
+            "max": -31
+          },
+          "rx_snr_db": {
+            "min": 12,
+            "median": 13.0,
+            "max": 14
+          },
+          "cca_rssi_dbm": {
+            "-128": 1000
+          }
+        },
+        "b": {
+          "serial": "E0:72:A1:D8:3E:74",
+          "variant": "diag-b-resp",
+          "begin_utc": "2026-09-07T18:18:46.608453+09:00",
+          "end_utc": "2026-09-07T18:22:42.143006+09:00",
+          "raw_log_sha256": "f5384809ba416c6a046a4f794d6f316ed8539ec30d0bbf07557e05016c186908",
+          "raw_log_bytes": 187203,
+          "app_sha256": "34ecb815453270fa364122d5ffa35b43de62df9e1d6180c7a21529c1780e83a1",
+          "app_bytes": 214384,
+          "elf_sha256": "c2fdb9457c427d44c8b648bebe0e035c4a19b13f27c0142b60bc2b5b8e867f2d",
+          "boot_elf_hash_prefix": "c2fdb9457",
+          "tx_count": 1000,
+          "rx_count": 1000,
+          "rx_rssi_dbm": {
+            "min": -37,
+            "median": -31.0,
+            "max": -31
+          },
+          "rx_snr_db": {
+            "min": 12,
+            "median": 13.0,
+            "max": 14
+          },
+          "cca_rssi_dbm": {
+            "-128": 1000
+          }
+        }
+      },
+      "timeout": 0,
+      "stack_minimum_free_bytes": 14652,
+      "result": "PASS",
+      "matching_pongs": 1000,
+      "missing_pongs": [],
+      "duplicate_sequences": 0,
+      "tx_done_to_pong_log_ms": {
+        "min": 60,
+        "median": 60.0,
+        "max": 60
+      },
+      "capture_metadata_sha256": "f2d505e95ee6ea498d92597dfaa8af14d1755fc9e1180d9c3873ae66bbe5d48d",
+      "evidence_stage": "REMOTE_RECEIVED; diagnostic response, not durable storage"
+    },
+    {
+      "campaign": "jp-b-to-a-01",
+      "direction": "b-to-a",
+      "source_commit": "834c62f6b58257f3d116e27937c8803731623805",
+      "boards": {
+        "b": {
+          "serial": "E0:72:A1:D8:3E:74",
+          "variant": "diag-b-init",
+          "begin_utc": "2026-09-07T18:24:24.549536+09:00",
+          "end_utc": "2026-09-07T18:28:19.757438+09:00",
+          "raw_log_sha256": "9bfc5a04644556f3d9e268f76de20c3de687b33cfdbdad913c4249d12354c4da",
+          "raw_log_bytes": 191406,
+          "app_sha256": "e34bdfb9d8c1b095317b1fed1d8a4c4c206d3166b7bc9a5f0e6d06448a1306aa",
+          "app_bytes": 215312,
+          "elf_sha256": "43ca895466dbe391780a6aa8e587a2a52f0254fbd7cec007cfc822b18b519616",
+          "boot_elf_hash_prefix": "43ca89546",
+          "tx_count": 1000,
+          "rx_count": 1000,
+          "rx_rssi_dbm": {
+            "min": -36,
+            "median": -31.0,
+            "max": -31
+          },
+          "rx_snr_db": {
+            "min": 12,
+            "median": 13.0,
+            "max": 14
+          },
+          "cca_rssi_dbm": {
+            "-128": 1000
+          }
+        },
+        "a": {
+          "serial": "E0:72:A1:F7:FF:0C",
+          "variant": "diag-a-resp",
+          "begin_utc": "2026-09-07T18:24:24.340806+09:00",
+          "end_utc": "2026-09-07T18:28:19.961174+09:00",
+          "raw_log_sha256": "02f9489ded85d82f41562cff4d4fb13b9185363e68f7d5c5779ab7743c2c167f",
+          "raw_log_bytes": 187207,
+          "app_sha256": "97b6f3c831879ccedfd2bd8648842e452d3caf13dc97218be012cbed795dcb40",
+          "app_bytes": 214384,
+          "elf_sha256": "cd1e0ebfb2924e394fff6a8987bace783ea1f26c1b2c94902c5a875bebf889c4",
+          "boot_elf_hash_prefix": "cd1e0ebfb",
+          "tx_count": 1000,
+          "rx_count": 1000,
+          "rx_rssi_dbm": {
+            "min": -38,
+            "median": -31.0,
+            "max": -31
+          },
+          "rx_snr_db": {
+            "min": 12,
+            "median": 13.0,
+            "max": 14
+          },
+          "cca_rssi_dbm": {
+            "-128": 1000
+          }
+        }
+      },
+      "timeout": 0,
+      "stack_minimum_free_bytes": 14652,
+      "result": "PASS",
+      "matching_pongs": 1000,
+      "missing_pongs": [],
+      "duplicate_sequences": 0,
+      "tx_done_to_pong_log_ms": {
+        "min": 60,
+        "median": 60.0,
+        "max": 60
+      },
+      "capture_metadata_sha256": "9b6689ad4c3063e35ed03ad3cb95f551d7df93a5e7fbeffafa011ce617a40350",
+      "evidence_stage": "REMOTE_RECEIVED; diagnostic response, not durable storage"
+    }
+  ],
+  "final_device_state": [
+    {
+      "board": "a",
+      "serial": "E0:72:A1:F7:FF:0C",
+      "result": "PASS",
+      "variant": "init-a-fix",
+      "source_commit": "8e8a6ea13efc8932c0a1508e4cc800b3038e1108",
+      "tx_enabled": false,
+      "frequency_hz": 0,
+      "init_cycles": 100,
+      "accounted_gpio_errors": 99,
+      "log_sha256": "7f9812e0af458ae274c69243e3cec810917989944f4f1a1d7be9029172221f5d",
+      "log_bytes": 11439,
+      "end_utc": "2026-09-07T18:29:05.881429+09:00"
+    },
+    {
+      "board": "b",
+      "serial": "E0:72:A1:D8:3E:74",
+      "result": "PASS",
+      "variant": "init-b",
+      "source_commit": "8e8a6ea13efc8932c0a1508e4cc800b3038e1108",
+      "tx_enabled": false,
+      "frequency_hz": 0,
+      "init_cycles": 100,
+      "accounted_gpio_errors": 99,
+      "log_sha256": "fbe70277b2729c1a998de3193e2d3f6fbc61d59c9beefde9cac6e3c7442b9f2e",
+      "log_bytes": 11429,
+      "end_utc": "2026-09-07T18:29:08.27228+09:00"
+    }
+  ],
+  "unrun_physical_gates": [
+    "durable delivery",
+    "restart and reconnect delivery recovery",
+    "fault injection",
+    "controlled hard power interruption",
+    "RF calibration and interference sensing verification"
+  ],
+  "overall_m1_accepted": false
+}

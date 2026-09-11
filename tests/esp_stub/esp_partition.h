@@ -8,6 +8,7 @@ typedef struct esp_partition_t {
     size_t size;
 } esp_partition_t;
 #define ESP_PARTITION_TYPE_DATA 1
+#define ESP_PARTITION_SUBTYPE_ANY ((esp_partition_subtype_t)0xff)
 const esp_partition_t *esp_partition_find_first(int type,
                                                 esp_partition_subtype_t subtype,
                                                 const char *label);

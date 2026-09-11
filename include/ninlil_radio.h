@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define NINLIL_RADIO_MTU 92u
+#define NINLIL_RADIO_MTU 240u
 #define NINLIL_RADIO_RX_SLOTS 4u
 #define NINLIL_RADIO_RECOVERY_LIMIT 3u
 #define NINLIL_RADIO_RECOVERY_WINDOW_MS UINT64_C(60000)

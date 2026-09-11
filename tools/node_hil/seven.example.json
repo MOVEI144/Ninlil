@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "scenario": "bidirectional",
+  "mac": "legacy",
+  "source_commit": "PLACEHOLDER_BUILD_COMMIT_SHA",
+  "seconds": 570,
+  "sequence": 1,
+  "root": 1,
+  "radio_profile_reviewed": false,
+  "nodes": [
+    {
+      "address": 1,
+      "role": 4,
+      "setup_revision": 1,
+      "usb_serial": "PLACEHOLDER_ACTUAL_SERIAL_1",
+      "identity": "PLACEHOLDER_ACTUAL_IDENTITY_64_HEX",
+      "public_key": "PLACEHOLDER_ACTUAL_PUBLIC_KEY_130_HEX",
+      "firmware_sha256": "PLACEHOLDER_APP_SHA256_64_HEX",
+      "firmware": "build/1/app.bin"
+    },
+    {
+      "address": 2,
+      "role": 3,
+      "setup_revision": 1,
+      "usb_serial": "PLACEHOLDER_ACTUAL_SERIAL_2",
+      "identity": "PLACEHOLDER_ACTUAL_IDENTITY_64_HEX",
+      "public_key": "PLACEHOLDER_ACTUAL_PUBLIC_KEY_130_HEX",
+      "firmware_sha256": "PLACEHOLDER_APP_SHA256_64_HEX",
+      "firmware": "build/2/app.bin"
+    },
+    {
+      "address": 3,
+      "role": 3,
+      "setup_revision": 1,
+      "usb_serial": "PLACEHOLDER_ACTUAL_SERIAL_3",
+      "identity": "PLACEHOLDER_ACTUAL_IDENTITY_64_HEX",
+      "public_key": "PLACEHOLDER_ACTUAL_PUBLIC_KEY_130_HEX",
+      "firmware_sha256": "PLACEHOLDER_APP_SHA256_64_HEX",
+      "firmware": "build/3/app.bin"
+    },
+    {
+      "address": 4,
+      "role": 2,
+      "setup_revision": 1,
+      "usb_serial": "PLACEHOLDER_ACTUAL_SERIAL_4",
+      "identity": "PLACEHOLDER_ACTUAL_IDENTITY_64_HEX",
+      "public_key": "PLACEHOLDER_ACTUAL_PUBLIC_KEY_130_HEX",
+      "firmware_sha256": "PLACEHOLDER_APP_SHA256_64_HEX",
+      "firmware": "build/4/app.bin"
+    },
+    {
+      "address": 5,
+      "role": 2,
+      "setup_revision": 1,
+      "usb_serial": "PLACEHOLDER_ACTUAL_SERIAL_5",
+      "identity": "PLACEHOLDER_ACTUAL_IDENTITY_64_HEX",
+      "public_key": "PLACEHOLDER_ACTUAL_PUBLIC_KEY_130_HEX",
+      "firmware_sha256": "PLACEHOLDER_APP_SHA256_64_HEX",
+      "firmware": "build/5/app.bin"
+    },
+    {
+      "address": 6,
+      "role": 2,
+      "setup_revision": 1,
+      "usb_serial": "PLACEHOLDER_ACTUAL_SERIAL_6",
+      "identity": "PLACEHOLDER_ACTUAL_IDENTITY_64_HEX",
+      "public_key": "PLACEHOLDER_ACTUAL_PUBLIC_KEY_130_HEX",
+      "firmware_sha256": "PLACEHOLDER_APP_SHA256_64_HEX",
+      "firmware": "build/6/app.bin"
+    },
+    {
+      "address": 7,
+      "role": 2,
+      "setup_revision": 1,
+      "usb_serial": "PLACEHOLDER_ACTUAL_SERIAL_7",
+      "identity": "PLACEHOLDER_ACTUAL_IDENTITY_64_HEX",
+      "public_key": "PLACEHOLDER_ACTUAL_PUBLIC_KEY_130_HEX",
+      "firmware_sha256": "PLACEHOLDER_APP_SHA256_64_HEX",
+      "firmware": "build/7/app.bin"
+    }
+  ],
+  "power_mode": "legacy",
+  "closed_probes": false,
+  "route_candidates": false
+}

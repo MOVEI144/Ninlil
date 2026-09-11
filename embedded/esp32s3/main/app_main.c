@@ -1,3 +1,4 @@
+#include "hil_delivery.h"
 #include "ninlil.h"
 #include "ninlil_diag.h"
 #include "ninlil_radio.h"
@@ -9,6 +10,11 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+#include "driver/gpio.h"
+#include "esp_system.h"
+#endif
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -22,6 +28,7 @@
 #define STACK_MIN_FREE_PERCENT 25u
 #define DIAG_PING_PERIOD_MS 100u
 #define DIAG_PING_DEADLINE_MS 1000u
+#define DIAG_START_DELAY_MS 3000u
 
 static const char *const TAG = "ninlil_m1";
 
@@ -45,10 +52,13 @@ static const char *const TAG = "ninlil_m1";
 
 void app_main(void);
 
+#if !defined(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
 static uint64_t now_ms(void)
 {
     return (uint64_t)(esp_timer_get_time() / 1000);
 }
+
+#endif
 
 #if defined(CONFIG_NINLIL_M1_MODE_DIAGNOSTIC) &&                               \
     defined(CONFIG_NINLIL_DIAGNOSTIC_INITIATOR)
@@ -99,6 +109,7 @@ static ninlil_rf_profile configured_profile(void)
     return profile;
 }
 
+#if !defined(CONFIG_NINLIL_M1_MODE_SECURE_BENCH)
 static int initialize_radio_state(ninlil_radio_link *state)
 {
     ninlil_radio_link_init(state);
@@ -135,7 +146,25 @@ static int recover_physical(ninlil_sx1262_radio *physical,
     return NINLIL_ERR_FAULT;
 }
 
+#endif
+
 #if defined(CONFIG_NINLIL_M1_MODE_DELIVERY)
+static const ninlil_hil_campaign delivery_campaign = {
+    CONFIG_NINLIL_DELIVERY_CAMPAIGN_ID, CONFIG_NINLIL_NODE_ID,
+    CONFIG_NINLIL_PEER_ID, CONFIG_NINLIL_DELIVERY_MESSAGE_COUNT};
+
+static void format_id(const ninlil_id *id, char text[33])
+{
+    static const char hex[] = "0123456789abcdef";
+    size_t index;
+
+    for (index = 0u; index < NINLIL_ID_BYTES; index++) {
+        text[index * 2u] = hex[id->bytes[index] >> 4];
+        text[index * 2u + 1u] = hex[id->bytes[index] & 15u];
+    }
+    text[32] = '\0';
+}
+
 static int random_fill(void *context, uint8_t *output, size_t length)
 {
     (void)context;
@@ -155,7 +184,7 @@ static int delivery_policy_lookup(void *context, uint16_t peer,
     };
 
     (void)context;
-    if (!policy || peer == 0u || peer == UINT16_MAX)
+    if (!policy || peer != CONFIG_NINLIL_PEER_ID)
         return NINLIL_ERR_NOT_FOUND;
     memset(policy, 0, sizeof(*policy));
     policy->role = NINLIL_ROLE_POWERED_ENDPOINT;
@@ -166,6 +195,41 @@ static int delivery_policy_lookup(void *context, uint16_t peer,
     policy->grant_count = 1u;
     return NINLIL_OK;
 }
+
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+static bool rx_fault_used[5];
+static unsigned int receipt_fault_count;
+static bool dio_fault_used;
+static bool hold_receipt;
+static ninlil_id held_id;
+
+// Exact fixed-size HIL DATA only; never interpret an arbitrary radio frame.
+static uint32_t fault_sequence(const uint8_t *packet, size_t length)
+{
+    uint32_t campaign;
+
+    if (length != 52u || memcmp(packet, "NL\002\001", 4u) != 0)
+        return 0u;
+    campaign = ((uint32_t)packet[40] << 24) | ((uint32_t)packet[41] << 16) |
+               ((uint32_t)packet[42] << 8) | (uint32_t)packet[43];
+    if (campaign != delivery_campaign.campaign || packet[48] != 0u ||
+        packet[49] != 0u || packet[50] != 0u)
+        return 0u;
+    return packet[51];
+}
+
+static void fault_log(const char *kind, const uint8_t *id_bytes,
+                      uint32_t sequence)
+{
+    ninlil_id id;
+    char text[33];
+
+    memcpy(id.bytes, id_bytes, sizeof(id.bytes));
+    format_id(&id, text);
+    ESP_LOGI(TAG, "HIL_FAULT kind=%s seq=%lu id=%s", kind,
+             (unsigned long)sequence, text);
+}
+#endif
 
 static int pump_radio_rx(ninlil_sx1262_radio *physical, ninlil_radio_link *link)
 {
@@ -186,6 +250,51 @@ static int pump_radio_rx(ninlil_sx1262_radio *physical, ninlil_radio_link *link)
             return rc;
         ESP_LOGD(TAG, "RX len=%u RSSI=%d SNR=%d", (unsigned int)length,
                  (int)info.rssi_dbm, (int)info.snr_db);
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+        {
+            uint32_t sequence = fault_sequence(packet, length);
+            bool duplicate = false;
+
+            if (sequence >= 1u && sequence <= 4u && !rx_fault_used[sequence]) {
+                rx_fault_used[sequence] = true;
+                if (sequence == 1u) {
+                    fault_log("drop-data-after-rx", packet + 10, sequence);
+                    continue;
+                }
+                if (sequence == 2u) {
+                    fault_log("duplicate-data-after-rx", packet + 10, sequence);
+                    duplicate = true;
+                } else if (sequence == 3u) {
+                    fault_log("reserved-flags-after-rx", packet + 10, sequence);
+                    packet[29] |= UINT8_C(0x80);
+                } else {
+                    fault_log("wrong-target-after-rx", packet + 10, sequence);
+                    packet[6] = 0u;
+                    packet[7] = 99u;
+                }
+            } else if (length == 26u && memcmp(packet, "NL\002\002", 4u) == 0 &&
+                       receipt_fault_count < 2u) {
+                receipt_fault_count++;
+                if (receipt_fault_count == 1u) {
+                    fault_log("drop-receipt-after-rx", packet + 8, 0u);
+                    continue;
+                }
+                fault_log("duplicate-receipt-after-rx", packet + 8, 0u);
+                duplicate = true;
+            }
+            // The injected restart clears this boot-local marker. A replayed
+            // sequence 6 must be allowed to send its durable duplicate receipt.
+            if (sequence == 6u && rx_fault_used[4]) {
+                memcpy(held_id.bytes, packet + 10, sizeof(held_id.bytes));
+                hold_receipt = true;
+            }
+            if (duplicate) {
+                rc = ninlil_radio_push_rx(link, packet, length);
+                if (rc != NINLIL_OK)
+                    return rc;
+            }
+        }
+#endif
         rc = ninlil_radio_push_rx(link, packet, length);
         if (rc != NINLIL_OK)
             return rc;
@@ -204,38 +313,40 @@ static int pump_radio_tx(ninlil_sx1262_radio *physical, ninlil_radio_link *link)
     rc = ninlil_radio_begin_tx(link, &packet, &length);
     if (rc != NINLIL_OK)
         return rc;
-    rc = ninlil_sx1262_radio_send(physical, packet, (uint16_t)length);
-    if (rc == NINLIL_OK)
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+    if (hold_receipt && length == 26u &&
+        memcmp(packet, "NL\002\002", 4u) == 0 &&
+        memcmp(packet + 8, held_id.bytes, sizeof(held_id.bytes)) == 0) {
+        fault_log("hold-receipt-until-restart", packet + 8, 6u);
+        return ninlil_radio_tx_defer(link);
+    }
+    if (!dio_fault_used && fault_sequence(packet, length) == 5u) {
+        if (gpio_intr_disable((gpio_num_t)39) != ESP_OK)
+            return NINLIL_ERR_IO;
+        rc = ninlil_sx1262_radio_send(physical, packet, (uint16_t)length);
+        if (gpio_intr_enable((gpio_num_t)39) != ESP_OK)
+            return NINLIL_ERR_IO;
+        if (rc == NINLIL_ERR_BUSY)
+            return ninlil_radio_tx_defer(link);
+        dio_fault_used = true;
+        fault_log("masked-dio1-tx", packet + 10, 5u);
+        ESP_LOGI(TAG, "HIL_FAULT_TX_RESULT rc=%d expected=%d", rc,
+                 NINLIL_ERR_TIMEOUT);
+        if (rc != NINLIL_ERR_TIMEOUT)
+            return NINLIL_ERR_FAULT;
+    } else
+#endif
+        rc = ninlil_sx1262_radio_send(physical, packet, (uint16_t)length);
+    if (rc == NINLIL_OK) {
+        ESP_LOGI(TAG, "HIL_LINK_SENT bytes=%u", (unsigned int)length);
         return ninlil_radio_tx_done(link);
+    }
     if (rc == NINLIL_ERR_BUSY)
         return ninlil_radio_tx_defer(link);
     ESP_LOGW(TAG, "radio TX failed: %d; packet remains pending", rc);
     if (rc == NINLIL_ERR_TIMEOUT || rc == NINLIL_ERR_IO)
         return recover_physical(physical, link, rc);
     return rc;
-}
-
-static uint32_t get_be32(const uint8_t *input)
-{
-    return ((uint32_t)input[0] << 24) | ((uint32_t)input[1] << 16) |
-           ((uint32_t)input[2] << 8) | (uint32_t)input[3];
-}
-
-static int validate_hil_inbound(const ninlil_inbound *inbound)
-{
-    uint32_t sequence;
-
-    if (!inbound || inbound->source != CONFIG_NINLIL_PEER_ID ||
-        inbound->service != APP_SERVICE || inbound->payload_len != 8u ||
-        inbound->payload[0] != (uint8_t)(CONFIG_NINLIL_PEER_ID >> 8) ||
-        inbound->payload[1] != (uint8_t)CONFIG_NINLIL_PEER_ID ||
-        inbound->payload[2] != (uint8_t)(CONFIG_NINLIL_NODE_ID >> 8) ||
-        inbound->payload[3] != (uint8_t)CONFIG_NINLIL_NODE_ID)
-        return NINLIL_ERR_INVALID;
-    sequence = get_be32(inbound->payload + 4);
-    return sequence >= 1u && sequence <= CONFIG_NINLIL_DELIVERY_MESSAGE_COUNT
-               ? NINLIL_OK
-               : NINLIL_ERR_INVALID;
 }
 
 #if defined(CONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT)
@@ -246,38 +357,10 @@ typedef struct hil_batch {
     bool complete;
 } hil_batch;
 
-static void put_be32(uint8_t *output, uint32_t value)
-{
-    output[0] = (uint8_t)(value >> 24);
-    output[1] = (uint8_t)(value >> 16);
-    output[2] = (uint8_t)(value >> 8);
-    output[3] = (uint8_t)value;
-}
-
-static void hil_key(ninlil_id *key, uint32_t sequence)
-{
-    static const uint8_t prefix[8] = {'N', 'I', 'N', 'L', 'I', 'L', 'M', '1'};
-
-    memcpy(key->bytes, prefix, sizeof(prefix));
-    key->bytes[8] = (uint8_t)(CONFIG_NINLIL_NODE_ID >> 8);
-    key->bytes[9] = (uint8_t)CONFIG_NINLIL_NODE_ID;
-    key->bytes[10] = (uint8_t)(CONFIG_NINLIL_PEER_ID >> 8);
-    key->bytes[11] = (uint8_t)CONFIG_NINLIL_PEER_ID;
-    put_be32(key->bytes + 12, sequence);
-}
-
-static void hil_payload(uint8_t payload[8], uint32_t sequence)
-{
-    payload[0] = (uint8_t)(CONFIG_NINLIL_NODE_ID >> 8);
-    payload[1] = (uint8_t)CONFIG_NINLIL_NODE_ID;
-    payload[2] = (uint8_t)(CONFIG_NINLIL_PEER_ID >> 8);
-    payload[3] = (uint8_t)CONFIG_NINLIL_PEER_ID;
-    put_be32(payload + 4, sequence);
-}
-
 static int advance_hil_batch(ninlil_runtime *runtime, hil_batch *batch)
 {
     ninlil_info info;
+    char id[33];
     int rc;
 
     if (batch->complete)
@@ -288,40 +371,49 @@ static int advance_hil_batch(ninlil_runtime *runtime, hil_batch *batch)
             return rc;
         if (info.outcome == NINLIL_OUTCOME_ACTIVE)
             return NINLIL_OK;
-        if (info.outcome != NINLIL_OUTCOME_SATISFIED)
+        if (info.outcome != NINLIL_OUTCOME_SATISFIED ||
+            info.required_evidence != NINLIL_EVIDENCE_REMOTE_STORED ||
+            info.latest_evidence < NINLIL_EVIDENCE_REMOTE_STORED)
             return NINLIL_ERR_FAULT;
-        ESP_LOGI(TAG, "HIL delivery satisfied sequence=%lu/%u",
-                 (unsigned long)batch->sequence,
-                 (unsigned int)CONFIG_NINLIL_DELIVERY_MESSAGE_COUNT);
+        format_id(&batch->message_id, id);
+        ESP_LOGI(TAG, "HIL_SATISFIED campaign=%lu seq=%lu id=%s evidence=%u",
+                 (unsigned long)delivery_campaign.campaign,
+                 (unsigned long)batch->sequence, id,
+                 (unsigned int)info.latest_evidence);
         batch->active = false;
         batch->sequence++;
     }
     if (batch->sequence > CONFIG_NINLIL_DELIVERY_MESSAGE_COUNT) {
         batch->complete = true;
         ESP_LOGI(TAG,
-                 "NINLIL_HIL_DELIVERY result=PASS node=%u peer=%u count=%u",
+                 "NINLIL_HIL_DELIVERY result=PASS node=%u peer=%u count=%u "
+                 "campaign=%lu",
                  (unsigned int)CONFIG_NINLIL_NODE_ID,
                  (unsigned int)CONFIG_NINLIL_PEER_ID,
-                 (unsigned int)CONFIG_NINLIL_DELIVERY_MESSAGE_COUNT);
+                 (unsigned int)CONFIG_NINLIL_DELIVERY_MESSAGE_COUNT,
+                 (unsigned long)delivery_campaign.campaign);
         return stack_headroom("delivery-complete");
     }
     {
-        ninlil_id key;
-        uint8_t payload[8];
-
-        hil_key(&key, batch->sequence);
-        hil_payload(payload, batch->sequence);
+        uint8_t payload[NINLIL_HIL_PAYLOAD_SIZE];
         ninlil_submission request;
 
-        ninlil_submission_defaults(&request);
-        request.idempotency_key = key;
-        request.target = CONFIG_NINLIL_PEER_ID;
-        request.service = APP_SERVICE;
-        request.payload = payload;
-        request.payload_len = sizeof(payload);
+        rc = ninlil_hil_request(&delivery_campaign, batch->sequence, &request,
+                                payload);
+        if (rc != NINLIL_OK)
+            return rc;
         rc = ninlil_submit(runtime, &request, &batch->message_id);
         if (rc != NINLIL_OK)
             return rc;
+        rc = ninlil_query(runtime, &batch->message_id, &info);
+        if (rc != NINLIL_OK)
+            return rc;
+        format_id(&batch->message_id, id);
+        ESP_LOGI(TAG,
+                 "HIL_SUBMIT campaign=%lu seq=%lu id=%s outcome=%u evidence=%u",
+                 (unsigned long)delivery_campaign.campaign,
+                 (unsigned long)batch->sequence, id, (unsigned int)info.outcome,
+                 (unsigned int)info.latest_evidence);
         batch->active = true;
     }
     return NINLIL_OK;
@@ -338,6 +430,7 @@ static void run_delivery(ninlil_sx1262_radio *physical)
     bool fatal = false;
 #if defined(CONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT)
     hil_batch batch = {.sequence = 1u};
+    uint64_t campaign_deadline = now_ms() + UINT64_C(600000);
 #endif
 
     if (initialize_radio_state(&adapter) != NINLIL_OK) {
@@ -360,6 +453,10 @@ static void run_delivery(ninlil_sx1262_radio *physical)
         ESP_LOGE(TAG, "durable Runtime open failed");
         return;
     }
+    ESP_LOGI(TAG, "NINLIL_HIL_DELIVERY_READY campaign=%lu node=%u peer=%u",
+             (unsigned long)delivery_campaign.campaign,
+             (unsigned int)delivery_campaign.node,
+             (unsigned int)delivery_campaign.peer);
     while (!fatal) {
         ninlil_inbound inbound;
         int rc = pump_radio_rx(physical, &adapter);
@@ -386,12 +483,24 @@ static void run_delivery(ninlil_sx1262_radio *physical)
             }
         }
         while (!fatal && ninlil_receive(runtime, &inbound) == NINLIL_OK) {
-            rc = validate_hil_inbound(&inbound);
+            uint32_t sequence;
+            char id[33];
+
+            rc = ninlil_hil_inbound(&delivery_campaign, &inbound, &sequence);
             if (rc != NINLIL_OK) {
                 ESP_LOGE(TAG, "HIL inbound validation failed: %d", rc);
                 fatal = true;
                 break;
             }
+            format_id(&inbound.message_id, id);
+            ESP_LOGI(
+                TAG,
+                "HIL_STORED campaign=%lu seq=%lu id=%s source=%u target=%u",
+                (unsigned long)delivery_campaign.campaign,
+                (unsigned long)sequence, id, (unsigned int)inbound.source,
+                (unsigned int)delivery_campaign.node);
+            // This test consumer only validates and durably retires the offer.
+            // It does not represent any product application side effect.
             rc = ninlil_application_accept(runtime, &inbound.message_id);
             if (rc != NINLIL_OK) {
                 ESP_LOGE(TAG, "Application acceptance commit failed: %d", rc);
@@ -399,13 +508,26 @@ static void run_delivery(ninlil_sx1262_radio *physical)
                 break;
             }
             inbound_accepted++;
-            ESP_LOGI(TAG, "Application ACCEPTED count=%lu service=%u len=%u",
-                     (unsigned long)inbound_accepted,
-                     (unsigned int)inbound.service,
-                     (unsigned int)inbound.payload_len);
+            ESP_LOGI(TAG, "HIL_CONSUMED campaign=%lu seq=%lu id=%s count=%lu",
+                     (unsigned long)delivery_campaign.campaign,
+                     (unsigned long)sequence, id,
+                     (unsigned long)inbound_accepted);
+#if defined(CONFIG_NINLIL_DELIVERY_FAULT_CAMPAIGN)
+            if (sequence == 6u && hold_receipt) {
+                fault_log("receiver-restart-before-receipt",
+                          inbound.message_id.bytes, sequence);
+                esp_restart();
+            }
+#endif
         }
 #if defined(CONFIG_NINLIL_DELIVERY_SUBMIT_ON_BOOT)
         if (!fatal && NINLIL_CONFIG_RF_TX_ENABLED) {
+            if (!batch.complete && now_ms() >= campaign_deadline) {
+                ESP_LOGE(TAG,
+                         "NINLIL_HIL_DELIVERY result=FAIL reason=deadline");
+                fatal = true;
+                break;
+            }
             rc = advance_hil_batch(runtime, &batch);
             if (rc != NINLIL_OK) {
                 ESP_LOGE(TAG, "HIL batch failed: %d", rc);
@@ -426,6 +548,7 @@ static int diagnostic_send(ninlil_sx1262_radio *radio, uint8_t type,
     ninlil_diag_frame frame;
     uint8_t packet[NINLIL_DIAG_MAX];
     size_t length;
+    int rc;
 
     memset(&frame, 0, sizeof(frame));
     frame.type = type;
@@ -435,7 +558,17 @@ static int diagnostic_send(ninlil_sx1262_radio *radio, uint8_t type,
     length = ninlil_diag_encode(packet, &frame);
     if (length == 0u)
         return NINLIL_ERR_INVALID;
-    return ninlil_sx1262_radio_send(radio, packet, (uint16_t)length);
+    rc = ninlil_sx1262_radio_send(radio, packet, (uint16_t)length);
+    if (rc != NINLIL_ERR_BUSY)
+        ESP_LOGI(TAG,
+                 "DIAG_TX type=%u seq=%lu source=%u target=%u rc=%d "
+                 "cca_stage=%u chip=%u command=%u rssi=%d",
+                 (unsigned int)type, (unsigned long)sequence,
+                 (unsigned int)frame.source, (unsigned int)target, rc,
+                 (unsigned int)radio->cca_stage,
+                 (unsigned int)radio->cca_chip_mode,
+                 (unsigned int)radio->cca_cmd_status, (int)radio->cca_rssi_dbm);
+    return rc;
 }
 
 static void run_diagnostic(ninlil_sx1262_radio *radio)
@@ -446,13 +579,21 @@ static void run_diagnostic(ninlil_sx1262_radio *radio)
     uint32_t received = 0u;
     uint32_t timed_out = 0u;
     uint32_t waiting_sequence = 0u;
-    TickType_t next_send = xTaskGetTickCount();
+    TickType_t next_send =
+        xTaskGetTickCount() + pdMS_TO_TICKS(DIAG_START_DELAY_MS);
     TickType_t deadline = 0u;
     bool waiting = false;
+    uint64_t campaign_deadline =
+        now_ms() + DIAG_START_DELAY_MS +
+        (uint64_t)CONFIG_NINLIL_DIAGNOSTIC_PING_COUNT * UINT64_C(2000);
+    uint64_t progress_at = now_ms() + UINT64_C(5000);
 #endif
 
     if (initialize_radio_state(&recovery_state) != NINLIL_OK)
         return;
+    ESP_LOGI(TAG, "NINLIL_HIL_DIAG_READY node=%u peer=%u",
+             (unsigned int)CONFIG_NINLIL_NODE_ID,
+             (unsigned int)CONFIG_NINLIL_PEER_ID);
     for (;;) {
         uint8_t packet[NINLIL_DIAG_MAX];
         uint16_t length = 0u;
@@ -468,11 +609,14 @@ static void run_diagnostic(ninlil_sx1262_radio *radio)
             ninlil_diag_frame frame;
 
             if (ninlil_diag_decode(packet, length, &frame) == NINLIL_OK &&
-                frame.target == CONFIG_NINLIL_NODE_ID) {
-                ESP_LOGI(TAG, "DIAG type=%u seq=%lu RSSI=%d SNR=%d",
-                         (unsigned int)frame.type,
-                         (unsigned long)frame.sequence, (int)info.rssi_dbm,
-                         (int)info.snr_db);
+                frame.target == CONFIG_NINLIL_NODE_ID &&
+                frame.source == CONFIG_NINLIL_PEER_ID) {
+                ESP_LOGI(
+                    TAG,
+                    "DIAG type=%u seq=%lu source=%u target=%u RSSI=%d SNR=%d",
+                    (unsigned int)frame.type, (unsigned long)frame.sequence,
+                    (unsigned int)frame.source, (unsigned int)frame.target,
+                    (int)info.rssi_dbm, (int)info.snr_db);
                 if (frame.type == NINLIL_DIAG_PING &&
                     NINLIL_CONFIG_RF_TX_ENABLED) {
                     rc = diagnostic_send(radio, NINLIL_DIAG_PONG,
@@ -498,6 +642,23 @@ static void run_diagnostic(ninlil_sx1262_radio *radio)
         }
 #if defined(CONFIG_NINLIL_DIAGNOSTIC_INITIATOR)
         now = xTaskGetTickCount();
+        if (now_ms() >= progress_at) {
+            ESP_LOGI(TAG,
+                     "DIAG_PROGRESS node=%u sent=%lu received=%lu timeout=%lu "
+                     "cca_busy=%lu",
+                     (unsigned int)CONFIG_NINLIL_NODE_ID, (unsigned long)sent,
+                     (unsigned long)received, (unsigned long)timed_out,
+                     (unsigned long)radio->channel_busy);
+            progress_at = now_ms() + UINT64_C(5000);
+        }
+        if (now_ms() >= campaign_deadline) {
+            ESP_LOGE(TAG,
+                     "NINLIL_HIL_DIAG result=FAIL reason=campaign-deadline "
+                     "sent=%lu received=%lu timeout=%lu",
+                     (unsigned long)sent, (unsigned long)received,
+                     (unsigned long)timed_out);
+            return;
+        }
         if (waiting && tick_reached(now, deadline)) {
             timed_out++;
             waiting = false;

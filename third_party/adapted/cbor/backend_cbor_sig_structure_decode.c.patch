@@ -1,0 +1,22 @@
+--- third_party/libedhoc/backends/cbor/src/backend_cbor_sig_structure_decode.c
++++ third_party/adapted/cbor/backend_cbor_sig_structure_decode.c
+@@ -18,6 +18,12 @@
+ 
+ static bool decode_sig_structure(zcbor_state_t *state, struct sig_structure *result);
+ 
++
++/* Exact callback types: no incompatible function-pointer casts. */
++static bool ninlil_decoder_decode_sig_structure(zcbor_state_t *state, void *data)
++{
++    return decode_sig_structure(state, data);
++}
+ 
+ static bool decode_sig_structure(
+ 		zcbor_state_t *state, struct sig_structure *result)
+@@ -50,5 +56,5 @@
+ 	zcbor_state_t states[3];
+ 
+ 	return zcbor_entry_function(payload, payload_len, (void *)result, payload_len_out, states,
+-		(zcbor_decoder_t *)decode_sig_structure, sizeof(states) / sizeof(zcbor_state_t), 1);
++		ninlil_decoder_decode_sig_structure, sizeof(states) / sizeof(zcbor_state_t), 1);
+ }

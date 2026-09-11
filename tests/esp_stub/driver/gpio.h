@@ -24,4 +24,6 @@ esp_err_t gpio_install_isr_service(int flags);
 esp_err_t gpio_isr_handler_add(gpio_num_t gpio, void (*handler)(void *),
                                void *context);
 esp_err_t gpio_isr_handler_remove(gpio_num_t gpio);
+esp_err_t gpio_intr_disable(gpio_num_t gpio);
+esp_err_t gpio_intr_enable(gpio_num_t gpio);
 #endif

@@ -1,0 +1,45 @@
+menu "Ninlil experimental adaptation"
+config NINLIL_ADAPTIVE_MAC_EXPERIMENTAL
+    bool "Enable airtime DRR instead of legacy packet-count scheduling"
+    default n
+    help
+        Experimental opt-in for the reference radio pump. Changes local queue
+        scheduling only; not frequency, output limits, security or membership.
+        Uses 10 ms base quantum, 8:4:3:1 airtime weights, and at most 50 ms
+        urgent bypass while a large packet accumulates radio credit.
+        Rebuild all consumers after the scheduler ABI extension.
+        Seven-board RF and full firmware qualification remain required.
+config NINLIL_CLOSED_PROBES_EXPERIMENTAL
+    bool "Route using finalized probe windows and measured queue residence"
+    default n
+    help
+        Connect actual TX completion, applied power, authenticated replies and
+        queue residence to the existing observation and Coordinator route cost.
+        No reply is classified before its three-second window closes. Routing
+        uses the latest eight completed trials; power-policy independent windows
+        remain separate. Legacy power adaptation is unchanged. Receive PHY,
+        credentials, packet formats and durable message ownership are unchanged.
+        Requires a full consumer rebuild and the seven-board acceptance gate.
+config NINLIL_RADIO_FEEDBACK_EXPERIMENTAL
+    bool "Use confirmed, non-overlapping neighbor probe windows for TX power"
+    default n
+    help
+        Opt-in actual node/pump integration. The driver stages TX power;
+        only TX_DONE with matching applied output confirms a new generation.
+        Authenticated neighbor replies feed eight-trial, non-overlapping
+        windows. Sleep invalidates unfinished measurements without RF loss.
+        Bootstrap/control floods remain at the reviewed maximum output.
+        Does not change frequency, modulation, membership or remote routing
+        observation formats. Actual ESP-IDF and seven-board RF gates remain.
+config NINLIL_ROUTE_CANDIDATES_EXPERIMENTAL
+    bool "Use bounded fixed-PHY candidate search on Root"
+    depends on NINLIL_CLOSED_PROBES_EXPERIMENTAL
+    default n
+    help
+        Root alone attaches a 16-node/64-edge workspace. Each node step performs
+        up to 64 search units; no global optimum, calibrated capacity or SLO
+        claim. Requires fresh directed observations in both hop directions.
+        All existing prepare/commit/reconcile/lease and RF limits remain.
+        Participant firmware reserves the same optional workspace but does not
+        use it. Measure whole-firmware RAM and RF before acceptance.
+endmenu
