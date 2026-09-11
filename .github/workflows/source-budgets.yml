@@ -1,0 +1,54 @@
+name: Source ownership budgets
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-budgets-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  budgets:
+    name: Source ownership budgets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Verify all unchanged source ceilings
+        shell: bash
+        run: |
+          set +e
+          overall=0
+          checks=(
+            scripts/loc_m1_software.sh
+            scripts/loc_secure_network.sh
+            scripts/loc_m3_security.sh
+            scripts/loc_p0.sh
+            scripts/loc.sh
+          )
+
+          for check in "${checks[@]}"; do
+            echo "::group::$check"
+            if bash "$check"; then
+              echo "PASS: $check"
+            else
+              status=$?
+              overall=1
+              echo "FAIL($status): $check"
+            fi
+            echo "::endgroup::"
+          done
+
+          if ((overall != 0)); then
+            echo 'One or more source ownership budgets failed.' >&2
+            exit 1
+          fi
