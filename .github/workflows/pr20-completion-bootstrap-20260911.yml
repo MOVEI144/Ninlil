@@ -1,0 +1,109 @@
+name: PR20 guarded completion bootstrap
+
+on:
+  push:
+    branches:
+      - implementation/validated-integration-20260910
+    paths:
+      - .github/workflows/pr20-completion-bootstrap-20260911.yml
+
+concurrency:
+  group: ninlil-pr20-guarded-completion
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: write
+  actions: read
+  models: read
+
+jobs:
+  complete:
+    name: Bootstrap guarded completion
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      TARGET_BRANCH: implementation/validated-integration-20260910
+      PR_NUMBER: "20"
+      SOURCE_WORKFLOW: .github/workflows/pr20-completion-20260911.yml
+      SELF_PATH: .github/workflows/pr20-completion-bootstrap-20260911.yml
+    steps:
+      - name: Checkout exact PR branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: implementation/validated-integration-20260910
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install isolated execution environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            build-essential clang clang-format-18 cmake ninja-build libssl-dev \
+            python3-venv python3-pip
+          python3 -m venv /tmp/ninlil-venv
+          /tmp/ninlil-venv/bin/pip install --disable-pip-version-check requests pyyaml
+
+      - name: Extract and run the guarded completion logic
+        id: completion
+        shell: bash
+        env:
+          MODEL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -f "$SOURCE_WORKFLOW"
+          export PATH="/tmp/ninlil-venv/bin:$PATH"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          source = Path('.github/workflows/pr20-completion-20260911.yml')
+          data = yaml.safe_load(source.read_text(encoding='utf-8'))
+          steps = data['jobs']['complete']['steps']
+          writer = next(step['run'] for step in steps if step.get('name') == 'Write guarded repository agent')
+          main = next(step['run'] for step in steps if step.get('name') == 'Complete implementation and enforce exact-tree verification')
+          main = main.replace(
+              "pr20-completion-20260911|recover-verified-source",
+              "pr20-completion-20260911|pr20-completion-bootstrap-20260911|recover-verified-source",
+          )
+          Path('/tmp/write-agent.sh').write_text(writer, encoding='utf-8')
+          Path('/tmp/run-completion.sh').write_text(main, encoding='utf-8')
+          PY
+
+          bash /tmp/write-agent.sh
+          rm -f "$SELF_PATH"
+          # The extracted main script owns and verifies deletion of SOURCE_WORKFLOW.
+          export SELF_PATH="$SOURCE_WORKFLOW"
+          bash /tmp/run-completion.sh
+
+      - name: Report guarded completion failure
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          {
+            echo "### PR #20 guarded completion failed closed"
+            echo
+            echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo "No failed or incomplete result was marked as release-ready or merged."
+            for log in /tmp/ninlil-host-*.log /tmp/ninlil-esp-*.log; do
+              [ -f "$log" ] || continue
+              echo
+              echo "<details><summary>$(basename "$log") tail</summary>"
+              echo
+              echo '```text'
+              tail -n 120 "$log"
+              echo '```'
+              echo '</details>'
+            done
+          } > /tmp/pr20-failure.md
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/pr20-failure.md
