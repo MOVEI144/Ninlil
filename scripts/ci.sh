@@ -69,11 +69,22 @@ run_build clang "$clang_bin" OFF
 run_build gcc-sanitize "$gcc_bin" ON
 run_build clang-sanitize "$clang_bin" ON
 
+format_roots=()
+for candidate in include src ports tests embedded examples; do
+  [[ -d "$root/$candidate" ]] && format_roots+=("$root/$candidate")
+done
+((${#format_roots[@]} > 0)) || {
+  echo "no source roots found for formatting" >&2
+  exit 1
+}
 mapfile -d '' format_files < <(
-  find "$root/include" "$root/src" "$root/ports" "$root/tests" \
-    "$root/embedded" "$root/examples" -type f \( -name '*.c' -o -name '*.h' \) \
+  find "${format_roots[@]}" -type f \( -name '*.c' -o -name '*.h' \) \
     ! -path "$root/third_party/*" -print0 | sort -z
 )
+((${#format_files[@]} > 0)) || {
+  echo "no C sources found for formatting" >&2
+  exit 1
+}
 "$clang_format_bin" --dry-run --Werror "${format_files[@]}"
 
 "$root/scripts/check_sx126x_driver.sh"
