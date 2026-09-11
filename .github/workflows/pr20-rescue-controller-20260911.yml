@@ -1,0 +1,121 @@
+name: PR20 rescue controller
+
+on:
+  push:
+    branches:
+      - automation/pr20-rescue-controller-20260911
+    paths:
+      - .github/workflows/pr20-rescue-controller-20260911.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ninlil-pr20-rescue-controller
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: read
+
+jobs:
+  supervise:
+    name: Supervise isolated watchdog retries
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      PR_NUMBER: "20"
+      WATCHDOG_BRANCH: automation/pr20-watchdog-20260911
+      RESCUE_BRANCH: automation/pr20-rescue-controller-20260911
+    steps:
+      - name: Checkout controller branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: automation/pr20-rescue-controller-20260911
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Wait for current watchdog and retry only failed completion runs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+
+          is_merged() {
+            [ "$(gh api "repos/$repo/pulls/$PR_NUMBER" --jq '.merged')" = "true" ]
+          }
+
+          cleanup_and_exit() {
+            git push origin --delete "$RESCUE_BRANCH" || true
+            exit 0
+          }
+
+          if is_merged; then
+            cleanup_and_exit
+          fi
+
+          # Allow the first watchdog attempt to finish without interference.
+          for poll in $(seq 1 90); do
+            run_json=$(gh api "repos/$repo/actions/runs?branch=$WATCHDOG_BRANCH&per_page=100" \
+              --jq '[.workflow_runs[] | select(.name == "PR20 isolated completion watchdog")] | sort_by(.created_at) | reverse | .[0] // {}')
+            run_id=$(jq -r '.id // empty' <<<"$run_json")
+            status=$(jq -r '.status // empty' <<<"$run_json")
+            if [ -n "$run_id" ] && [ "$status" = "completed" ]; then
+              break
+            fi
+            if is_merged; then
+              cleanup_and_exit
+            fi
+            sleep 30
+          done
+
+          if is_merged; then
+            cleanup_and_exit
+          fi
+
+          run_json=$(gh api "repos/$repo/actions/runs?branch=$WATCHDOG_BRANCH&per_page=100" \
+            --jq '[.workflow_runs[] | select(.name == "PR20 isolated completion watchdog")] | sort_by(.created_at) | reverse | .[0] // {}')
+          run_id=$(jq -r '.id // empty' <<<"$run_json")
+          test -n "$run_id"
+
+          for retry in 1 2; do
+            conclusion=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.conclusion // ""')
+            if [ "$conclusion" = "failure" ] || [ "$conclusion" = "cancelled" ] || [ "$conclusion" = "timed_out" ]; then
+              gh api --method POST "repos/$repo/actions/runs/$run_id/rerun-failed-jobs"
+            else
+              gh api --method POST "repos/$repo/actions/runs/$run_id/rerun"
+            fi
+
+            # A re-run uses the same run id with a new run_attempt.
+            seen_active=0
+            for poll in $(seq 1 660); do
+              status=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')
+              if [ "$status" != "completed" ]; then
+                seen_active=1
+              elif [ "$seen_active" -eq 1 ]; then
+                break
+              fi
+              if is_merged; then
+                cleanup_and_exit
+              fi
+              sleep 30
+            done
+
+            if is_merged; then
+              cleanup_and_exit
+            fi
+          done
+
+          final_conclusion=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.conclusion // "unknown"')
+          {
+            echo "### PR #20 rescue controller exhausted retries"
+            echo
+            echo "Watchdog run: $GITHUB_SERVER_URL/$repo/actions/runs/$run_id"
+            echo "Final conclusion: \`$final_conclusion\`"
+            echo
+            echo "通常マージが成立していないため、成功扱いにはしていません。"
+          } > /tmp/pr20-rescue-result.md
+          gh pr comment "$PR_NUMBER" --repo "$repo" --body-file /tmp/pr20-rescue-result.md
+          exit 1
