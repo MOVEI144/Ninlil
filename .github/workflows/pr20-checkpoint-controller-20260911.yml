@@ -1,0 +1,108 @@
+name: PR20 checkpoint retry controller
+
+on:
+  push:
+    branches:
+      - automation/pr20-checkpoint-controller-20260911
+    paths:
+      - .github/workflows/pr20-checkpoint-controller-20260911.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ninlil-pr20-checkpoint-retry-controller
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: read
+
+jobs:
+  supervise:
+    name: Retry checkpointed completion from latest saved head
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      PR_NUMBER: "20"
+      TARGET_BRANCH: automation/pr20-checkpointed-completion-20260911
+      SELF_BRANCH: automation/pr20-checkpoint-controller-20260911
+    steps:
+      - name: Checkout controller branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: automation/pr20-checkpoint-controller-20260911
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Supervise and retry the checkpointed completion
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+
+          merged() {
+            [ "$(gh api "repos/$repo/pulls/$PR_NUMBER" --jq '.merged')" = "true" ]
+          }
+          cleanup() {
+            git push origin --delete "$SELF_BRANCH" || true
+          }
+          latest_run() {
+            gh api "repos/$repo/actions/runs?branch=$TARGET_BRANCH&per_page=100" \
+              --jq '[.workflow_runs[] | select(.name == "PR20 checkpointed completion")] | sort_by(.updated_at) | reverse | .[0] // {}'
+          }
+
+          merged && { cleanup; exit 0; }
+
+          run_json=$(latest_run)
+          run_id=$(jq -r '.id // empty' <<<"$run_json")
+          test -n "$run_id"
+
+          # Wait for the initial attempt without disturbing it.
+          for poll in $(seq 1 660); do
+            status=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')
+            [ "$status" = "completed" ] && break
+            merged && { cleanup; exit 0; }
+            sleep 30
+          done
+
+          merged && { cleanup; exit 0; }
+          test "$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')" = "completed"
+
+          for retry in 1 2; do
+            conclusion=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.conclusion // ""')
+            if [ "$conclusion" = "failure" ] || [ "$conclusion" = "cancelled" ] || [ "$conclusion" = "timed_out" ]; then
+              gh api --method POST "repos/$repo/actions/runs/$run_id/rerun-failed-jobs"
+            else
+              gh api --method POST "repos/$repo/actions/runs/$run_id/rerun"
+            fi
+
+            active_seen=0
+            for poll in $(seq 1 690); do
+              status=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')
+              [ "$status" != "completed" ] && active_seen=1
+              if [ "$status" = "completed" ] && [ "$active_seen" -eq 1 ]; then
+                break
+              fi
+              merged && { cleanup; exit 0; }
+              sleep 30
+            done
+
+            merged && { cleanup; exit 0; }
+            test "$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')" = "completed"
+          done
+
+          final=$(gh api "repos/$repo/actions/runs/$run_id" --jq '{status, conclusion, run_attempt, html_url}')
+          {
+            echo "### PR #20 checkpoint retry controller exhausted retries"
+            echo
+            echo '```json'
+            echo "$final"
+            echo '```'
+            echo
+            echo "未マージのため完了扱いにはしていません。各成功工程のチェックポイントはPRブランチに残っています。"
+          } > /tmp/pr20-checkpoint-controller-result.md
+          gh pr comment "$PR_NUMBER" --repo "$repo" --body-file /tmp/pr20-checkpoint-controller-result.md
+          exit 1
