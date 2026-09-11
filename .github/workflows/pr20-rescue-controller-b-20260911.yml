@@ -1,0 +1,112 @@
+name: PR20 rescue controller B
+
+on:
+  push:
+    branches:
+      - automation/pr20-rescue-controller-b-20260911
+    paths:
+      - .github/workflows/pr20-rescue-controller-b-20260911.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ninlil-pr20-rescue-controller-b
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: read
+
+jobs:
+  supervise:
+    name: Retry latest isolated watchdog when necessary
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      PR_NUMBER: "20"
+      WATCHDOG_BRANCH: automation/pr20-watchdog-20260911
+      SELF_BRANCH: automation/pr20-rescue-controller-b-20260911
+    steps:
+      - name: Checkout controller branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: automation/pr20-rescue-controller-b-20260911
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Wait for active attempt, then retry once if PR remains open
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+
+          merged() {
+            [ "$(gh api "repos/$repo/pulls/$PR_NUMBER" --jq '.merged')" = "true" ]
+          }
+          cleanup() {
+            git push origin --delete "$SELF_BRANCH" || true
+          }
+
+          if merged; then
+            cleanup
+            exit 0
+          fi
+
+          latest_run() {
+            gh api "repos/$repo/actions/runs?branch=$WATCHDOG_BRANCH&per_page=100" \
+              --jq '[.workflow_runs[] | select(.name == "PR20 isolated completion watchdog")] | sort_by(.updated_at) | reverse | .[0] // {}'
+          }
+
+          run_json=$(latest_run)
+          run_id=$(jq -r '.id // empty' <<<"$run_json")
+          test -n "$run_id"
+
+          for poll in $(seq 1 180); do
+            status=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')
+            [ "$status" = "completed" ] && break
+            merged && { cleanup; exit 0; }
+            sleep 30
+          done
+
+          merged && { cleanup; exit 0; }
+          status=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')
+          test "$status" = "completed"
+          conclusion=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.conclusion // ""')
+
+          if [ "$conclusion" = "failure" ] || [ "$conclusion" = "cancelled" ] || [ "$conclusion" = "timed_out" ]; then
+            gh api --method POST "repos/$repo/actions/runs/$run_id/rerun-failed-jobs"
+          else
+            gh api --method POST "repos/$repo/actions/runs/$run_id/rerun"
+          fi
+
+          active_seen=0
+          for poll in $(seq 1 690); do
+            status=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')
+            if [ "$status" = "completed" ] && [ "$active_seen" -eq 1 ]; then
+              break
+            fi
+            [ "$status" != "completed" ] && active_seen=1
+            merged && { cleanup; exit 0; }
+            sleep 30
+          done
+
+          if merged; then
+            cleanup
+            exit 0
+          fi
+
+          final_status=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.status')
+          final_conclusion=$(gh api "repos/$repo/actions/runs/$run_id" --jq '.conclusion // "unknown"')
+          {
+            echo "### PR #20 second rescue attempt did not merge"
+            echo
+            echo "Watchdog run: $GITHUB_SERVER_URL/$repo/actions/runs/$run_id"
+            echo "Status: \`$final_status\`, conclusion: \`$final_conclusion\`"
+            echo
+            echo "未マージのため完了扱いにはしていません。"
+          } > /tmp/pr20-rescue-b.md
+          gh pr comment "$PR_NUMBER" --repo "$repo" --body-file /tmp/pr20-rescue-b.md
+          exit 1
