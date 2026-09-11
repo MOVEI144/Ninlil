@@ -1,0 +1,140 @@
+name: PR20 retire obsolete completion workflows
+
+on:
+  push:
+    branches:
+      - implementation/validated-integration-20260910
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  issues: write
+  pull-requests: write
+  statuses: write
+
+concurrency:
+  group: pr20-retire-obsolete-completion
+  cancel-in-progress: false
+
+jobs:
+  retire-and-verify:
+    if: github.repository == 'MOVEI144/Ninlil'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      TARGET_BRANCH: implementation/validated-integration-20260910
+      PR_NUMBER: '20'
+      SELF_PATH: .github/workflows/pr20-retire-obsolete-20260911.yml
+    steps:
+      - name: Checkout exact integration branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: implementation/validated-integration-20260910
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Retire obsolete completion machinery
+        id: retire
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = "$TARGET_BRANCH"
+          git fetch origin "$TARGET_BRANCH"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/$TARGET_BRANCH)"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          rm -f \
+            .github/workflows/pr20-completion-20260911.yml \
+            .github/workflows/pr20-completion-bootstrap-20260911.yml \
+            .github/workflows/recover-verified-source.yml \
+            "$SELF_PATH"
+
+          git diff --check
+          if git diff --quiet; then
+            echo 'No obsolete workflow files remained.'
+          else
+            git add -A
+            git commit -m 'ci: retire obsolete PR 20 completion workflows'
+            git push origin "HEAD:$TARGET_BRANCH"
+          fi
+
+          final_sha=$(git rev-parse HEAD)
+          echo "final_sha=$final_sha" >> "$GITHUB_OUTPUT"
+          echo "Final verification SHA: $final_sha" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install host verification tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            build-essential clang clang-format-18 cmake ninja-build libssl-dev
+
+      - name: Fetch and verify pinned dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/fetch_edhoc.sh
+          bash scripts/fetch_sx126x_driver.sh
+          python3 scripts/check_edhoc.py
+          bash scripts/check_sx126x_driver.sh
+
+      - name: Verify final tree on GCC Clang sanitizers static analysis and fuzz
+        id: host
+        continue-on-error: true
+        shell: bash
+        env:
+          CLANG_FORMAT: clang-format-18
+        run: |
+          set -o pipefail
+          ./scripts/ci.sh 2>&1 | tee /tmp/pr20-final-host.log
+
+      - name: Publish final-tree result and request review
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FINAL_SHA: ${{ steps.retire.outputs.final_sha }}
+          HOST_OUTCOME: ${{ steps.host.outcome }}
+        run: |
+          set -euo pipefail
+          state=failure
+          description='Final-tree host verification failed'
+          if [[ "$HOST_OUTCOME" == success ]]; then
+            state=success
+            description='Final-tree host verification passed'
+          fi
+
+          gh api --method POST \
+            "repos/$GITHUB_REPOSITORY/statuses/$FINAL_SHA" \
+            -f state="$state" \
+            -f context='PR20 final-tree host verification' \
+            -f description="$description" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+          {
+            echo "### PR #20 final-tree verification"
+            echo
+            echo "Final SHA: \`$FINAL_SHA\`"
+            echo "Host outcome: **$HOST_OUTCOME**"
+            echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            if [[ -f /tmp/pr20-final-host.log ]]; then
+              echo '<details><summary>Host log tail</summary>'
+              echo
+              echo '```text'
+              tail -n 160 /tmp/pr20-final-host.log
+              echo '```'
+              echo '</details>'
+            fi
+          } > /tmp/pr20-final-result.md
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/pr20-final-result.md
+
+          if [[ "$HOST_OUTCOME" == success ]]; then
+            gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body '@coderabbitai review'
+          else
+            exit 1
+          fi
