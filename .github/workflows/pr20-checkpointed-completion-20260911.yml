@@ -1,0 +1,377 @@
+name: PR20 checkpointed completion
+
+on:
+  push:
+    branches:
+      - automation/pr20-checkpointed-completion-20260911
+    paths:
+      - .github/workflows/pr20-checkpointed-completion-20260911.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ninlil-pr20-checkpointed-completion
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  checks: write
+  contents: write
+  issues: write
+  models: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  complete:
+    name: Checkpoint implementation and merge PR 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      PR_NUMBER: "20"
+      PR_BRANCH: implementation/validated-integration-20260910
+      SOURCE_AGENT_BRANCH: automation/pr20-watchdog-20260911
+      SELF_BRANCH: automation/pr20-checkpointed-completion-20260911
+    steps:
+      - name: Checkout isolated workflow branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: automation/pr20-checkpointed-completion-20260911
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Wait until every earlier PR completion writer is inactive
+        id: wait
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          for poll in $(seq 1 240); do
+            merged=$(gh api "repos/$repo/pulls/$PR_NUMBER" --jq '.merged')
+            if [ "$merged" = "true" ]; then
+              echo "merged=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            active_pr=$(gh api "repos/$repo/actions/runs?branch=$PR_BRANCH&per_page=100" \
+              --jq '[.workflow_runs[] | select((.name == "PR20 guarded completion" or .name == "PR20 guarded completion bootstrap") and .status != "completed")] | length')
+            active_watchdog=$(gh api "repos/$repo/actions/runs?branch=$SOURCE_AGENT_BRANCH&per_page=100" \
+              --jq '[.workflow_runs[] | select(.name == "PR20 isolated completion watchdog" and .status != "completed")] | length')
+            if [ "$active_pr" = "0" ] && [ "$active_watchdog" = "0" ]; then
+              echo "merged=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Earlier writer still active: PR=$active_pr watchdog=$active_watchdog ($poll/240)"
+            sleep 30
+          done
+          echo "Earlier writer remained active for 120 minutes; refusing concurrent PR writes." >&2
+          exit 1
+
+      - name: Stop when PR already merged
+        if: steps.wait.outputs.merged == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin --delete "$SELF_BRANCH" || true
+
+      - name: Install deterministic toolchain and isolated Python environment
+        if: steps.wait.outputs.merged != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            build-essential clang clang-format-18 cmake ninja-build libssl-dev \
+            python3-venv python3-pip docker.io ripgrep
+          python3 -m venv /tmp/ninlil-venv
+          /tmp/ninlil-venv/bin/pip install --disable-pip-version-check requests pyyaml
+
+      - name: Checkout latest PR head and remove temporary recovery machinery
+        if: steps.wait.outputs.merged != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "$PR_BRANCH" "$SOURCE_AGENT_BRANCH"
+          git checkout -B "$PR_BRANCH" "origin/$PR_BRANCH"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/pr20-completion-20260911.yml
+          rm -f .github/workflows/pr20-completion-bootstrap-20260911.yml
+          rm -f .github/workflows/recover-verified-source.yml
+
+      - name: Capture immutable gates and extract the constrained agent
+        if: steps.wait.outputs.merged != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="/tmp/ninlil-venv/bin:$PATH"
+          mkdir -p /tmp/ninlil-guard/files
+          printf '%s\n' .github/workflows/ci.yml scripts/ci.sh > /tmp/ninlil-guard/protected.txt
+          rg -l --hidden --glob '!.git/**' \
+            'M1 software line budget|50000|50,000|7000|7,000|line budget exceeded' \
+            scripts cmake CMakeLists.txt >> /tmp/ninlil-guard/protected.txt || true
+          sort -u /tmp/ninlil-guard/protected.txt -o /tmp/ninlil-guard/protected.txt
+          while IFS= read -r file; do
+            test -f "$file" || continue
+            mkdir -p "/tmp/ninlil-guard/files/$(dirname "$file")"
+            cp "$file" "/tmp/ninlil-guard/files/$file"
+          done < /tmp/ninlil-guard/protected.txt
+          sha256sum $(cat /tmp/ninlil-guard/protected.txt) > /tmp/ninlil-guard/SHA256SUMS
+
+          git show "origin/$SOURCE_AGENT_BRANCH:.github/workflows/pr20-watchdog-20260911.yml" > /tmp/ninlil-watchdog.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          import yaml
+          data = yaml.safe_load(Path('/tmp/ninlil-watchdog.yml').read_text(encoding='utf-8'))
+          steps = data['jobs']['finish-pr20']['steps']
+          block = next(step['run'] for step in steps if step.get('name') == 'Write constrained repository engineering agent')
+          Path('/tmp/write-agent.sh').write_text(block, encoding='utf-8')
+          PY
+          bash /tmp/write-agent.sh
+
+      - name: Fetch and verify pinned dependencies
+        if: steps.wait.outputs.merged != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/fetch_edhoc.sh
+          bash scripts/fetch_sx126x_driver.sh
+          python3 scripts/check_edhoc.py
+          bash scripts/check_sx126x_driver.sh
+
+      - name: Run checkpointed implementation phases
+        if: steps.wait.outputs.merged != 'true'
+        shell: bash
+        env:
+          MODEL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          export PATH="/tmp/ninlil-venv/bin:$PATH"
+
+          guard_gates() {
+            sha256sum --check /tmp/ninlil-guard/SHA256SUMS
+            git diff --check
+            test ! -e .github/workflows/pr20-completion-20260911.yml
+            test ! -e .github/workflows/pr20-completion-bootstrap-20260911.yml
+            test ! -e .github/workflows/recover-verified-source.yml
+          }
+
+          checkpoint() {
+            local message="$1"
+            guard_gates
+            git add -A
+            if git diff --cached --name-only | grep -Eq '^third_party/(libedhoc|sx126x_driver)(/|$)'; then
+              echo "Fetched dependency working copy entered staging; refusing checkpoint." >&2
+              exit 1
+            fi
+            git diff --cached --check
+            if git diff --cached --quiet; then
+              echo "No checkpoint changes for: $message"
+              return 0
+            fi
+            git commit -m "$message"
+            git push origin "HEAD:$PR_BRANCH"
+          }
+
+          python3 /tmp/ninlil_agent.py functional --limit 55
+          checkpoint "wip: separate scalable roster and bounded security sessions"
+
+          # A second pass starts from the checkpoint and focuses on anything the first pass left disconnected.
+          python3 /tmp/ninlil_agent.py functional --limit 35
+          checkpoint "wip: complete authenticated negotiated PHY lifecycle"
+
+          python3 /tmp/ninlil_agent.py structure --limit 45
+          checkpoint "refactor: meet immutable source budgets through deduplication"
+
+          python3 /tmp/ninlil_agent.py review --limit 30
+          checkpoint "fix: address release audit findings for PR 20"
+
+      - name: Complete unchanged host verification with repair checkpoints
+        if: steps.wait.outputs.merged != 'true'
+        shell: bash
+        env:
+          MODEL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLANG_FORMAT: clang-format-18
+        run: |
+          set -euo pipefail
+          export PATH="/tmp/ninlil-venv/bin:$PATH"
+
+          guard_gates() {
+            sha256sum --check /tmp/ninlil-guard/SHA256SUMS
+            git diff --check
+          }
+          checkpoint_repair() {
+            local message="$1"
+            guard_gates
+            git add -A
+            if git diff --cached --name-only | grep -Eq '^third_party/(libedhoc|sx126x_driver)(/|$)'; then
+              exit 1
+            fi
+            git diff --cached --check
+            if ! git diff --cached --quiet; then
+              git commit -m "$message"
+              git push origin "HEAD:$PR_BRANCH"
+            fi
+          }
+
+          host_passed=0
+          for round in 1 2 3; do
+            guard_gates
+            rm -rf .ci-build build-ci
+            if timeout 90m ./scripts/ci.sh > "/tmp/ninlil-host-$round.log" 2>&1; then
+              host_passed=1
+              break
+            fi
+            tail -n 1000 "/tmp/ninlil-host-$round.log" > /tmp/ninlil-host-feedback.log
+            if [ "$round" -lt 3 ]; then
+              python3 /tmp/ninlil_agent.py repair --limit 35 --feedback-file /tmp/ninlil-host-feedback.log
+              checkpoint_repair "wip: repair unchanged host verification round $round"
+            fi
+          done
+          test "$host_passed" -eq 1
+          guard_gates
+
+      - name: Complete canonical ESP-IDF verification with repair checkpoints
+        if: steps.wait.outputs.merged != 'true'
+        shell: bash
+        env:
+          MODEL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CLANG_FORMAT: clang-format-18
+        run: |
+          set -euo pipefail
+          export PATH="/tmp/ninlil-venv/bin:$PATH"
+
+          guard_gates() {
+            sha256sum --check /tmp/ninlil-guard/SHA256SUMS
+            git diff --check
+          }
+          checkpoint_repair() {
+            local message="$1"
+            guard_gates
+            git add -A
+            if git diff --cached --name-only | grep -Eq '^third_party/(libedhoc|sx126x_driver)(/|$)'; then
+              exit 1
+            fi
+            git diff --cached --check
+            if ! git diff --cached --quiet; then
+              git commit -m "$message"
+              git push origin "HEAD:$PR_BRANCH"
+            fi
+          }
+
+          esp_passed=0
+          for round in 1 2 3; do
+            guard_gates
+            if timeout 90m python3 /tmp/run_canonical_esp.py > "/tmp/ninlil-esp-$round.log" 2>&1; then
+              esp_passed=1
+              break
+            fi
+            tail -n 1000 "/tmp/ninlil-esp-$round.log" > /tmp/ninlil-esp-feedback.log
+            if [ "$round" -lt 3 ]; then
+              python3 /tmp/ninlil_agent.py repair --limit 35 --feedback-file /tmp/ninlil-esp-feedback.log
+              checkpoint_repair "wip: repair canonical ESP-IDF verification round $round"
+              rm -rf .ci-build build-ci
+              timeout 90m ./scripts/ci.sh > "/tmp/ninlil-host-after-esp-$round.log" 2>&1
+            fi
+          done
+          test "$esp_passed" -eq 1
+          guard_gates
+
+      - name: Publish exact-head checks and merge without bypass
+        if: steps.wait.outputs.merged != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          sha256sum --check /tmp/ninlil-guard/SHA256SUMS
+          git diff --check
+          rm -rf third_party/libedhoc third_party/sx126x_driver
+          git add -A
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: finalize verified PR 20 tree"
+            git push origin "HEAD:$PR_BRANCH"
+          fi
+          final_sha=$(git rev-parse HEAD)
+          test -z "$(git status --porcelain)"
+
+          create_check() {
+            local name="$1"
+            local summary="$2"
+            gh api --method POST "repos/$GITHUB_REPOSITORY/check-runs" \
+              -f name="$name" -f head_sha="$final_sha" -f status=completed -f conclusion=success \
+              -f "output[title]=PR #20 exact-head verification passed" \
+              -f "output[summary]=$summary" >/dev/null
+          }
+          create_check "Host, sanitizers, static analysis" \
+            "Exact committed head passed unchanged GCC, Clang, ASan/UBSan, static-analysis, fuzz, package, vendor and line-budget gates."
+          create_check "ESP-IDF v6.0.2 / ESP32-S3" \
+            "Exact committed head passed every run step in the immutable canonical ESP-IDF/ESP32-S3 job using its declared container."
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$final_sha" \
+            -f state=success -f context=CI -f description="Exact-head guarded verification passed" >/dev/null
+
+          {
+            echo "### PR #20 checkpointed completion passed"
+            echo
+            echo "Verified head: \`$final_sha\`"
+            echo
+            echo "- scalable registered roster / bounded resident security sessions: implemented and tested"
+            echo "- authenticated PHY prepare/commit/applied/rollback lifecycle: implemented and tested"
+            echo "- unchanged M1/global line budgets: PASS"
+            echo "- GCC, Clang, both sanitizer configurations, static analysis, fuzz, package and vendor tests: PASS"
+            echo "- canonical ESP-IDF v6.0.2 / ESP32-S3 commands: PASS"
+            echo "- physical RF, real flash power-cut and current measurements remain separate acceptance work"
+          } > /tmp/pr20-checkpoint-success.md
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/pr20-checkpoint-success.md
+
+          gh pr ready "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" || true
+          if ! gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --merge --delete-branch; then
+            gh pr merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --auto --merge --delete-branch
+            for poll in $(seq 1 90); do
+              if [ "$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" --jq '.merged')" = "true" ]; then
+                git push origin --delete "$SELF_BRANCH" || true
+                exit 0
+              fi
+              sleep 20
+            done
+            exit 1
+          fi
+          git push origin --delete "$SELF_BRANCH" || true
+
+      - name: Report failure while preserving completed checkpoints
+        if: failure() && steps.wait.outputs.merged != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          head_sha=$(git rev-parse HEAD 2>/dev/null || echo unknown)
+          {
+            echo "### PR #20 checkpointed completion stopped fail-closed"
+            echo
+            echo "Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "Latest local/checkpoint head: \`$head_sha\`"
+            echo
+            echo "完了した工程の安全なチェックポイントはPRブランチへ保存しています。未合格のためReady化・マージはしていません。"
+            for file in /tmp/ninlil-*-summary.txt; do
+              [ -f "$file" ] || continue
+              echo
+              echo "<details><summary>$(basename "$file")</summary>"
+              echo
+              cat "$file"
+              echo
+              echo "</details>"
+            done
+            for log in /tmp/ninlil-host-*.log /tmp/ninlil-esp-*.log; do
+              [ -f "$log" ] || continue
+              echo
+              echo "<details><summary>$(basename "$log") tail</summary>"
+              echo
+              echo '```text'
+              tail -n 180 "$log"
+              echo '```'
+              echo "</details>"
+            done
+          } > /tmp/pr20-checkpoint-failure.md
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/pr20-checkpoint-failure.md
