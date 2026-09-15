@@ -3,7 +3,7 @@
 
 #include "ninlil.h"
 
-#define NINLIL_AIRTIME_API_VERSION 3u
+#define NINLIL_AIRTIME_API_VERSION 4u
 #define NINLIL_AIRTIME_QUEUE_MAX 32u
 #define NINLIL_AIRTIME_FRAME_MAX 240u
 
@@ -41,6 +41,8 @@ typedef struct ninlil_airtime_scheduler {
     uint16_t peer_ids[NINLIL_AIRTIME_QUEUE_MAX];
     uint32_t quantum_us, bypass_limit_us, bypass_left_us;
     uint8_t drr_enabled, drr_class, drr_enter, reserved;
+    uint64_t selected_at_us;
+    uint8_t selected_bypass;
 } ninlil_airtime_scheduler;
 
 /* Explicit one-radio queue; all jobs are derived from owners above this layer.
@@ -78,6 +80,17 @@ int ninlil_airtime_next(ninlil_airtime_scheduler *s, uint64_t now_us,
 /* OK means real TX completion. BUSY/TIMEOUT/IO keep the job; no discard limit.
  * Ambiguous transmissions consume their reserved airtime conservatively. */
 int ninlil_airtime_complete(ninlil_airtime_scheduler *s, int physical_result);
+/* Explicit proof that the CURRENT reservation never started transmitting.
+ * Refunds only that reservation, including DRR service and bypass charges;
+ * earlier ambiguous attempts remain charged. Retains the job and ownership.
+ * retry_at_us is a monotonic earliest retry, not regulatory authorization.
+ * Never call for TX timeout, lost IRQ, or ambiguous SPI/driver failure. */
+int ninlil_airtime_not_sent(ninlil_airtime_scheduler *s, uint64_t retry_at_us);
+/* Completion timestamp includes time spent staging/CCA/on air. Enforces the
+ * configured post-TX pause from actual completion, not queue selection.
+ * BUSY here remains conservatively charged: use not_sent only with proof. */
+int ninlil_airtime_complete_at(ninlil_airtime_scheduler *s, int physical_result,
+                               uint64_t completed_at_us);
 
 /* Only for a staged envelope whose session/authorization became obsolete.
  * The originating Core/Relay retains logical ownership. Not a retry limit. */

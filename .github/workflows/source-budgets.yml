@@ -16,14 +16,26 @@ jobs:
   budgets:
     name: Source ownership budgets
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
 
+      - name: Prepare identical provenance inputs
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends clang-format-18
+          bash scripts/fetch_edhoc.sh
+          bash scripts/fetch_sx126x_driver.sh
+          python3 scripts/check_edhoc.py
+          bash scripts/check_sx126x_driver.sh
+
       - name: Verify all unchanged source ceilings
+        env:
+          CLANG_FORMAT: clang-format-18
         shell: bash
         run: |
           set +e

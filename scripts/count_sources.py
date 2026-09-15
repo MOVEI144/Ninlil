@@ -2,6 +2,7 @@
 import difflib
 import hashlib
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -31,7 +32,7 @@ for name in files:
         # Apply the same formatting to both sides: reindentation of upstream
         # code is not an original implementation. Inputs remain unchanged.
         canonical = lambda value: subprocess.check_output(
-            ['clang-format', '--style=file:'+str(root / '.clang-format')],
+            [os.environ.get('CLANG_FORMAT', 'clang-format'), '--style=file:'+str(root / '.clang-format')],
             input=value.encode()).decode().splitlines()
         old_lines, new_lines = canonical(upstream), canonical(text)
         own = sum(sum(bool(line.strip()) for line in new_lines[start:end])

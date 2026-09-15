@@ -1,4 +1,5 @@
 #include "ninlil_node_internal.h"
+#include "ninlil_retry.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -267,6 +268,10 @@ static int open_layers(ninlil_node *n, int initialize)
     core.spool = n->config.spool;
     ninlil_node_delivery_link(n, &core.link);
     rc = ninlil_open(&n->core, &core);
+    if (rc == NINLIL_OK) {
+        const ninlil_retry_policy retry = {1000u, 160u, 30000u};
+        rc = ninlil_retry_enable(n->core, &retry, n->now_ms);
+    }
     if (rc == NINLIL_OK)
         rc = ninlil_bind_storage(n->core, n->config.identity->identity,
                                  initialize);

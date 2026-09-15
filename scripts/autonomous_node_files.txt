@@ -21,6 +21,7 @@ tests/test_lease_clock.c
 tests/test_node.c
 tests/test_node_application.c
 tests/test_node_storage.c
+tests/test_route_progress.c
 tools/node_hil/README.md
 tools/node_hil/build.py
 tools/node_hil/campaign.py

@@ -65,3 +65,17 @@ revision/hash verification in `docs/evidence/2026-09-09-maintenance/HISTORY.csv`
 The earlier over-budget owner/field results were 5,524/5,500 and 3,254/3,000;
 they are failures. Stale roster-only documentation is simplified and historical
 reports are retired; no previous limit is increased and no source is excluded.
+
+## September 15 historical consolidation
+
+Superseded campaign reports, raw result manifests and duplicate review witnesses
+are now pinned Git retrieval records, not copied logs in the current checkout.
+Before replacement each original matched its blob in PR22 commit
+`dc1203b85f115a5eb3acb686b1c87a43305fb732`; the recovery index stores both Git
+blob and SHA-256 with byte length. `scripts/read_history.py` verifies before
+emitting any bytes and never silently fetches or writes a working-tree file.
+Failures and unrun physical gates remain in the original records. Current
+regression tests and normative contracts are retained; no tests are excluded
+from project accounting. Small capture indices remain in their original schema.
+The former self-modifying PR20 repair workflow is removed: it must not rewrite
+the accounting rules or push source changes after an integration merge.

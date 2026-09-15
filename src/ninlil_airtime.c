@@ -191,6 +191,8 @@ static int take_selected(ninlil_airtime_scheduler *s, uint64_t now,
         return NINLIL_ERR_EMPTY;
     if (now > UINT64_MAX - job->airtime_us - s->pause_us)
         return NINLIL_ERR_STATE;
+    s->selected_at_us = now;
+    s->selected_bypass = 0u;
     s->credit_us -= job->airtime_us;
     s->not_before_us = now + job->airtime_us + s->pause_us;
     s->waiting = 0u;
@@ -255,6 +257,8 @@ static int drr_take(ninlil_airtime_scheduler *s, unsigned int index,
     if (j->airtime_us > s->credit_us ||
         (bypass && j->airtime_us > s->bypass_left_us))
         return NINLIL_ERR_EMPTY;
+    s->selected_at_us = now;
+    s->selected_bypass = bypass ? 1u : 0u;
     s->credit_us -= j->airtime_us;
     s->deficit_us[cls] -= (int64_t)j->airtime_us;
     s->peer_service_us[peer][cls] += j->airtime_us;
@@ -374,11 +378,63 @@ int ninlil_airtime_complete(ninlil_airtime_scheduler *s, int result)
     return NINLIL_OK;
 }
 
+int ninlil_airtime_not_sent(ninlil_airtime_scheduler *s, uint64_t retry_at)
+{
+    ninlil_airtime_job *j;
+    unsigned int cls, peer = 0u;
+    if (!s || !s->busy || !s->jobs[s->active].used ||
+        retry_at < s->selected_at_us || retry_at < s->last_refill_us)
+        return NINLIL_ERR_STATE;
+    j = &s->jobs[s->active];
+    cls = (unsigned int)j->traffic;
+    if (j->airtime_us > s->budget_us ||
+        s->credit_us > s->budget_us - j->airtime_us)
+        return NINLIL_ERR_STATE;
+    if (s->drr_enabled) {
+        peer = known_peer(s, j->peer);
+        if (peer == NINLIL_AIRTIME_QUEUE_MAX ||
+            s->peer_service_us[peer][cls] < j->airtime_us ||
+            s->deficit_us[cls] > INT64_MAX - (int64_t)j->airtime_us ||
+            (s->selected_bypass &&
+             (j->airtime_us > s->bypass_limit_us ||
+              s->bypass_left_us > s->bypass_limit_us - j->airtime_us)))
+            return NINLIL_ERR_STATE;
+    }
+    s->credit_us += j->airtime_us;
+    if (s->drr_enabled) {
+        s->deficit_us[cls] += (int64_t)j->airtime_us;
+        s->peer_service_us[peer][cls] -= j->airtime_us;
+        if (s->selected_bypass)
+            s->bypass_left_us += j->airtime_us;
+    }
+    s->not_before_us = retry_at;
+    s->busy = 0u;
+    s->selected_bypass = 0u;
+    return NINLIL_OK;
+}
+
+int ninlil_airtime_complete_at(ninlil_airtime_scheduler *s, int result,
+                               uint64_t completed)
+{
+    int rc;
+    if (!s || completed < s->selected_at_us ||
+        completed > UINT64_MAX - s->pause_us)
+        return NINLIL_ERR_STATE;
+    rc = ninlil_airtime_complete(s, result);
+    if (rc == NINLIL_OK && s->not_before_us < completed + s->pause_us)
+        s->not_before_us = completed + s->pause_us;
+    return rc;
+}
+
 int ninlil_airtime_discard_stale(ninlil_airtime_scheduler *s)
 {
-    if (!s || !s->busy || !s->jobs[s->active].used)
-        return NINLIL_ERR_STATE;
-    memset(&s->jobs[s->active], 0, sizeof(s->jobs[s->active]));
-    s->busy = 0u;
-    return NINLIL_OK;
+    uint8_t active;
+    int rc;
+    if (!s)
+        return NINLIL_ERR_INVALID;
+    active = s->active;
+    rc = ninlil_airtime_not_sent(s, s->selected_at_us);
+    if (rc == NINLIL_OK)
+        memset(&s->jobs[active], 0, sizeof(s->jobs[active]));
+    return rc;
 }

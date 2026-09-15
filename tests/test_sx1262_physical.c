@@ -975,10 +975,33 @@ static int (*const tests[])(void) = {
     test_adaptive_power_boundary,
 };
 
+static int test_profile_preflight(void)
+{
+    ninlil_rf_profile profile = make_profile(true);
+    uint32_t airtime = 17u;
+    unsigned int before;
+    reset_fakes();
+    before = fake_set_tx_calls;
+    fake_airtime_ms = 401u;
+    CHECK(ninlil_sx1262_profile_airtime(&profile, 240u, &airtime) ==
+          NINLIL_ERR_TOO_LARGE);
+    CHECK(airtime == 17u && fake_set_tx_calls == before);
+    fake_airtime_ms = 400u;
+    CHECK(ninlil_sx1262_profile_airtime(&profile, 240u, &airtime) == NINLIL_OK);
+    CHECK(airtime == 400000u && fake_set_tx_calls == before);
+    CHECK(ninlil_sx1262_profile_airtime(&profile, 241u, &airtime) ==
+          NINLIL_ERR_INVALID);
+    CHECK(ninlil_sx1262_profile_airtime(NULL, 1u, &airtime) ==
+          NINLIL_ERR_INVALID);
+    return 0;
+}
+
 int main(void)
 {
     size_t index;
 
+    if (test_profile_preflight() != 0)
+        return 1;
     for (index = 0u; index < sizeof(tests) / sizeof(tests[0]); index++) {
         int rc = tests[index]();
 

@@ -15,6 +15,7 @@ typedef enum ninlil_service_state {
 } ninlil_service_state;
 typedef struct ninlil_service_info {
     ninlil_service_state state;
+    /* Legacy tick mode only. Zero in monotonic mode: use retry_query. */
     uint64_t next_step;
     int last_result;
     uint16_t owned_outbound, owned_capacity, servicing, service_capacity;

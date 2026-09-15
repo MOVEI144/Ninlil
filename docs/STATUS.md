@@ -1,5 +1,8 @@
 # Project status
 
+Low-latency follow-up candidate: [2026-09-15 implementation](LOW_LATENCY_IMPLEMENTATION_2026-09-15.md).
+This does not complete the integration or RF acceptance gates below.
+
 Current local recovery checkpoint: [SOFTWARE_READINESS_2026-09-10.md](SOFTWARE_READINESS_2026-09-10.md).
 **NOT implementation-complete; NOT merged.** Older sections below retain their
 original evidence scope. The previous partial PHY files are not part of this build.

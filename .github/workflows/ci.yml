@@ -59,7 +59,19 @@ jobs:
       - name: Run full host CI
         env:
           CLANG_FORMAT: clang-format-18
-        run: ./scripts/ci.sh
+          NINLIL_BUILD_ROOT: ${{ github.workspace }}/build-ci
+          NINLIL_JOBS: 4
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$NINLIL_BUILD_ROOT/artifacts"
+          {
+            git rev-parse HEAD
+            git status --short
+            gcc --version | head -1
+            clang --version | head -1
+          } > "$NINLIL_BUILD_ROOT/artifacts/source.txt"
+          ./scripts/ci.sh 2>&1 | tee "$NINLIL_BUILD_ROOT/artifacts/host-ci.log"
       - name: Upload verification diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

@@ -5,6 +5,8 @@ root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 limit=${NINLIL_P0_LOC_LIMIT:-12000}
 paths=(
   "$root/include/ninlil.h"
+  "$root/include/ninlil_retry.h"
+  "$root/tests/test_retry_time.c"
   "$root/include/ninlil_custody.h"
   "$root/include/ninlil_group.h"
   "$root/include/ninlil_leaf.h"
