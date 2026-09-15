@@ -55,9 +55,9 @@ run_build() {
   if [[ "$sanitize" == ON ]]; then
     ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
     UBSAN_OPTIONS=halt_on_error=1 \
-      "$ctest_bin" --test-dir "$build" --output-on-failure
+      "$ctest_bin" --test-dir "$build" --parallel "$jobs" --timeout 180 --output-on-failure
   else
-    "$ctest_bin" --test-dir "$build" --output-on-failure
+    "$ctest_bin" --test-dir "$build" --parallel "$jobs" --timeout 180 --output-on-failure
   fi
   ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 UBSAN_OPTIONS=halt_on_error=1 \
     bash "$root/scripts/verify_sim.sh" "$build/ninlil_sim"
