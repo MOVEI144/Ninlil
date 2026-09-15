@@ -4,6 +4,7 @@
 #include "ninlil.h"
 #include "ninlil_binding.h"
 #include "ninlil_journal.h"
+#include "ninlil_retry.h"
 #include "ninlil_service.h"
 #include "ninlil_wire.h"
 
@@ -52,7 +53,12 @@ typedef struct ninlil_outbound_entry {
     ninlil_id idempotency_key;
     ninlil_journal_ref record_ref;
     uint64_t absolute_deadline_ms;
-    uint64_t last_sent_step;
+    union {
+        uint64_t last_sent_step; /* Legacy caller-driven tick mode. */
+        uint64_t retry_at_ms;    /* Optional boot-local monotonic mode. */
+    };
+    uint32_t retry_rto_ms;
+    uint8_t retry_waiting_tx;
     uint64_t
         binding_offset; /* Zero is legacy; generation follows record_ref. */
     uint16_t target;
@@ -159,6 +165,9 @@ struct ninlil_runtime {
     uint8_t phase_cursor;
     uint8_t replaying;
     uint64_t step_count;
+    uint64_t retry_now_ms;
+    ninlil_retry_policy retry_policy;
+    uint8_t retry_timed, retry_driving;
     uint64_t last_rejection_step;
     int fatal_error;
     uint8_t storage_identity[32];
@@ -174,6 +183,10 @@ struct ninlil_runtime {
     uint8_t service_class;
 };
 
+int ninlil_retry_ready(const ninlil_runtime *runtime,
+                       const ninlil_outbound_entry *entry);
+void ninlil_retry_result(ninlil_runtime *runtime, ninlil_outbound_entry *entry,
+                         int result);
 int ninlil_spool_limits_valid(const ninlil_config *config);
 size_t ninlil_service_memory(const ninlil_runtime *runtime);
 int ninlil_service_open(ninlil_runtime *runtime);

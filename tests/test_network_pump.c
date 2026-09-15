@@ -1,10 +1,12 @@
 /* Actual Core + routed + secure + pump, with bounded clock/radio/NOR fixtures.
  */
+#include "../src/ninlil_internal.h"
 #include "../src/ninlil_node_internal.h"
 #include "../src/ninlil_wire.h"
 #include "esp_random.h"
 #include "esp_timer.h"
 #include "ninlil_network_pump.h"
+#include "ninlil_retry.h"
 #include "security_test_io.h"
 #include "test_support.h"
 #include <psa/crypto.h>
@@ -38,6 +40,7 @@ static uint8_t transmitted_frame[240];
 static uint16_t transmitted_length;
 static int transmit_result;
 static uint32_t random_delay;
+static int airtime_result;
 static unsigned int receive_calls;
 uint32_t esp_random(void)
 {
@@ -58,6 +61,8 @@ int ninlil_sx1262_radio_airtime(const ninlil_sx1262_radio *r, uint16_t length,
                                 uint32_t *out)
 {
     (void)r;
+    if (airtime_result)
+        return airtime_result;
     if (!length || length > 240u)
         return NINLIL_ERR_INVALID;
     *out = 1000u;
@@ -498,6 +503,58 @@ static void source_retries_keep_custody_identity(void)
          "it PASS");
 }
 
+static void completion_inspection_and_preflight(void)
+{
+    fixture f;
+    ninlil_airtime_job job = {0};
+    ninlil_wire_data_view view;
+    uint8_t hop_plain[200], plain[200];
+    ninlil_relay_record record;
+    size_t size = 0u;
+    ninlil_outbound_entry *owned;
+    uint64_t rx_before;
+    setup(&f);
+    REQUIRE(ninlil_retry_enable(f.core,
+                                &(ninlil_retry_policy){1000u, 160u, 30000u},
+                                0u) == NINLIL_OK);
+    submit(&f, 2u, 0u);
+    REQUIRE(ninlil_step_at(f.core, 0u) == NINLIL_OK);
+    for (unsigned int i = 0u; i < NINLIL_AIRTIME_QUEUE_MAX; i++)
+        if (f.pump.scheduler.jobs[i].used)
+            job = f.pump.scheduler.jobs[i];
+    REQUIRE(job.used);
+    REQUIRE(ninlil_secure_inspect_tx(&f.sessions[0][1], job.frame, job.length,
+                                     hop_plain, sizeof(hop_plain),
+                                     &size) == NINLIL_OK);
+    REQUIRE(ninlil_relay_decode(hop_plain, size, &record) == NINLIL_OK);
+    REQUIRE(ninlil_secure_inspect_tx(&f.sessions[0][0], record.ciphertext,
+                                     record.length, plain, sizeof(plain),
+                                     &size) == NINLIL_OK);
+    REQUIRE(ninlil_wire_decode_data(plain, size, &view) == NINLIL_OK);
+    owned = ninlil_find_outbound(f.core, &view.message_id);
+    REQUIRE(owned && owned->retry_waiting_tx && owned->retry_rto_ms == 1000u);
+    rx_before = f.sessions[0][1].rx_bitmap;
+    job.frame[job.length - 1u] ^= 1u;
+    ninlil_routed_tx_done(&f.routed, job.frame, job.length, 500u);
+    REQUIRE(owned->retry_waiting_tx && owned->retry_at_ms == 30000u);
+    job.frame[job.length - 1u] ^= 1u;
+    ninlil_routed_tx_done(&f.routed, job.frame, job.length, 500u);
+    REQUIRE(!owned->retry_waiting_tx && owned->retry_at_ms == 1500u);
+    REQUIRE(owned->latest_evidence == NINLIL_EVIDENCE_NONE &&
+            f.sessions[0][1].rx_bitmap == rx_before);
+    ninlil_routed_tx_done(&f.routed, job.frame, job.length, 700u);
+    REQUIRE(owned->retry_at_ms ==
+            1500u); /* Repeated completion is not progress. */
+    airtime_result = NINLIL_ERR_TOO_LARGE;
+    REQUIRE(ninlil_esp_network_open(&f.pump, &f.radio, &f.routed, 1000000u) ==
+            NINLIL_ERR_TOO_LARGE);
+    REQUIRE(f.pump.routed ==
+            &f.routed); /* Failed open leaves existing owner intact. */
+    airtime_result = 0;
+    cleanup(&f);
+    puts("actual AEAD TX completion / per-flow RTO / non-mutating preflight "
+         "PASS");
+}
 int main(void)
 {
     static const uint8_t empty_hash[16] = {0xe3, 0xb0, 0xc4, 0x42, 0x98, 0xfc,
@@ -505,6 +562,7 @@ int main(void)
                                            0x99, 0x6f, 0xb9, 0x24};
     uint8_t digest[16];
     REQUIRE(psa_crypto_init() == PSA_SUCCESS);
+    completion_inspection_and_preflight();
     REQUIRE(ninlil_psa_packet_digest(NULL, 0u, digest) == NINLIL_OK);
     REQUIRE(memcmp(digest, empty_hash, 16u) == 0);
     staged_validation();

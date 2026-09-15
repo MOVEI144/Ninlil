@@ -1,4 +1,5 @@
 #include "ninlil_node_internal.h"
+#include "ninlil_retry.h"
 #include "ninlil_route_optimizer.h"
 #include <string.h>
 
@@ -57,17 +58,11 @@ int ninlil_node_step(ninlil_node *n, uint64_t now)
         if (rc != NINLIL_OK)
             return rc;
     }
-    /* A >=10 ms Core tick bounds retries; delayed calls never catch up. */
+    /* Bound CPU polling, not retransmission time. Each message uses its own
+     * route RTO; a long path cannot slow all other flows on this node. */
     if (now >= n->core_at) {
-        uint32_t retry_ms = 1000u;
-        for (unsigned int i = 0u; i < NINLIL_NETWORK_FLOWS_MAX; i++)
-            if (n->local_ready[i] == 3u &&
-                n->local_plans[i].path.nodes[0] == n->config.local &&
-                n->local_plans[i].rto_ms > retry_ms)
-                retry_ms = n->local_plans[i].rto_ms;
-        (void)ninlil_set_retry_interval(n->core, (retry_ms + 9u) / 10u);
         n->core_at = now + 10u;
-        rc = ninlil_node_result(n, ninlil_step(n->core));
+        rc = ninlil_node_result(n, ninlil_step_at(n->core, now));
         if (ninlil_health(n->core) != NINLIL_OK)
             n->status.fault = ninlil_health(n->core);
     }
@@ -155,8 +150,10 @@ void ninlil_node_transmitted(ninlil_node *n, const uint8_t *frame,
 {
     if (enter(n, now) != NINLIL_OK || result != NINLIL_OK || !frame ||
         length <= NINLIL_SECURE_OVERHEAD || length > NINLIL_SECURE_FRAME_MAX ||
-        memcmp(frame, "NS\001", 3u) != 0 || frame[31] != 2u || !airtime ||
-        airtime > 400000u)
+        memcmp(frame, "NS\001", 3u) != 0 || !airtime || airtime > 400000u)
         return;
-    ninlil_node_probe_transmitted(n, frame, length, airtime);
+    if (frame[31] == 0u)
+        ninlil_routed_tx_done(&n->routed, frame, length, now);
+    else if (frame[31] == 2u)
+        ninlil_node_probe_transmitted(n, frame, length, airtime);
 }

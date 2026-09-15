@@ -1,4 +1,5 @@
 #include "ninlil_routed.h"
+#include "ninlil_retry.h"
 #include <string.h>
 
 static uint16_t node_at(const uint8_t *p)
@@ -148,6 +149,15 @@ static int send_packet(void *ctx, const uint8_t *data, size_t length)
     rc = r->config.digest(record.ciphertext, record.length, record.packet_id);
     if (rc != NINLIL_OK)
         return rc;
+    if (data[3] == 1u && r->core) {
+        ninlil_id id;
+        memcpy(id.bytes, data + 10u, sizeof(id.bytes));
+        /* Preserve the reference one-second floor; only the unrelated
+         * slow-flow coupling is removed, not the conservative response budget.
+         */
+        (void)ninlil_retry_set_message(
+            r->core, &id, plan.rto_ms < 1000u ? 1000u : plan.rto_ms);
+    }
     return emit(r, record.path.nodes[1],
                 data[3] == 2u ? NINLIL_TRAFFIC_CONTROL
                               : (ninlil_traffic_class)data[28],
@@ -392,4 +402,34 @@ int ninlil_routed_frame_current(ninlil_routed *r, const uint8_t *frame,
     }
     ninlil_secret_clear(plain, sizeof(plain));
     return rc;
+}
+
+void ninlil_routed_tx_done(ninlil_routed *r, const uint8_t *frame,
+                           size_t length, uint64_t now)
+{
+    uint8_t plain[NINLIL_SECURE_PLAINTEXT_MAX];
+    ninlil_relay_record record;
+    size_t size = 0u;
+    ninlil_secure_session *s;
+    if (!r || !r->core || !frame || length <= NINLIL_SECURE_OVERHEAD ||
+        length > NINLIL_SECURE_FRAME_MAX ||
+        node_at(frame + 4) != r->config.local)
+        return;
+    s = session(r, node_at(frame + 6), 1);
+    if (!s || inspect(s, frame, length, plain, &size) != NINLIL_OK ||
+        ninlil_relay_decode(plain, size, &record) != NINLIL_OK || record.done ||
+        record.control || record.path.nodes[0] != r->config.local)
+        goto done;
+    s = session(r, record.path.nodes[record.path.count - 1u], 0);
+    if (s &&
+        inspect(s, record.ciphertext, record.length, plain, &size) ==
+            NINLIL_OK &&
+        size >= 40u && !memcmp(plain, "NL\002\001", 4u)) {
+        ninlil_id id;
+        memcpy(id.bytes, plain + 10u, sizeof(id.bytes));
+        (void)ninlil_retry_tx_done(r->core, &id, now);
+    }
+done:
+    ninlil_secret_clear(plain, sizeof(plain));
+    ninlil_secret_clear(&record, sizeof(record));
 }

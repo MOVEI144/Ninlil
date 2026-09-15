@@ -77,4 +77,8 @@ int ninlil_routed_apply_rto(ninlil_routed *r, uint16_t target,
 int ninlil_psa_packet_digest(const uint8_t *data, size_t length,
                              uint8_t id[16]);
 
+/* Same owner; called once for a completed currently staged source DATA.
+ * Decrypts only our own authenticated TX and never mutates a receive window. */
+void ninlil_routed_tx_done(ninlil_routed *routed, const uint8_t *frame,
+                           size_t length, uint64_t monotonic_ms);
 #endif

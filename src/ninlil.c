@@ -365,6 +365,8 @@ int ninlil_step(ninlil_runtime *runtime)
         return NINLIL_ERR_INVALID;
     if (runtime->fatal_error != NINLIL_OK)
         return runtime->fatal_error;
+    if (runtime->retry_timed && !runtime->retry_driving)
+        return NINLIL_ERR_STATE;
     if (runtime->step_count == UINT64_MAX)
         return NINLIL_ERR_FAULT;
     result = ninlil_collect_if_needed(runtime);

@@ -12,6 +12,15 @@ int ninlil_esp_network_open(ninlil_esp_network_pump *p,
     int64_t now = esp_timer_get_time();
     if (!p || !radio || !routed || now < 0)
         return NINLIL_ERR_INVALID;
+    {
+        uint32_t maximum_airtime;
+        int checked = ninlil_sx1262_radio_airtime(
+            radio, NINLIL_SECURE_FRAME_MAX, &maximum_airtime);
+        if (checked != NINLIL_OK)
+            return checked;
+        if (maximum_airtime > budget)
+            return NINLIL_ERR_CAPACITY;
+    }
     memset(p, 0, sizeof(*p));
     p->radio = radio;
     p->routed = routed;
@@ -56,6 +65,15 @@ int ninlil_esp_node_open(ninlil_esp_network_pump *p, ninlil_sx1262_radio *radio,
     int64_t now = esp_timer_get_time();
     if (!p || !radio || !node || now < 0)
         return NINLIL_ERR_INVALID;
+    {
+        uint32_t maximum_airtime;
+        int checked = ninlil_sx1262_radio_airtime(
+            radio, NINLIL_SECURE_FRAME_MAX, &maximum_airtime);
+        if (checked != NINLIL_OK)
+            return checked;
+        if (maximum_airtime > budget)
+            return NINLIL_ERR_CAPACITY;
+    }
     memset(p, 0, sizeof(*p));
     p->radio = radio;
     p->node = node;
@@ -253,10 +271,9 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
              ? ninlil_esp_feedback_prepare(p, job, (uint64_t)now)
              : power_for(p, job->peer, (uint64_t)now / 1000u);
     if (rc != NINLIL_OK) {
-        if (p->adaptive_power == 2u) {
-            (void)ninlil_airtime_complete(
-                &p->scheduler, rc == NINLIL_ERR_BUSY ? rc : NINLIL_ERR_IO);
-        }
+        /* Preparation has not called SetTx. Preserve the job, but do not
+         * charge RF for policy/feedback/queue deferral. */
+        (void)ninlil_airtime_not_sent(&p->scheduler, (uint64_t)now + 1000u);
         return rc;
     }
     rc = ninlil_sx1262_radio_send(p->radio, job->frame, job->length);
@@ -289,9 +306,19 @@ int ninlil_esp_network_step(ninlil_esp_network_pump *p)
                 p->feedback->fault = rc;
         }
     }
-    completion = ninlil_airtime_complete(
-        &p->scheduler, rc == NINLIL_OK         ? NINLIL_OK
-                       : rc == NINLIL_ERR_BUSY ? rc
-                                               : NINLIL_ERR_IO);
+    /* BUSY is returned before SetTx by this driver (CCA, RX or TX pause).
+     * TIMEOUT/IO cannot prove absence of RF and never refund airtime. */
+    {
+        int64_t finished = esp_timer_get_time();
+        if (finished < now || finished > INT64_MAX - 1000)
+            return NINLIL_ERR_IO;
+        completion = rc == NINLIL_ERR_BUSY
+                         ? ninlil_airtime_not_sent(&p->scheduler,
+                                                   (uint64_t)finished + 1000u)
+                         : ninlil_airtime_complete_at(
+                               &p->scheduler,
+                               rc == NINLIL_OK ? NINLIL_OK : NINLIL_ERR_IO,
+                               (uint64_t)finished);
+    }
     return completion == NINLIL_OK ? rc : completion;
 }

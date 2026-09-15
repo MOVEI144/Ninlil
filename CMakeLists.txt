@@ -141,6 +141,13 @@ add_executable(m1_flash_inspect tools/m1_flash_inspect.c)
 target_link_libraries(m1_flash_inspect PRIVATE ninlil_flash_store)
 ninlil_strict_target(m1_flash_inspect)
 
+foreach(backend posix flash_runtime)
+  add_executable(test_retry_time_${backend} tests/test_retry_time.c tests/test_support.c)
+  target_include_directories(test_retry_time_${backend} PRIVATE tests src)
+  target_link_libraries(test_retry_time_${backend} PRIVATE ninlil_${backend})
+  ninlil_strict_target(test_retry_time_${backend})
+  add_test(NAME retry_monotonic_${backend} COMMAND test_retry_time_${backend})
+endforeach()
 add_executable(test_core
   tests/test_core.c
   tests/test_support.c

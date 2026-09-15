@@ -510,21 +510,32 @@ int ninlil_sx1262_radio_sleep(ninlil_sx1262_radio *radio)
                : NINLIL_ERR_IO;
 }
 
-int ninlil_sx1262_radio_airtime(const ninlil_sx1262_radio *radio,
-                                uint16_t length, uint32_t *airtime_us)
+int ninlil_sx1262_profile_airtime(const ninlil_rf_profile *profile,
+                                  uint16_t length, uint32_t *airtime_us)
 {
     sx126x_mod_params_lora_t modulation;
     sx126x_pkt_params_lora_t packet;
     uint32_t ms;
-    if (!radio || !airtime_us || !length || length > NINLIL_RADIO_MTU ||
-        build_lora_parameters(&radio->profile, (uint8_t)length, &modulation,
-                              &packet) != NINLIL_OK)
+    if (!profile || !airtime_us || !length || length > NINLIL_RADIO_MTU ||
+        ninlil_rf_profile_validate(profile) != NINLIL_OK ||
+        build_lora_parameters(profile, (uint8_t)length, &modulation, &packet) !=
+            NINLIL_OK)
         return NINLIL_ERR_INVALID;
     ms = sx126x_get_lora_time_on_air_in_ms(&packet, &modulation);
-    if (!ms || ms > 400u)
+    /* This is the currently supported scheduler profile, not a claim that
+     * all regions impose the same rule. Never bypass the cap to start. */
+    if (!ms || ms > JP_MAX_AIRTIME_MS)
         return NINLIL_ERR_TOO_LARGE;
     *airtime_us = ms * 1000u;
     return NINLIL_OK;
+}
+
+int ninlil_sx1262_radio_airtime(const ninlil_sx1262_radio *radio,
+                                uint16_t length, uint32_t *airtime_us)
+{
+    return radio ? ninlil_sx1262_profile_airtime(&radio->profile, length,
+                                                 airtime_us)
+                 : NINLIL_ERR_INVALID;
 }
 
 int ninlil_sx1262_radio_power(ninlil_sx1262_radio *radio, int8_t power)

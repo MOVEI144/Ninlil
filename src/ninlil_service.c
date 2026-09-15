@@ -49,10 +49,8 @@ static int ready(const ninlil_runtime *r, uint16_t index)
     const ninlil_outbound_entry *e = &r->outbound[index];
     const ninlil_service_wait *w = &r->service_wait[index];
     return e->used && w->state != NINLIL_SERVICE_PAUSED &&
-           r->step_count >= w->next_step &&
-           (!e->last_sent_step || (r->step_count >= e->last_sent_step &&
-                                   r->step_count - e->last_sent_step >=
-                                       r->config.retry_interval_steps));
+           (r->retry_timed || r->step_count >= w->next_step) &&
+           ninlil_retry_ready(r, e);
 }
 static int valid_slot(const ninlil_runtime *r, const ninlil_service_slot *s)
 {
@@ -162,7 +160,7 @@ int ninlil_service_query(ninlil_runtime *r, const ninlil_id *id,
     if (rc != NINLIL_OK)
         return rc;
     info.state = (ninlil_service_state)r->service_wait[index].state;
-    info.next_step = r->service_wait[index].next_step;
+    info.next_step = r->retry_timed ? 0u : r->service_wait[index].next_step;
     info.last_result = r->service_wait[index].result;
     info.owned_outbound = r->outbound_live;
     info.owned_capacity = r->outbound_capacity;

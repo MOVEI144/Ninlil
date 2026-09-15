@@ -6,6 +6,7 @@
 #include "esp_timer.h"
 #include "ninlil_feedback_pump.h"
 #include "ninlil_node_internal.h"
+#include "ninlil_retry.h"
 #include "ninlil_route_optimizer.h"
 #include "ninlil_sleep.h"
 #include <stdio.h>
@@ -526,4 +527,20 @@ int main(void)
            "bytes\n",
            sizeof(ninlil_radio_feedback));
     return 0;
+}
+
+/* These fixtures isolate RF feedback, not Core timer correctness. The real
+ * Core/POSIX/Flash timer contract is exercised by test_retry_time. */
+int ninlil_step_at(ninlil_runtime *r, uint64_t now)
+{
+    (void)now;
+    return ninlil_step(r);
+}
+void ninlil_routed_tx_done(ninlil_routed *r, const uint8_t *p, size_t len,
+                           uint64_t now)
+{
+    (void)r;
+    (void)p;
+    (void)len;
+    (void)now;
 }

@@ -11,9 +11,11 @@ static const ninlil_traffic_class schedule[NINLIL_SCHEDULE_SLOTS] = {
     NINLIL_TRAFFIC_BULK,
 };
 
-static int retry_ready(const ninlil_runtime *runtime,
+int ninlil_retry_ready(const ninlil_runtime *runtime,
                        const ninlil_outbound_entry *entry)
 {
+    if (runtime->retry_timed)
+        return runtime->retry_now_ms >= entry->retry_at_ms;
     return entry->last_sent_step == 0u ||
            (runtime->step_count >= entry->last_sent_step &&
             runtime->step_count - entry->last_sent_step >=
@@ -48,7 +50,8 @@ static ninlil_outbound_entry *find_class_entry(ninlil_runtime *runtime,
         ninlil_outbound_entry *entry = &runtime->outbound[index];
 
         if (!entry->used || entry->traffic_class != class ||
-            !retry_ready(runtime, entry) || !deadline_sendable(runtime, entry))
+            !ninlil_retry_ready(runtime, entry) ||
+            !deadline_sendable(runtime, entry))
             continue;
         runtime->outbound_cursor[(unsigned int)class] =
             (uint16_t)((index + 1u) % runtime->outbound_capacity);
@@ -206,7 +209,7 @@ static int send_entry(ninlil_runtime *runtime, ninlil_outbound_entry *entry)
         entry->attempted = 1u;
     }
     rc = runtime->config.link.send(runtime->config.link.ctx, packet, length);
-    if (rc == NINLIL_OK)
+    if (rc == NINLIL_OK && !runtime->retry_timed)
         entry->last_sent_step = runtime->step_count;
     return rc;
 }
@@ -225,13 +228,118 @@ int ninlil_process_outbound(ninlil_runtime *runtime, int *worked)
     if (runtime->service_wait && entry->absolute_deadline_ms) {
         rc = ninlil_deadline_check(runtime, entry->absolute_deadline_ms);
         if (rc != NINLIL_OK) {
+            ninlil_retry_result(runtime, entry, rc);
             ninlil_service_result(runtime, entry, rc);
             return NINLIL_OK; /* No invented outcome for an attempted deadline.
                                */
         }
     }
     rc = send_entry(runtime, entry);
-    if (entry->used)
+    if (entry->used) {
+        ninlil_retry_result(runtime, entry, rc);
         ninlil_service_result(runtime, entry, rc);
+    }
     return rc;
+}
+
+int ninlil_retry_enable(ninlil_runtime *r, const ninlil_retry_policy *p,
+                        uint64_t now)
+{
+    if (!r || !p || !p->initial_rto_ms || p->initial_rto_ms > 60000u ||
+        !p->blocked_backoff_ms || p->blocked_backoff_ms > 60000u ||
+        !p->staging_timeout_ms || p->staging_timeout_ms > 120000u ||
+        now > UINT64_MAX - 120000u)
+        return NINLIL_ERR_INVALID;
+    if (r->fatal_error)
+        return r->fatal_error;
+    if (r->retry_timed || r->step_count)
+        return NINLIL_ERR_STATE;
+    r->retry_policy = *p;
+    r->retry_now_ms = now;
+    r->retry_timed = 1u;
+    return NINLIL_OK;
+}
+
+int ninlil_step_at(ninlil_runtime *r, uint64_t now)
+{
+    int rc;
+    if (!r || !r->retry_timed || r->retry_driving || now < r->retry_now_ms ||
+        now > UINT64_MAX - 120000u)
+        return NINLIL_ERR_STATE;
+    if (r->fatal_error)
+        return r->fatal_error;
+    r->retry_now_ms = now;
+    r->retry_driving = 1u;
+    rc = ninlil_step(r);
+    r->retry_driving = 0u;
+    return rc;
+}
+
+int ninlil_retry_set_message(ninlil_runtime *r, const ninlil_id *id,
+                             uint32_t rto)
+{
+    ninlil_outbound_entry *e;
+    if (!r || !id || !rto || rto > 60000u)
+        return NINLIL_ERR_INVALID;
+    if (!r->retry_timed)
+        return NINLIL_ERR_STATE;
+    if (r->fatal_error)
+        return r->fatal_error;
+    e = ninlil_find_outbound(r, id);
+    if (!e)
+        return NINLIL_ERR_NOT_FOUND;
+    e->retry_rto_ms = rto;
+    return NINLIL_OK;
+}
+
+void ninlil_retry_result(ninlil_runtime *r, ninlil_outbound_entry *e, int rc)
+{
+    if (!r->retry_timed)
+        return;
+    e->retry_waiting_tx = rc == NINLIL_OK ? 1u : 0u;
+    e->retry_at_ms = r->retry_now_ms +
+                     (rc == NINLIL_OK ? r->retry_policy.staging_timeout_ms
+                                      : r->retry_policy.blocked_backoff_ms);
+}
+
+int ninlil_retry_tx_done(ninlil_runtime *r, const ninlil_id *id, uint64_t now)
+{
+    ninlil_outbound_entry *e;
+    if (!r || !id || !r->retry_timed || r->retry_driving ||
+        now < r->retry_now_ms || now > UINT64_MAX - 120000u)
+        return NINLIL_ERR_STATE;
+    if (r->fatal_error)
+        return r->fatal_error;
+    e = ninlil_find_outbound(r, id);
+    if (!e)
+        return NINLIL_ERR_NOT_FOUND;
+    if (!e->attempted || !e->retry_waiting_tx)
+        return NINLIL_ERR_STATE;
+    e->retry_at_ms = now + (e->retry_rto_ms ? e->retry_rto_ms
+                                            : r->retry_policy.initial_rto_ms);
+    e->retry_waiting_tx = 0u;
+    r->retry_now_ms = now;
+    return NINLIL_OK;
+}
+
+int ninlil_retry_query(ninlil_runtime *r, const ninlil_id *id,
+                       ninlil_retry_info *out)
+{
+    ninlil_outbound_entry *e;
+    ninlil_retry_info info = {0};
+    if (!r || !id || !out)
+        return NINLIL_ERR_INVALID;
+    if (!r->retry_timed)
+        return NINLIL_ERR_STATE;
+    if (r->fatal_error)
+        return r->fatal_error;
+    e = ninlil_find_outbound(r, id);
+    if (!e)
+        return NINLIL_ERR_NOT_FOUND;
+    info.next_due_ms = e->retry_at_ms;
+    info.rto_ms =
+        e->retry_rto_ms ? e->retry_rto_ms : r->retry_policy.initial_rto_ms;
+    info.waiting_for_tx = e->retry_waiting_tx;
+    *out = info;
+    return NINLIL_OK;
 }

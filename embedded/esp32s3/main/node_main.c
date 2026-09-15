@@ -122,6 +122,14 @@ static int start(uint64_t duration)
         duration > 600000u || !p.tx_enabled || !p.frequency_hz ||
         !node_identity.signing_key || !node_config.member_count)
         return NINLIL_ERR_STATE;
+    {
+        uint32_t maximum_airtime;
+        rc = ninlil_sx1262_profile_airtime(&p, NINLIL_SECURE_FRAME_MAX,
+                                           &maximum_airtime);
+        if (rc != NINLIL_OK)
+            return rc; /* Reject before creating Node/journal/handshake state.
+                        */
+    }
     rc = ninlil_node_open(&node, &node_config, milliseconds());
     if (rc == NINLIL_OK)
         rc = node_deployment_start(node);

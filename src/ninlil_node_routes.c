@@ -212,9 +212,9 @@ static int request_flow(ninlil_node *n, uint16_t peer, const uint8_t *data,
     return NINLIL_OK;
 }
 
-int ninlil_node_plan_receive(ninlil_node *n, uint16_t peer,
-                             node_control_kind kind, const uint8_t *data,
-                             size_t length)
+static int handle_plan_message(ninlil_node *n, uint16_t peer,
+                               node_control_kind kind, const uint8_t *data,
+                               size_t length)
 {
     if (peer == n->config.root && n->config.local != n->config.root) {
         if (kind == NODE_PREPARE || kind == NODE_APPLY ||
@@ -253,6 +253,30 @@ int ninlil_node_plan_receive(ninlil_node *n, uint16_t peer,
             return request_flow(n, peer, data, length);
     }
     return ninlil_node_link_receive(n, peer, kind, data, length);
+}
+
+int ninlil_node_plan_receive(ninlil_node *n, uint16_t peer,
+                             node_control_kind kind, const uint8_t *data,
+                             size_t length)
+{
+    uint8_t prepared, proof, released, notified[NINLIL_NETWORK_FLOWS_MAX];
+    int rc;
+    if (!n || !data)
+        return NINLIL_ERR_INVALID;
+    prepared = n->coordinator.prepared_live;
+    proof = n->proof_mask;
+    released = n->released_mask;
+    memcpy(notified, n->effective_notified, sizeof(notified));
+    rc = handle_plan_message(n, peer, kind, data, length);
+    /* Only verified NEW progress makes the next phase runnable. Duplicates
+     * and stale/invalid ACKs cannot reset the retry throttle. The existing
+     * ownership, epoch, proof, lease and RF constraints still apply. */
+    if (rc == NINLIL_OK && n->config.local == n->config.root &&
+        (prepared != n->coordinator.prepared_live || proof != n->proof_mask ||
+         released != n->released_mask ||
+         memcmp(notified, n->effective_notified, sizeof(notified))))
+        n->route_at = n->now_ms;
+    return rc;
 }
 
 static int pending(ninlil_node *n, uint64_t now)
